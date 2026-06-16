@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
   const pdf = await done;
   const tgl = new Date().toISOString().slice(0, 10);
 
-  return new Response(pdf, {
+  return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename="wilayah-kerja-${tgl}.pdf"`,
