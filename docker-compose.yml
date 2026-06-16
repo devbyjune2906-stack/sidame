@@ -13,8 +13,8 @@ services:
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
       SEED_ADMIN_NAMA: ${SEED_ADMIN_NAMA}
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
 
   db:
     image: postgres:16-alpine
