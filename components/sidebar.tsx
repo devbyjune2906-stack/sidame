@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { isAdmin, isPokjaAdmin } from "@/lib/rbac";
 import { logout } from "@/app/(app)/actions";
 
 const NAV = [
@@ -12,7 +13,7 @@ const NAV = [
 
 export function Sidebar({ user }: { user: { nama: string; role: string } }) {
   const pathname = usePathname();
-  const isAdmin = user.role === "Admin";
+  const showAdminMenu = isAdmin(user.role) || isPokjaAdmin(user.role);
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-line bg-surface">
@@ -43,7 +44,7 @@ export function Sidebar({ user }: { user: { nama: string; role: string } }) {
           );
         })}
 
-        {isAdmin && (
+        {showAdminMenu && (
           <div className="pt-3">
             <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">Admin</p>
             <Link

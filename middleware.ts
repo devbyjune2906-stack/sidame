@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifySession, SESSION_COOKIE } from "@/lib/jwt";
+import { isAdmin, isPokjaAdmin } from "@/lib/rbac";
 
 export async function middleware(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
@@ -10,8 +11,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Batasi area admin hanya untuk role Admin
-  if (req.nextUrl.pathname.startsWith("/admin") && session.role !== "Admin") {
+  // Batasi area admin untuk role Admin global & Admin Pokja
+  if (
+    req.nextUrl.pathname.startsWith("/admin") &&
+    !isAdmin(session.role) &&
+    !isPokjaAdmin(session.role)
+  ) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 

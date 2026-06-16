@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { users, roles } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { isAdmin } from "@/lib/rbac";
+import { isAdmin, isPokjaAdmin, manageableRoleNames } from "@/lib/rbac";
 import { Card } from "@/components/ui";
 import { UserForm } from "./user-form";
 import { deleteUser } from "./actions";
@@ -11,14 +11,22 @@ import { deleteUser } from "./actions";
 export default async function UsersPage() {
   const current = await getCurrentUser();
   if (!current) redirect("/login");
-  if (!isAdmin(current.role)) redirect("/dashboard");
+  if (!isAdmin(current.role) && !isPokjaAdmin(current.role)) redirect("/dashboard");
 
-  const roleList = await db.select({ id: roles.id, nama: roles.nama }).from(roles).orderBy(asc(roles.id));
+  const scoped = manageableRoleNames(current.role);
+  const roleFilter: SQL | undefined = scoped === "ALL" ? undefined : inArray(roles.nama, scoped);
+
+  const roleList = await db
+    .select({ id: roles.id, nama: roles.nama })
+    .from(roles)
+    .where(roleFilter)
+    .orderBy(asc(roles.id));
 
   const userList = await db
     .select({ id: users.id, nama: users.nama, email: users.email, role: roles.nama })
     .from(users)
     .innerJoin(roles, eq(users.roleId, roles.id))
+    .where(roleFilter)
     .orderBy(asc(users.nama));
 
   return (
