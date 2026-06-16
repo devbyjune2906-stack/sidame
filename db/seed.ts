@@ -6,10 +6,62 @@ import {
   processTemplate,
   stageTemplate,
   hariLibur,
+  provinsi,
 } from "./schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { ROLE_LIST } from "../lib/constants";
+
+const PROVINSI_LIST = [
+  "Aceh",
+  "Sumatera Utara",
+  "Sumatera Barat",
+  "Riau",
+  "Kepulauan Riau",
+  "Jambi",
+  "Bengkulu",
+  "Sumatera Selatan",
+  "Kepulauan Bangka Belitung",
+  "Lampung",
+  "DKI Jakarta",
+  "Jawa Barat",
+  "Jawa Tengah",
+  "DI Yogyakarta",
+  "Jawa Timur",
+  "Banten",
+  "Bali",
+  "Nusa Tenggara Barat",
+  "Nusa Tenggara Timur",
+  "Kalimantan Barat",
+  "Kalimantan Tengah",
+  "Kalimantan Selatan",
+  "Kalimantan Timur",
+  "Kalimantan Utara",
+  "Sulawesi Utara",
+  "Gorontalo",
+  "Sulawesi Tengah",
+  "Sulawesi Barat",
+  "Sulawesi Selatan",
+  "Sulawesi Tenggara",
+  "Maluku",
+  "Maluku Utara",
+  "Papua",
+  "Papua Barat",
+  "Papua Barat Daya",
+  "Papua Tengah",
+  "Papua Pegunungan",
+  "Papua Selatan",
+];
+
+async function seedProvinsi() {
+  for (const nama of PROVINSI_LIST) {
+    const existing = await db.select().from(provinsi).where(eq(provinsi.nama, nama));
+    if (existing.length === 0) {
+      await db.insert(provinsi).values({ nama });
+    }
+  }
+  console.log("  + provinsi (38 provinsi)");
+}
 
 async function seedRoles() {
   for (const nama of ROLE_LIST) {
@@ -160,6 +212,7 @@ async function seedHariLibur() {
 
 async function main() {
   console.log("Seeding SIDAME...");
+  await seedProvinsi();
   await seedRoles();
   await seedAdmin();
   await seedTemplates();
