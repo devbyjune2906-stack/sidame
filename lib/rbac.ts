@@ -26,6 +26,11 @@ export function manageableRoleNames(role: string): string[] | "ALL" {
   return pair ? [pair.staf, pair.admin] : [];
 }
 
+/** True kalau role termasuk Pokja DMED (staf atau admin pokja). */
+export function isDmed(role: string): boolean {
+  return role === POKJA_ROLE_PAIRS.DMED.staf || role === POKJA_ROLE_PAIRS.DMED.admin;
+}
+
 /** Boleh kelola (create/update/delete) data dengan status tertentu? */
 export function canManageStatus(role: string, status: StatusWk): boolean {
   const allowed = allowedStatuses(role);
