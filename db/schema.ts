@@ -24,15 +24,9 @@ export const statusWk = pgEnum("status_wk", [
 export const slaUnit = pgEnum("sla_unit", ["HARI_KALENDER", "HARI_KERJA", "BULAN", "TANPA_SLA"]);
 export const stageStatus = pgEnum("stage_status", ["BELUM_MULAI", "BERJALAN", "SELESAI"]);
 
-export const jenisPod = pgEnum("jenis_pod", [
-  "POD_I",
-  "REVISI_PODI_1",
-  "REVISI_PODI_2_PERPANJANGAN",
-  "PERINGATAN_1",
-  "PERINGATAN_2",
-  "PERINGATAN_3",
-  "TERMINASI",
-]);
+// jenisPod sengaja text biasa (bukan pgEnum) -- mengubah kolom existing dari text ke
+// enum butuh cast eksplisit yang tidak ditangani drizzle-kit push. Nilai yang diizinkan
+// dibatasi di level aplikasi lewat JENIS_POD_VALUES (lib/constants.ts).
 
 /* ===================== USER & ROLE ===================== */
 export const roles = pgTable("roles", {
@@ -160,7 +154,7 @@ export const dmedPodiDetail = pgTable("dmed_podi_detail", {
     .notNull()
     .unique()
     .references(() => wilayahKerja.id, { onDelete: "cascade" }),
-  jenisPod: jenisPod("jenis_pod"),
+  jenisPod: text("jenis_pod"),
   luasWilayahSisa: doublePrecision("luas_wilayah_sisa"),
   persetujuanPodI: timestamp("persetujuan_pod_i"),
   revisiPodI1: timestamp("revisi_pod_i_1"),
