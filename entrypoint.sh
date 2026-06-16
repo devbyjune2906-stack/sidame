@@ -2,7 +2,7 @@
 set -e
 
 echo "[SIDAME] Menerapkan skema database (drizzle push)..."
-npx drizzle-kit push
+npx drizzle-kit push --force
 
 echo "[SIDAME] Menjalankan seed (idempotent)..."
 npx tsx db/seed.ts
