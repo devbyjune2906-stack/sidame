@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button, Input, Label, Select, Card } from "@/components/ui";
 import { STATUS_WK_LABEL, TYPE_CONTRACT_LABEL, TYPE_CONTRACT_VALUES, type StatusWk } from "@/lib/constants";
 
 type Opsi = { id: number; nama: string };
+type KabupatenOpsi = { id: number; nama: string; provinsiId: number | null };
 
 export type WkInitial = {
   namaWk?: string;
@@ -25,16 +26,27 @@ export function WkForm({
   initial = {},
   selectableStatuses,
   provinsiList,
+  kabupatenList,
   submitLabel,
 }: {
   action: (prev: { error?: string } | null, fd: FormData) => Promise<{ error?: string } | null>;
   initial?: WkInitial;
   selectableStatuses: StatusWk[];
   provinsiList: Opsi[];
+  kabupatenList: KabupatenOpsi[];
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const statusLocked = selectableStatuses.length === 1;
+
+  const [provinsiId, setProvinsiId] = useState(initial.provinsiId?.toString() ?? "");
+  const kabupatenOptions = useMemo(
+    () =>
+      kabupatenList.filter(
+        (k) => k.provinsiId === null || (provinsiId !== "" && k.provinsiId === Number(provinsiId))
+      ),
+    [kabupatenList, provinsiId]
+  );
 
   return (
     <form action={formAction}>
@@ -63,7 +75,12 @@ export function WkForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor="provinsiId">Provinsi</Label>
-            <Select id="provinsiId" name="provinsiId" defaultValue={initial.provinsiId?.toString() ?? ""}>
+            <Select
+              id="provinsiId"
+              name="provinsiId"
+              value={provinsiId}
+              onChange={(e) => setProvinsiId(e.target.value)}
+            >
               <option value="">— Pilih provinsi —</option>
               {provinsiList.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -73,14 +90,19 @@ export function WkForm({
             </Select>
           </div>
           <div>
-            <Label htmlFor="kabupatenId">Kabupaten/Kota (ID)</Label>
-            <Input
+            <Label htmlFor="kabupatenId">Kabupaten/Kota</Label>
+            <Select
               id="kabupatenId"
               name="kabupatenId"
-              type="number"
               defaultValue={initial.kabupatenId?.toString() ?? ""}
-              placeholder="opsional"
-            />
+            >
+              <option value="">— Pilih kabupaten/kota —</option>
+              {kabupatenOptions.map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.nama}
+                </option>
+              ))}
+            </Select>
           </div>
         </div>
 

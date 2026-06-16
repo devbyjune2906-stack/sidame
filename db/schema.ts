@@ -51,9 +51,8 @@ export const provinsi = pgTable("provinsi", {
 export const kabupaten = pgTable("kabupaten", {
   id: serial("id").primaryKey(),
   nama: text("nama").notNull(),
-  provinsiId: integer("provinsi_id")
-    .notNull()
-    .references(() => provinsi.id),
+  // null = bukan kabupaten/kota administratif (mis. "Di Atas 12 Mil Laut")
+  provinsiId: integer("provinsi_id").references(() => provinsi.id),
 });
 
 /* ===================== MASTER WK ===================== */

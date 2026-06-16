@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
-import { provinsi } from "@/db/schema";
+import { provinsi, kabupaten } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { allowedStatuses } from "@/lib/rbac";
 import { STATUS_WK_VALUES, type StatusWk } from "@/lib/constants";
@@ -20,6 +20,11 @@ export default async function NewWkPage() {
     .from(provinsi)
     .orderBy(asc(provinsi.nama));
 
+  const kabupatenList = await db
+    .select({ id: kabupaten.id, nama: kabupaten.nama, provinsiId: kabupaten.provinsiId })
+    .from(kabupaten)
+    .orderBy(asc(kabupaten.nama));
+
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <h1 className="font-display text-2xl font-bold text-ink">Tambah Wilayah Kerja</h1>
@@ -27,6 +32,7 @@ export default async function NewWkPage() {
         action={createWk}
         selectableStatuses={selectable}
         provinsiList={provinsiList}
+        kabupatenList={kabupatenList}
         submitLabel="Simpan"
       />
     </div>

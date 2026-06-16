@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { provinsi, wilayahKerja } from "@/db/schema";
+import { provinsi, kabupaten, wilayahKerja } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { allowedStatuses, canManageStatus } from "@/lib/rbac";
 import { STATUS_WK_VALUES, type StatusWk } from "@/lib/constants";
@@ -33,6 +33,11 @@ export default async function EditWkPage({ params }: { params: Promise<{ id: str
     .from(provinsi)
     .orderBy(asc(provinsi.nama));
 
+  const kabupatenList = await db
+    .select({ id: kabupaten.id, nama: kabupaten.nama, provinsiId: kabupaten.provinsiId })
+    .from(kabupaten)
+    .orderBy(asc(kabupaten.nama));
+
   // bind id ke action update
   const action = updateWk.bind(null, id);
 
@@ -43,6 +48,7 @@ export default async function EditWkPage({ params }: { params: Promise<{ id: str
         action={action}
         selectableStatuses={selectable}
         provinsiList={provinsiList}
+        kabupatenList={kabupatenList}
         submitLabel="Simpan Perubahan"
         initial={{
           namaWk: wk.namaWk,

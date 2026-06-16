@@ -7,10 +7,12 @@ import {
   stageTemplate,
   hariLibur,
   provinsi,
+  kabupaten,
 } from "./schema";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { ROLE_LIST } from "../lib/constants";
+import { KABUPATEN_KOTA_BY_PROVINSI, KABUPATEN_NON_ADMINISTRATIF } from "./data/kabupaten-kota";
 
 const PROVINSI_LIST = [
   "Aceh",
@@ -61,6 +63,45 @@ async function seedProvinsi() {
     }
   }
   console.log("  + provinsi (38 provinsi)");
+}
+
+async function seedKabupatenKota() {
+  const provinsiRows = await db.select().from(provinsi);
+  const provinsiIdByNama = new Map(provinsiRows.map((p) => [p.nama, p.id]));
+
+  let inserted = 0;
+  for (const [namaProvinsi, { kab, kota }] of Object.entries(KABUPATEN_KOTA_BY_PROVINSI)) {
+    const provinsiId = provinsiIdByNama.get(namaProvinsi);
+    if (!provinsiId) continue;
+
+    const existing = await db
+      .select({ nama: kabupaten.nama })
+      .from(kabupaten)
+      .where(eq(kabupaten.provinsiId, provinsiId));
+    const existingNama = new Set(existing.map((r) => r.nama));
+
+    const namaList = [
+      ...kab.map((n) => `Kabupaten ${n}`),
+      ...kota.map((n) => `Kota ${n}`),
+    ];
+    for (const nama of namaList) {
+      if (existingNama.has(nama)) continue;
+      await db.insert(kabupaten).values({ nama, provinsiId });
+      inserted++;
+    }
+  }
+
+  // Opsi non-administratif (lepas pantai, >12 mil laut) -- provinsiId null
+  const existingNonAdmin = await db
+    .select()
+    .from(kabupaten)
+    .where(isNull(kabupaten.provinsiId));
+  if (!existingNonAdmin.some((r) => r.nama === KABUPATEN_NON_ADMINISTRATIF)) {
+    await db.insert(kabupaten).values({ nama: KABUPATEN_NON_ADMINISTRATIF, provinsiId: null });
+    inserted++;
+  }
+
+  console.log(`  + kabupaten/kota (${inserted} baris baru)`);
 }
 
 async function seedRoles() {
@@ -213,6 +254,7 @@ async function seedHariLibur() {
 async function main() {
   console.log("Seeding SIDAME...");
   await seedProvinsi();
+  await seedKabupatenKota();
   await seedRoles();
   await seedAdmin();
   await seedTemplates();
