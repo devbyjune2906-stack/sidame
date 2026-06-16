@@ -72,3 +72,32 @@ export const STATUS_BADGE: Record<StatusWk, string> = {
   POD_I: "bg-petroleum/10 text-petroleum-dark",
   ONSTREAM: "bg-ok/10 text-ok",
 };
+
+export type JenisPod =
+  | "POD_I"
+  | "REVISI_PODI_1"
+  | "REVISI_PODI_2_PERPANJANGAN"
+  | "PERINGATAN_1"
+  | "PERINGATAN_2"
+  | "PERINGATAN_3"
+  | "TERMINASI";
+
+export const JENIS_POD_VALUES: JenisPod[] = [
+  "POD_I",
+  "REVISI_PODI_1",
+  "REVISI_PODI_2_PERPANJANGAN",
+  "PERINGATAN_1",
+  "PERINGATAN_2",
+  "PERINGATAN_3",
+  "TERMINASI",
+];
+
+export const JENIS_POD_LABEL: Record<JenisPod, string> = {
+  POD_I: "POD I",
+  REVISI_PODI_1: "Revisi POD I ke-1",
+  REVISI_PODI_2_PERPANJANGAN: "Revisi POD I ke-2 (Perpanjangan)",
+  PERINGATAN_1: "Peringatan 1",
+  PERINGATAN_2: "Peringatan 2",
+  PERINGATAN_3: "Peringatan 3",
+  TERMINASI: "Terminasi",
+};

@@ -5,10 +5,20 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { wilayahKerja } from "@/db/schema";
+import {
+  wilayahKerja,
+  dmewLelangDetail,
+  dmedPodiDetail,
+  dmedPi10Detail,
+  dmedEDetail,
+  wkProcess,
+  processTemplate,
+} from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { canManageStatus } from "@/lib/rbac";
 import { type StatusWk } from "@/lib/constants";
+import { dmewTemplateId, dmedTemplateId, type DmewJalur, type DmedJenis } from "@/lib/process-map";
+import { createWkProcess } from "@/lib/process-engine";
 
 const schema = z.object({
   namaWk: z.string().trim().min(1, "Nama WK wajib diisi"),
@@ -41,10 +51,139 @@ function parse(formData: FormData) {
   return schema.safeParse(raw);
 }
 
-function toDate(v?: string): Date | null {
+function toDate(v?: string | null): Date | null {
   if (!v) return null;
   const d = new Date(v);
   return isNaN(d.getTime()) ? null : d;
+}
+
+function str(fd: FormData, key: string): string | null {
+  const v = fd.get(key);
+  return v ? String(v) : null;
+}
+
+function num(fd: FormData, key: string): number | null {
+  const v = fd.get(key);
+  if (!v) return null;
+  const n = Number(v);
+  return isNaN(n) ? null : n;
+}
+
+function podiFieldsFromForm(fd: FormData) {
+  return {
+    jenisPod: str(fd, "jenisPod") as
+      | "POD_I"
+      | "REVISI_PODI_1"
+      | "REVISI_PODI_2_PERPANJANGAN"
+      | "PERINGATAN_1"
+      | "PERINGATAN_2"
+      | "PERINGATAN_3"
+      | "TERMINASI"
+      | null,
+    luasWilayahSisa: num(fd, "luasWilayahSisa"),
+    persetujuanPodI: toDate(str(fd, "persetujuanPodI")),
+    revisiPodI1: toDate(str(fd, "revisiPodI1")),
+    revisiPodI2: toDate(str(fd, "revisiPodI2")),
+    perkiraanOnstream: toDate(str(fd, "perkiraanOnstream")),
+    fluidaProduksi: str(fd, "fluidaProduksi"),
+    cadanganGas: num(fd, "cadanganGas"),
+    cadanganMinyak: num(fd, "cadanganMinyak"),
+    asumsiHargaGas: num(fd, "asumsiHargaGas"),
+    asumsiHargaMinyak: num(fd, "asumsiHargaMinyak"),
+    grossRevenue: num(fd, "grossRevenue"),
+    costRecovery: num(fd, "costRecovery"),
+    goiTake: num(fd, "goiTake"),
+    contTake: num(fd, "contTake"),
+    irr: num(fd, "irr"),
+    npvGov: num(fd, "npvGov"),
+    npvKkks: num(fd, "npvKkks"),
+    capex: num(fd, "capex"),
+    opex: num(fd, "opex"),
+    asr: num(fd, "asr"),
+    sunkCost: num(fd, "sunkCost"),
+    statusKesdmDjm: str(fd, "statusKesdmDjm"),
+    statusSkkMigas: str(fd, "statusSkkMigas"),
+    statusKkks: str(fd, "statusKkks"),
+    keterangan: str(fd, "keterangan"),
+  };
+}
+
+function pi10FieldsFromForm(fd: FormData) {
+  return {
+    bumdPenerima: str(fd, "bumdPenerima"),
+    bumdPengelola: str(fd, "bumdPengelola"),
+    statusKesdmDjm: str(fd, "statusKesdmDjm"),
+    statusSkkMigas: str(fd, "statusSkkMigas"),
+    statusProvBumd: str(fd, "statusProvBumd"),
+    statusKkks: str(fd, "statusKkks"),
+    tglEfekPi10: toDate(str(fd, "tglEfekPi10")),
+    tglPerstMesdm: toDate(str(fd, "tglPerstMesdm")),
+  };
+}
+
+function dmedEFieldsFromForm(fd: FormData) {
+  return {
+    statusKesdmDjm: str(fd, "statusKesdmDjm"),
+    statusSkkMigas: str(fd, "statusSkkMigas"),
+    statusProvBumd: str(fd, "statusProvBumd"),
+    statusKkks: str(fd, "statusKkks"),
+    tglEfekPi10: toDate(str(fd, "tglEfekPi10")),
+    tglPerstMesdm: toDate(str(fd, "tglPerstMesdm")),
+  };
+}
+
+/** Buat detail row + wk_process untuk WK DMEW/DMED yang baru dibuat. */
+async function createProcessAndDetail(wkId: string, statusWk: StatusWk, formData: FormData) {
+  if (statusWk === "SEDANG_DILELANG") {
+    const subpokja = (str(formData, "subpokjaDmew") ?? "DMEW-S") as "DMEW-S" | "DMEW-T";
+    const jalur = (str(formData, "jalurDmew") ?? "REGULER") as DmewJalur;
+    const templateId = dmewTemplateId(subpokja, jalur);
+
+    await db.insert(dmewLelangDetail).values({ wkId, subpokja, jalur });
+    await createWkProcess(wkId, templateId);
+    return;
+  }
+
+  if (statusWk === "POD_I") {
+    const subpokja = (str(formData, "subpokjaDmed") ?? "DMED-T") as "DMED-T" | "DMED-E";
+
+    if (subpokja === "DMED-E") {
+      await db.insert(dmedEDetail).values({ wkId, ...dmedEFieldsFromForm(formData) });
+      await createWkProcess(wkId, "DMED_E");
+      return;
+    }
+
+    const jenis = (str(formData, "jenisDmed") ?? "POD_I") as DmedJenis;
+    const templateId = dmedTemplateId(subpokja, jenis);
+    if (!templateId) return;
+
+    if (jenis === "POD_I") {
+      await db.insert(dmedPodiDetail).values({ wkId, ...podiFieldsFromForm(formData) });
+    } else {
+      await db.insert(dmedPi10Detail).values({ wkId, ...pi10FieldsFromForm(formData) });
+    }
+    await createWkProcess(wkId, templateId);
+  }
+}
+
+/** Update detail row WK yang sudah punya wk_process (sub-pokja/template tidak berubah). */
+async function updateDetailForExistingProcess(wkId: string, formData: FormData) {
+  const [proc] = await db
+    .select({ templateId: wkProcess.templateId, subpokja: processTemplate.subpokja })
+    .from(wkProcess)
+    .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+    .where(eq(wkProcess.wkId, wkId))
+    .limit(1);
+  if (!proc) return;
+
+  if (proc.templateId === "DMED_PODI") {
+    await db.update(dmedPodiDetail).set(podiFieldsFromForm(formData)).where(eq(dmedPodiDetail.wkId, wkId));
+  } else if (proc.templateId === "DMED_PI10") {
+    await db.update(dmedPi10Detail).set(pi10FieldsFromForm(formData)).where(eq(dmedPi10Detail.wkId, wkId));
+  } else if (proc.templateId === "DMED_E") {
+    await db.update(dmedEDetail).set(dmedEFieldsFromForm(formData)).where(eq(dmedEDetail.wkId, wkId));
+  }
+  // DMEW: tidak ada field detail yang bisa diubah (subpokja/jalur terkunci)
 }
 
 export async function createWk(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -59,18 +198,23 @@ export async function createWk(_prev: ActionState, formData: FormData): Promise<
     return { error: "Anda tidak berwenang menambah data pada status WK ini." };
   }
 
-  await db.insert(wilayahKerja).values({
-    namaWk: data.namaWk,
-    lapangan: data.lapangan ?? null,
-    operatorK3s: data.operatorK3s ?? null,
-    pemegangSaham: data.pemegangSaham ?? null,
-    provinsiId: data.provinsiId ?? null,
-    kabupatenId: data.kabupatenId ?? null,
-    typeContract: data.typeContract ?? null,
-    statusWk: data.statusWk,
-    startPsc: toDate(data.startPsc),
-    endPsc: toDate(data.endPsc),
-  });
+  const [created] = await db
+    .insert(wilayahKerja)
+    .values({
+      namaWk: data.namaWk,
+      lapangan: data.lapangan ?? null,
+      operatorK3s: data.operatorK3s ?? null,
+      pemegangSaham: data.pemegangSaham ?? null,
+      provinsiId: data.provinsiId ?? null,
+      kabupatenId: data.kabupatenId ?? null,
+      typeContract: data.typeContract ?? null,
+      statusWk: data.statusWk,
+      startPsc: toDate(data.startPsc),
+      endPsc: toDate(data.endPsc),
+    })
+    .returning();
+
+  await createProcessAndDetail(created.id, data.statusWk as StatusWk, formData);
 
   revalidatePath("/wk");
   redirect("/wk");
@@ -113,6 +257,10 @@ export async function updateWk(id: string, _prev: ActionState, formData: FormDat
       updatedAt: new Date(),
     })
     .where(eq(wilayahKerja.id, id));
+
+  if (existing.statusWk === data.statusWk) {
+    await updateDetailForExistingProcess(id, formData);
+  }
 
   revalidatePath("/wk");
   redirect("/wk");

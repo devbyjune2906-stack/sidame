@@ -130,34 +130,62 @@ async function seedAdmin() {
   console.log("  + admin:", email, "(password dari SEED_ADMIN_PASSWORD)");
 }
 
+type ExtraField = { key: string; label: string };
+
 type StageDef = {
   urutan: number;
   nama: string;
   slaValue?: number;
   slaUnit?: "HARI_KALENDER" | "HARI_KERJA" | "BULAN" | "TANPA_SLA";
+  extraFields?: ExtraField[];
 };
 
-const TEMPLATES: { id: string; nama: string; stages: StageDef[] }[] = [
+const SK_TNC_FIELDS: ExtraField[] = [
+  { key: "split", label: "Split" },
+  { key: "komitmenPasti", label: "Komitmen Pasti (PB)" },
+  { key: "signatureBonus", label: "Signature Bonus" },
+];
+
+const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[] }[] = [
   {
     id: "DMEW_REGULER",
     nama: "DMEW-S Reguler",
+    subpokja: "DMEW-S",
     stages: [
       { urutan: 1, nama: "Tim WK / Usulan dari KKKS", slaValue: 4, slaUnit: "BULAN" },
       { urutan: 2, nama: "Penyiapan WK yang dilelang", slaUnit: "TANPA_SLA" },
       { urutan: 3, nama: "Pertimbangan SKK Migas/BPMA", slaUnit: "TANPA_SLA" },
-      { urutan: 4, nama: "SK TNC (Split, Komitmen Pasti, Signature Bonus)", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 4,
+        nama: "SK TNC (Split, Komitmen Pasti, Signature Bonus)",
+        slaUnit: "TANPA_SLA",
+        extraFields: SK_TNC_FIELDS,
+      },
     ],
   },
   {
     id: "DMEW_JOINT_STUDY",
     nama: "DMEW-S Joint Study",
+    subpokja: "DMEW-S",
     stages: [{ urutan: 1, nama: "Langsung / Usulan dari KKKS", slaUnit: "TANPA_SLA" }],
   },
   {
-    id: "DMEW_T",
-    nama: "DMEW-T",
+    id: "DMEW_T_REGULER",
+    nama: "DMEW-T Reguler",
+    subpokja: "DMEW-T",
     stages: [
-      { urutan: 1, nama: "Masa Lelang (Reguler 120 / Joint Study 45 hari kalender)", slaValue: 120, slaUnit: "HARI_KALENDER" },
+      { urutan: 1, nama: "Masa Lelang Reguler", slaValue: 120, slaUnit: "HARI_KALENDER" },
+      { urutan: 2, nama: "Penetapan Pemenang (surat Dirjen Migas)", slaUnit: "TANPA_SLA" },
+      { urutan: 3, nama: "Pembahasan Kontrak", slaUnit: "TANPA_SLA" },
+      { urutan: 4, nama: "TTD Kontrak", slaUnit: "TANPA_SLA" },
+    ],
+  },
+  {
+    id: "DMEW_T_JOINT_STUDY",
+    nama: "DMEW-T Joint Study",
+    subpokja: "DMEW-T",
+    stages: [
+      { urutan: 1, nama: "Masa Lelang Joint Study", slaValue: 45, slaUnit: "HARI_KALENDER" },
       { urutan: 2, nama: "Penetapan Pemenang (surat Dirjen Migas)", slaUnit: "TANPA_SLA" },
       { urutan: 3, nama: "Pembahasan Kontrak", slaUnit: "TANPA_SLA" },
       { urutan: 4, nama: "TTD Kontrak", slaUnit: "TANPA_SLA" },
@@ -166,6 +194,7 @@ const TEMPLATES: { id: string; nama: string; stages: StageDef[] }[] = [
   {
     id: "DMED_PODI",
     nama: "DMED-T POD I",
+    subpokja: "DMED-T",
     stages: [
       { urutan: 1, nama: "Rekomendasi dari SKK Migas/BPMA", slaUnit: "TANPA_SLA" },
       { urutan: 2, nama: "Tindak lanjut oleh DME/DMED", slaUnit: "TANPA_SLA" },
@@ -177,6 +206,7 @@ const TEMPLATES: { id: string; nama: string; stages: StageDef[] }[] = [
   {
     id: "DMED_PI10",
     nama: "DMED-T PI 10%",
+    subpokja: "DMED-T",
     stages: [
       { urutan: 1, nama: "Persetujuan POD I / Tgl Efektif KKS Perpanjangan / Alih Kelola", slaUnit: "TANPA_SLA" },
       { urutan: 2, nama: "Surat Ka. SKK Migas ke Gubernur untuk menunjuk BUMD", slaValue: 10, slaUnit: "HARI_KERJA" },
@@ -197,6 +227,7 @@ const TEMPLATES: { id: string; nama: string; stages: StageDef[] }[] = [
   {
     id: "DMED_E",
     nama: "DMED-E",
+    subpokja: "DMED-E",
     stages: [
       { urutan: 1, nama: "Rekomendasi dari SKK Migas/BPMA", slaUnit: "TANPA_SLA" },
       { urutan: 2, nama: "Tindak lanjut oleh DME/DMED", slaUnit: "TANPA_SLA" },
@@ -211,10 +242,14 @@ async function seedTemplates() {
   for (const t of TEMPLATES) {
     const existing = await db.select().from(processTemplate).where(eq(processTemplate.id, t.id));
     if (existing.length > 0) {
-      console.log("  = template sudah ada:", t.id);
+      await db
+        .update(processTemplate)
+        .set({ nama: t.nama, subpokja: t.subpokja })
+        .where(eq(processTemplate.id, t.id));
+      console.log("  = template di-update:", t.id);
       continue;
     }
-    await db.insert(processTemplate).values({ id: t.id, nama: t.nama });
+    await db.insert(processTemplate).values({ id: t.id, nama: t.nama, subpokja: t.subpokja });
     for (const s of t.stages) {
       await db.insert(stageTemplate).values({
         templateId: t.id,
@@ -222,6 +257,7 @@ async function seedTemplates() {
         nama: s.nama,
         slaValue: s.slaValue ?? null,
         slaUnit: s.slaUnit ?? "TANPA_SLA",
+        extraFields: s.extraFields ? { fields: s.extraFields } : null,
       });
     }
     console.log("  + template:", t.id, `(${t.stages.length} tahap)`);

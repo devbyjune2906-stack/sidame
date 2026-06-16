@@ -24,6 +24,16 @@ export const statusWk = pgEnum("status_wk", [
 export const slaUnit = pgEnum("sla_unit", ["HARI_KALENDER", "HARI_KERJA", "BULAN", "TANPA_SLA"]);
 export const stageStatus = pgEnum("stage_status", ["BELUM_MULAI", "BERJALAN", "SELESAI"]);
 
+export const jenisPod = pgEnum("jenis_pod", [
+  "POD_I",
+  "REVISI_PODI_1",
+  "REVISI_PODI_2_PERPANJANGAN",
+  "PERINGATAN_1",
+  "PERINGATAN_2",
+  "PERINGATAN_3",
+  "TERMINASI",
+]);
+
 /* ===================== USER & ROLE ===================== */
 export const roles = pgTable("roles", {
   id: serial("id").primaryKey(),
@@ -77,6 +87,7 @@ export const wilayahKerja = pgTable("wilayah_kerja", {
 export const processTemplate = pgTable("process_template", {
   id: text("id").primaryKey(), // kode unik, mis. DMEW_REGULER
   nama: text("nama").notNull(),
+  subpokja: text("subpokja"), // DMEW-S | DMEW-T | DMED-T | DMED-E
 });
 
 export const stageTemplate = pgTable("stage_template", {
@@ -147,8 +158,9 @@ export const dmedPodiDetail = pgTable("dmed_podi_detail", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   wkId: text("wk_id")
     .notNull()
+    .unique()
     .references(() => wilayahKerja.id, { onDelete: "cascade" }),
-  jenisPod: text("jenis_pod"),
+  jenisPod: jenisPod("jenis_pod"),
   luasWilayahSisa: doublePrecision("luas_wilayah_sisa"),
   persetujuanPodI: timestamp("persetujuan_pod_i"),
   revisiPodI1: timestamp("revisi_pod_i_1"),
@@ -184,6 +196,20 @@ export const dmedPi10Detail = pgTable("dmed_pi10_detail", {
     .references(() => wilayahKerja.id, { onDelete: "cascade" }),
   bumdPenerima: text("bumd_penerima"),
   bumdPengelola: text("bumd_pengelola"),
+  statusKesdmDjm: text("status_kesdm_djm"),
+  statusSkkMigas: text("status_skk_migas"),
+  statusProvBumd: text("status_prov_bumd"),
+  statusKkks: text("status_kkks"),
+  tglEfekPi10: timestamp("tgl_efek_pi10"),
+  tglPerstMesdm: timestamp("tgl_perst_mesdm"),
+});
+
+export const dmedEDetail = pgTable("dmed_e_detail", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  wkId: text("wk_id")
+    .notNull()
+    .unique()
+    .references(() => wilayahKerja.id, { onDelete: "cascade" }),
   statusKesdmDjm: text("status_kesdm_djm"),
   statusSkkMigas: text("status_skk_migas"),
   statusProvBumd: text("status_prov_bumd"),
@@ -231,4 +257,8 @@ export const wkRelations = relations(wilayahKerja, ({ one }) => ({
 
 export const kabupatenRelations = relations(kabupaten, ({ one }) => ({
   provinsi: one(provinsi, { fields: [kabupaten.provinsiId], references: [provinsi.id] }),
+}));
+
+export const dmedEDetailRelations = relations(dmedEDetail, ({ one }) => ({
+  wk: one(wilayahKerja, { fields: [dmedEDetail.wkId], references: [wilayahKerja.id] }),
 }));

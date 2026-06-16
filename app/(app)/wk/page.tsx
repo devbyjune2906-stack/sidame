@@ -130,6 +130,9 @@ export default async function WkListPage({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2">
+                    <Link href={`/wk/${r.id}`} className="text-sm font-medium text-ink hover:underline">
+                      Lihat
+                    </Link>
                     <Link href={`/wk/${r.id}/edit`} className="text-sm font-medium text-petroleum hover:underline">
                       Edit
                     </Link>

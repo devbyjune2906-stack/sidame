@@ -4,6 +4,8 @@ import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button, Input, Label, Select, Card } from "@/components/ui";
 import { STATUS_WK_LABEL, TYPE_CONTRACT_LABEL, TYPE_CONTRACT_VALUES, type StatusWk } from "@/lib/constants";
+import { DmewFields, type DmewInitial } from "./dmew-fields";
+import { DmedFields, type DmedInitial } from "./dmed-fields";
 
 type Opsi = { id: number; nama: string };
 type KabupatenOpsi = { id: number; nama: string; provinsiId: number | null };
@@ -19,6 +21,8 @@ export type WkInitial = {
   statusWk?: string;
   startPsc?: string;
   endPsc?: string;
+  dmew?: DmewInitial;
+  dmed?: DmedInitial;
 };
 
 export function WkForm({
@@ -28,6 +32,7 @@ export function WkForm({
   provinsiList,
   kabupatenList,
   submitLabel,
+  hasProcess = false,
 }: {
   action: (prev: { error?: string } | null, fd: FormData) => Promise<{ error?: string } | null>;
   initial?: WkInitial;
@@ -35,9 +40,12 @@ export function WkForm({
   provinsiList: Opsi[];
   kabupatenList: KabupatenOpsi[];
   submitLabel: string;
+  /** true kalau WK ini sudah punya wk_process (sub-pokja/jalur terkunci, tidak bisa diganti) */
+  hasProcess?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const statusLocked = selectableStatuses.length === 1;
+  const [statusWk, setStatusWk] = useState(initial.statusWk ?? selectableStatuses[0]);
 
   const [provinsiId, setProvinsiId] = useState(initial.provinsiId?.toString() ?? "");
   const kabupatenOptions = useMemo(
@@ -123,7 +131,8 @@ export function WkForm({
             <Select
               id="statusWk"
               name={statusLocked ? undefined : "statusWk"}
-              defaultValue={initial.statusWk ?? selectableStatuses[0]}
+              value={statusWk}
+              onChange={(e) => setStatusWk(e.target.value as StatusWk)}
               required={!statusLocked}
               disabled={statusLocked}
             >
@@ -154,6 +163,9 @@ export function WkForm({
             <Input id="endPsc" name="endPsc" type="date" defaultValue={initial.endPsc ?? ""} />
           </div>
         </div>
+
+        {statusWk === "SEDANG_DILELANG" && <DmewFields initial={initial.dmew} locked={hasProcess} />}
+        {statusWk === "POD_I" && <DmedFields initial={initial.dmed} locked={hasProcess} />}
 
         {state?.error && (
           <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{state.error}</p>
