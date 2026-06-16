@@ -100,21 +100,24 @@ Buka http://localhost:3000 dan login dengan akun `SEED_ADMIN_EMAIL` / `SEED_ADMI
 
 ---
 
-## Deploy ke Coolify
+## Deploy ke Coolify (Docker Compose)
+
+Repo ini menyediakan `docker-compose.yml` berisi dua service: `app` (Next.js, dibangun dari `Dockerfile`) dan `db` (PostgreSQL 16, dengan volume persisten). Coolify mendukung tipe resource **Docker Compose** secara native.
 
 1. **Push repo** ini ke GitHub/GitLab.
-2. Di Coolify: **New Project → New Resource → Database → PostgreSQL**. Salin **connection string internal**-nya.
-3. **New Resource → Application → from Git**, pilih repo ini. Build pack: **Dockerfile** (terdeteksi otomatis).
-4. **Environment Variables**:
-   - `DATABASE_URL` — connection string internal PostgreSQL dari langkah 2
+2. Di Coolify: **New Project → New Resource → Docker Compose**, pilih repo ini (Coolify otomatis mendeteksi `docker-compose.yml`).
+3. **Environment Variables** (isi di tab Environment Variables milik resource ini — dipakai sebagai substitusi variabel di compose):
+   - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` — kredensial database (host `db` & port `5432` sudah otomatis dirakit menjadi `DATABASE_URL` untuk service `app`)
    - `AUTH_SECRET` — hasil `openssl rand -base64 32`
    - `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`, `SEED_ADMIN_NAMA` — akun admin awal
-5. **Port**: `3000`. Pasang domain & aktifkan HTTPS (Let's Encrypt otomatis).
-6. **Deploy.** Saat container start, `entrypoint.sh` otomatis:
+4. Pada service `app`, pasang **domain** & aktifkan HTTPS (Let's Encrypt otomatis) lewat tab Domains, arahkan ke port `3000`.
+5. **Deploy.** Coolify akan membangun image `app` dan menjalankan `db` (menunggu `db` sehat lewat healthcheck sebelum `app` start). Saat container `app` start, `entrypoint.sh` otomatis:
    - menerapkan skema (`drizzle-kit push`),
    - menjalankan seed (idempotent — aman dijalankan berulang),
    - menjalankan aplikasi.
-7. Login dengan akun admin → **segera ganti password** → buat user untuk tiap Pokja.
+6. Login dengan akun admin → **segera ganti password** → buat user untuk tiap Pokja.
+
+> Data PostgreSQL disimpan di volume bernama `sidame_pgdata` — aman terhadap redeploy/restart container.
 
 > **Catatan migrasi:** Untuk kemudahan deploy pertama, `entrypoint.sh` memakai `drizzle-kit push` (menyamakan DB dengan skema). Bila nanti ingin pelacakan perubahan skema yang ketat untuk produksi, ganti ke alur migrasi: jalankan `npm run db:generate` lalu commit folder `drizzle/`, dan ubah perintah di `entrypoint.sh` menjadi `npx drizzle-kit migrate`.
 
