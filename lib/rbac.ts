@@ -56,6 +56,27 @@ export function canManageStatus(role: string, status: StatusWk): boolean {
   return allowed.includes(status);
 }
 
+/**
+ * Sub Pokja yang bisa di-assign oleh Admin Pokja untuk proses manual.
+ * DMEW/DMEN menggunakan template-based (tidak perlu fungsi ini).
+ */
+export function subpokjasForRole(role: string): string[] {
+  if (role === POKJA_ROLE_PAIRS.DMEE.admin) return ["DMEE-L", "DMEE-M"];
+  if (role === POKJA_ROLE_PAIRS.DMED.admin) return ["DMED-T", "DMED-E"];
+  if (role === POKJA_ROLE_PAIRS.DMEP.admin) return ["DMEP-L", "DMEP-P"];
+  return [];
+}
+
+/** Apakah user bisa mengelola tahapan untuk sub pokja tertentu? */
+export function canManageSubpokja(role: string, subpokja: string | null): boolean {
+  if (!canWrite(role)) return false;
+  if (isAdmin(role)) return true;
+  const sp = subpokja ?? "";
+  if (role === POKJA_ROLE_PAIRS.DMEW.admin) return sp === "DMEW-S" || sp === "DMEW-T";
+  if (role === POKJA_ROLE_PAIRS.DMEN.admin) return sp === "DMEN-N" || sp === "DMEN-K";
+  return subpokjasForRole(role).includes(sp);
+}
+
 /** Klausa WHERE untuk membatasi query berdasarkan role. undefined = tanpa batas (Admin). */
 export function statusWhere(role: string): SQL | undefined {
   const allowed = allowedStatuses(role);

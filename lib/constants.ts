@@ -72,6 +72,14 @@ export const STATUS_BY_ROLE: Record<string, StatusWk[] | "ALL"> = {
   [ROLE.DMEN_ADMIN]: ["SEDANG_DILELANG"],
 };
 
+/** Transisi status otomatis saat semua tahap proses selesai. */
+export const NEXT_STATUS_WK: Partial<Record<StatusWk, StatusWk>> = {
+  SEDANG_DILELANG: "EKSPLORASI",
+  EKSPLORASI: "POD_I",
+  POD_I: "ONSTREAM",
+  // ONSTREAM: tidak ada transisi (tahap akhir, ditangani DMEP)
+};
+
 export type JenisWk = "KONVENSIONAL" | "NON_KONVENSIONAL";
 export const JENIS_WK_VALUES: JenisWk[] = ["KONVENSIONAL", "NON_KONVENSIONAL"];
 export const JENIS_WK_LABEL: Record<JenisWk, string> = {

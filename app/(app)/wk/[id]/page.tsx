@@ -12,11 +12,12 @@ import {
   hariLibur,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { canManageStatus, canWrite } from "@/lib/rbac";
+import { canManageStatus, canManageSubpokja, canWrite, subpokjasForRole } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { hitungDeadline, statusSla, type SlaUnit } from "@/lib/sla";
 import { Badge, Button, Card, Input, Label } from "@/components/ui";
 import { startStage, completeStage } from "./timeline-actions";
+import AddProcessForm from "./add-process-form";
 
 const SLA_LABEL: Record<string, string> = {
   HARI_KALENDER: "hari kalender",
@@ -42,6 +43,7 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
   if (!user) redirect("/login");
 
   const { id } = await params;
+
   const [wk] = await db
     .select({
       id: wilayahKerja.id,
@@ -59,20 +61,24 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
 
   if (!canManageStatus(user.role, wk.statusWk as StatusWk)) redirect("/wk");
 
-  const [proc] = await db
+  // Fetch ALL processes for this WK (all pokjas that have worked on it)
+  const allProcs = await db
     .select({
       id: wkProcess.id,
       templateId: wkProcess.templateId,
       templateNama: processTemplate.nama,
       subpokja: processTemplate.subpokja,
+      createdAt: wkProcess.createdAt,
     })
     .from(wkProcess)
     .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
     .where(eq(wkProcess.wkId, id))
-    .limit(1);
+    .orderBy(asc(wkProcess.createdAt));
 
-  const stages = proc
-    ? await db
+  // Fetch stages for each process
+  const procWithStages = await Promise.all(
+    allProcs.map(async (proc) => {
+      const stages = await db
         .select({
           id: wkStageProgress.id,
           status: wkStageProgress.status,
@@ -89,14 +95,25 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
         .from(wkStageProgress)
         .innerJoin(stageTemplate, eq(wkStageProgress.stageTemplateId, stageTemplate.id))
         .where(eq(wkStageProgress.wkProcessId, proc.id))
-        .orderBy(asc(stageTemplate.urutan))
-    : [];
+        .orderBy(asc(stageTemplate.urutan));
+      return { ...proc, stages };
+    })
+  );
 
   const liburRows = await db.select({ tanggal: hariLibur.tanggal }).from(hariLibur);
   const liburList = liburRows.map((r) => r.tanggal);
 
-  // Staf hanya bisa lihat -- tombol Mulai/Selesaikan hanya muncul untuk Admin dan Admin Pokja
-  const canManage = canManageStatus(user.role, wk.statusWk as StatusWk) && canWrite(user.role);
+  // Determine which sub-pokjas this user can manage & which already have a process
+  const allowedSubpokjas = subpokjasForRole(user.role);
+  const existingSubpokjas = new Set(allProcs.map((p) => p.subpokja ?? ""));
+  const availableSubpokjas = allowedSubpokjas.filter((sp) => !existingSubpokjas.has(sp));
+
+  // Show the add-process form only when user can write, has allowed sub-pokjas, and there are
+  // still sub-pokjas without a process for this WK at its current status
+  const showAddForm =
+    canWrite(user.role) &&
+    canManageStatus(user.role, wk.statusWk as StatusWk) &&
+    availableSubpokjas.length > 0;
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
@@ -106,99 +123,122 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
           <span>
             {wk.provinsiNama ?? "—"} / {wk.kabupatenNama ?? "—"}
           </span>
-          <Badge className={STATUS_BADGE[wk.statusWk as StatusWk]}>{STATUS_WK_LABEL[wk.statusWk as StatusWk]}</Badge>
+          <Badge className={STATUS_BADGE[wk.statusWk as StatusWk]}>
+            {STATUS_WK_LABEL[wk.statusWk as StatusWk]}
+          </Badge>
         </p>
       </header>
 
-      {!proc && (
+      {/* History: all processes */}
+      {procWithStages.length === 0 && (
         <Card>
           <p className="text-sm text-muted">Belum ada proses/tahapan untuk WK ini.</p>
         </Card>
       )}
 
-      {proc && (
-        <Card className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-muted">{proc.subpokja}</p>
-          <p className="font-display text-base font-semibold text-ink">{proc.templateNama}</p>
-        </Card>
-      )}
+      {procWithStages.map((proc) => {
+        const userCanManageThisProc =
+          canWrite(user.role) &&
+          canManageStatus(user.role, wk.statusWk as StatusWk) &&
+          canManageSubpokja(user.role, proc.subpokja ?? null);
 
-      <div className="space-y-3">
-        {stages.map((s) => {
-          const deadline =
-            s.startDate && s.slaUnit !== "TANPA_SLA"
-              ? hitungDeadline(s.startDate, s.slaValue, s.slaUnit as SlaUnit, liburList)
-              : null;
-          const sla = s.status === "SELESAI" ? "TANPA_SLA" : statusSla(deadline);
-          const extra = (s.extraFields as { fields: { key: string; label: string }[] } | null)?.fields ?? [];
+        const allDone = proc.stages.length > 0 && proc.stages.every((s) => s.status === "SELESAI");
 
-          return (
-            <Card key={s.id} className="space-y-3">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="text-xs text-muted">Tahap {s.urutan}</p>
-                  <p className="font-medium text-ink">{s.nama}</p>
-                  {s.slaUnit !== "TANPA_SLA" && (
-                    <p className="text-xs text-muted">
-                      SLA: {s.slaValue} {SLA_LABEL[s.slaUnit]}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={SLA_BADGE[sla]}>
-                    {sla === "ON_TRACK" && "On Track"}
-                    {sla === "MENDEKATI" && "Mendekati Deadline"}
-                    {sla === "LEWAT" && "Lewat Deadline"}
-                    {sla === "TANPA_SLA" && (s.status === "SELESAI" ? "Selesai" : "Tanpa SLA")}
-                  </Badge>
-                  <Badge className="bg-line/40 text-ink">
-                    {s.status === "BELUM_MULAI" && "Belum Mulai"}
-                    {s.status === "BERJALAN" && "Berjalan"}
-                    {s.status === "SELESAI" && "Selesai"}
-                  </Badge>
-                </div>
+        return (
+          <section key={proc.id} className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <p className="text-xs uppercase tracking-wide text-muted">{proc.subpokja}</p>
+                <p className="font-display text-base font-semibold text-ink">{proc.templateNama}</p>
               </div>
-
-              <div className="grid gap-3 text-xs text-muted sm:grid-cols-2">
-                <p>Mulai: {fmtDate(s.startDate)}</p>
-                <p>Selesai: {fmtDate(s.completedDate)}</p>
-              </div>
-
-              {s.catatan && <p className="text-sm text-ink">Catatan: {s.catatan}</p>}
-
-              {canManage && s.status === "BELUM_MULAI" && (
-                <form action={startStage}>
-                  <input type="hidden" name="stageProgressId" value={s.id} />
-                  <Button type="submit" variant="outline">
-                    Mulai Tahap
-                  </Button>
-                </form>
+              {allDone && (
+                <Badge className="bg-ok/10 text-ok">Semua Tahap Selesai</Badge>
               )}
+            </div>
 
-              {canManage && s.status === "BERJALAN" && (
-                <form action={completeStage} className="space-y-3">
-                  <input type="hidden" name="stageProgressId" value={s.id} />
-                  {extra.length > 0 && (
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      {extra.map((f) => (
-                        <div key={f.key}>
-                          <Label htmlFor={`extra_${f.key}_${s.id}`}>{f.label}</Label>
-                          <Input id={`extra_${f.key}_${s.id}`} name={`extra_${f.key}`} />
-                        </div>
-                      ))}
+            {proc.stages.map((s) => {
+              const deadline =
+                s.startDate && s.slaUnit !== "TANPA_SLA"
+                  ? hitungDeadline(s.startDate, s.slaValue, s.slaUnit as SlaUnit, liburList)
+                  : null;
+              const sla = s.status === "SELESAI" ? "TANPA_SLA" : statusSla(deadline);
+              const extra =
+                (s.extraFields as { fields: { key: string; label: string }[] } | null)?.fields ?? [];
+
+              return (
+                <Card key={s.id} className="space-y-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs text-muted">Tahap {s.urutan}</p>
+                      <p className="font-medium text-ink">{s.nama}</p>
+                      {s.slaUnit !== "TANPA_SLA" && (
+                        <p className="text-xs text-muted">
+                          SLA: {s.slaValue} {SLA_LABEL[s.slaUnit]}
+                        </p>
+                      )}
                     </div>
-                  )}
-                  <div>
-                    <Label htmlFor={`catatan_${s.id}`}>Catatan</Label>
-                    <Input id={`catatan_${s.id}`} name="catatan" />
+                    <div className="flex items-center gap-2">
+                      <Badge className={SLA_BADGE[sla]}>
+                        {sla === "ON_TRACK" && "On Track"}
+                        {sla === "MENDEKATI" && "Mendekati Deadline"}
+                        {sla === "LEWAT" && "Lewat Deadline"}
+                        {sla === "TANPA_SLA" && (s.status === "SELESAI" ? "Selesai" : "Tanpa SLA")}
+                      </Badge>
+                      <Badge className="bg-line/40 text-ink">
+                        {s.status === "BELUM_MULAI" && "Belum Mulai"}
+                        {s.status === "BERJALAN" && "Berjalan"}
+                        {s.status === "SELESAI" && "Selesai"}
+                      </Badge>
+                    </div>
                   </div>
-                  <Button type="submit">Selesaikan Tahap</Button>
-                </form>
-              )}
-            </Card>
-          );
-        })}
-      </div>
+
+                  <div className="grid gap-3 text-xs text-muted sm:grid-cols-2">
+                    <p>Mulai: {fmtDate(s.startDate)}</p>
+                    <p>Selesai: {fmtDate(s.completedDate)}</p>
+                  </div>
+
+                  {s.catatan && <p className="text-sm text-ink">Catatan: {s.catatan}</p>}
+
+                  {userCanManageThisProc && s.status === "BELUM_MULAI" && (
+                    <form action={startStage}>
+                      <input type="hidden" name="stageProgressId" value={s.id} />
+                      <Button type="submit" variant="outline">
+                        Mulai Tahap
+                      </Button>
+                    </form>
+                  )}
+
+                  {userCanManageThisProc && s.status === "BERJALAN" && (
+                    <form action={completeStage} className="space-y-3">
+                      <input type="hidden" name="stageProgressId" value={s.id} />
+                      {extra.length > 0 && (
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          {extra.map((f) => (
+                            <div key={f.key}>
+                              <Label htmlFor={`extra_${f.key}_${s.id}`}>{f.label}</Label>
+                              <Input id={`extra_${f.key}_${s.id}`} name={`extra_${f.key}`} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div>
+                        <Label htmlFor={`catatan_${s.id}`}>Catatan</Label>
+                        <Input id={`catatan_${s.id}`} name="catatan" />
+                      </div>
+                      <Button type="submit">Selesaikan Tahap</Button>
+                    </form>
+                  )}
+                </Card>
+              );
+            })}
+          </section>
+        );
+      })}
+
+      {/* Form tambah proses manual untuk Admin Pokja */}
+      {showAddForm && (
+        <AddProcessForm wkId={id} subpokjaOptions={availableSubpokjas} />
+      )}
     </div>
   );
 }
