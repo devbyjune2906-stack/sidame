@@ -36,6 +36,16 @@ export function isDmew(role: string): boolean {
   return role === POKJA_ROLE_PAIRS.DMEW.staf || role === POKJA_ROLE_PAIRS.DMEW.admin;
 }
 
+/** True kalau role termasuk Pokja DMEE (staf atau admin pokja). */
+export function isDmee(role: string): boolean {
+  return role === POKJA_ROLE_PAIRS.DMEE.staf || role === POKJA_ROLE_PAIRS.DMEE.admin;
+}
+
+/** True kalau role termasuk Pokja DMEP (staf atau admin pokja). */
+export function isDmep(role: string): boolean {
+  return role === POKJA_ROLE_PAIRS.DMEP.staf || role === POKJA_ROLE_PAIRS.DMEP.admin;
+}
+
 /** True kalau role termasuk Pokja DMEN (staf atau admin pokja). */
 export function isDmen(role: string): boolean {
   return role === POKJA_ROLE_PAIRS.DMEN.staf || role === POKJA_ROLE_PAIRS.DMEN.admin;

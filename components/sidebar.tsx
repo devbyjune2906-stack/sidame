@@ -3,28 +3,76 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { isAdmin, isPokjaAdmin, isDmed, isDmen } from "@/lib/rbac";
+import { isAdmin, isPokjaAdmin, isDmew, isDmee, isDmed, isDmep, isDmen } from "@/lib/rbac";
 import { logout } from "@/app/(app)/actions";
 
-const NAV = [
+type NavItem = { href: string; label: string };
+
+const NAV: NavItem[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/wk", label: "Wilayah Kerja" },
 ];
 
-const DMED_NAV = [
-  { href: "/wk/dmed-t", label: "DMED-T" },
-  { href: "/wk/dmed-e", label: "DMED-E" },
-];
-
-const DMEN_NAV = [
-  { href: "/wk/dmen", label: "WK Non Konvensional" },
+const POKJA_SECTIONS: {
+  key: string;
+  label: string;
+  items: NavItem[];
+  show: (role: string) => boolean;
+}[] = [
+  {
+    key: "dmew",
+    label: "Pokja DMEW",
+    items: [{ href: "/wk/dmew", label: "WK Konvensional" }],
+    show: (r) => isAdmin(r) || isDmew(r),
+  },
+  {
+    key: "dmee",
+    label: "Pokja DMEE",
+    items: [{ href: "/wk/dmee", label: "WK Eksplorasi" }],
+    show: (r) => isAdmin(r) || isDmee(r),
+  },
+  {
+    key: "dmed",
+    label: "Pokja DMED",
+    items: [
+      { href: "/wk/dmed-t", label: "DMED-T" },
+      { href: "/wk/dmed-e", label: "DMED-E" },
+    ],
+    show: (r) => isAdmin(r) || isDmed(r),
+  },
+  {
+    key: "dmep",
+    label: "Pokja DMEP",
+    items: [{ href: "/wk/dmep", label: "WK Onstream" }],
+    show: (r) => isAdmin(r) || isDmep(r),
+  },
+  {
+    key: "dmen",
+    label: "Pokja DMEN",
+    items: [{ href: "/wk/dmen", label: "WK Non Konvensional" }],
+    show: (r) => isAdmin(r) || isDmen(r),
+  },
 ];
 
 export function Sidebar({ user }: { user: { nama: string; role: string } }) {
   const pathname = usePathname();
   const showAdminMenu = isAdmin(user.role) || isPokjaAdmin(user.role);
-  const showDmedMenu = isAdmin(user.role) || isDmed(user.role);
-  const showDmenMenu = isAdmin(user.role) || isDmen(user.role);
+
+  function navLink(item: NavItem) {
+    const active = pathname === item.href || pathname.startsWith(item.href + "/");
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={cn(
+          "block rounded-lg px-3 py-2 text-sm font-medium transition",
+          active ? "bg-petroleum/10 text-petroleum" : "text-ink hover:bg-line/50"
+        )}
+      >
+        {item.label}
+      </Link>
+    );
+  }
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-line bg-surface">
@@ -38,64 +86,17 @@ export function Sidebar({ user }: { user: { nama: string; role: string } }) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 p-3">
-        {NAV.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "block rounded-lg px-3 py-2 text-sm font-medium transition",
-                active ? "bg-petroleum/10 text-petroleum" : "text-ink hover:bg-line/50"
-              )}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto space-y-1 p-3">
+        {NAV.map(navLink)}
 
-        {showDmedMenu && (
-          <div className="pt-3">
-            <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">Sub Pokja DMED</p>
-            {DMED_NAV.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "block rounded-lg px-3 py-2 text-sm font-medium transition",
-                    active ? "bg-petroleum/10 text-petroleum" : "text-ink hover:bg-line/50"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+        {POKJA_SECTIONS.filter((s) => s.show(user.role)).map((section) => (
+          <div key={section.key} className="pt-3">
+            <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">
+              {section.label}
+            </p>
+            {section.items.map(navLink)}
           </div>
-        )}
-
-        {showDmenMenu && (
-          <div className="pt-3">
-            <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">Sub Pokja DMEN</p>
-            {DMEN_NAV.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "block rounded-lg px-3 py-2 text-sm font-medium transition",
-                    active ? "bg-petroleum/10 text-petroleum" : "text-ink hover:bg-line/50"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        )}
+        ))}
 
         {showAdminMenu && (
           <div className="pt-3">
