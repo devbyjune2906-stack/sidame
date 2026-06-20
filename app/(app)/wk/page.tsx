@@ -4,7 +4,7 @@ import { asc, count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { wilayahKerja, provinsi } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { isAdmin } from "@/lib/rbac";
+import { isAdmin, canWrite } from "@/lib/rbac";
 import { buildWkWhere, parseFilters } from "@/lib/wk-query";
 import {
   STATUS_WK_LABEL,
@@ -32,6 +32,7 @@ export default async function WkListPage({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  const userCanWrite = canWrite(user.role);
   const sp = await searchParams;
   const filters = parseFilters(sp);
   const page = Math.max(1, Number(Array.isArray(sp.page) ? sp.page[0] : sp.page) || 1);
@@ -83,9 +84,11 @@ export default async function WkListPage({
           <Link href={`/api/export/pdf?${exportQuery}`}>
             <Button variant="outline">Export PDF</Button>
           </Link>
-          <Link href="/wk/new">
-            <Button>+ Tambah WK</Button>
-          </Link>
+          {userCanWrite && (
+            <Link href="/wk/new">
+              <Button>+ Tambah WK</Button>
+            </Link>
+          )}
         </div>
       </header>
 
@@ -133,18 +136,22 @@ export default async function WkListPage({
                     <Link href={`/wk/${r.id}`} className="text-sm font-medium text-ink hover:underline">
                       Lihat
                     </Link>
-                    <Link href={`/wk/${r.id}/edit`} className="text-sm font-medium text-petroleum hover:underline">
-                      Edit
-                    </Link>
-                    <form action={deleteWk}>
-                      <input type="hidden" name="id" value={r.id} />
-                      <button
-                        type="submit"
-                        className="text-sm font-medium text-danger hover:underline"
-                      >
-                        Hapus
-                      </button>
-                    </form>
+                    {userCanWrite && (
+                      <Link href={`/wk/${r.id}/edit`} className="text-sm font-medium text-petroleum hover:underline">
+                        Edit
+                      </Link>
+                    )}
+                    {userCanWrite && (
+                      <form action={deleteWk}>
+                        <input type="hidden" name="id" value={r.id} />
+                        <button
+                          type="submit"
+                          className="text-sm font-medium text-danger hover:underline"
+                        >
+                          Hapus
+                        </button>
+                      </form>
+                    )}
                   </div>
                 </td>
               </tr>

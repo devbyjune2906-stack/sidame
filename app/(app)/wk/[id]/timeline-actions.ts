@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { wkStageProgress, wkProcess, wilayahKerja } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { canManageStatus } from "@/lib/rbac";
+import { canManageStatus, canWrite } from "@/lib/rbac";
 import { type StatusWk } from "@/lib/constants";
 
 async function authorizeStage(stageProgressId: string): Promise<string | null> {
@@ -22,6 +22,7 @@ async function authorizeStage(stageProgressId: string): Promise<string | null> {
     .limit(1);
 
   if (!row) return null;
+  if (!canWrite(user.role)) return null;
   if (!canManageStatus(user.role, row.statusWk as StatusWk)) return null;
   return row.wkId;
 }

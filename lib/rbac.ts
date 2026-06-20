@@ -41,6 +41,14 @@ export function isDmen(role: string): boolean {
   return role === POKJA_ROLE_PAIRS.DMEN.staf || role === POKJA_ROLE_PAIRS.DMEN.admin;
 }
 
+/**
+ * Boleh menulis (create/update/delete WK, input progres timeline)?
+ * Hanya Admin global dan Admin Pokja — staf pokja READ-ONLY.
+ */
+export function canWrite(role: string): boolean {
+  return isAdmin(role) || isPokjaAdmin(role);
+}
+
 /** Boleh kelola (create/update/delete) data dengan status tertentu? */
 export function canManageStatus(role: string, status: StatusWk): boolean {
   const allowed = allowedStatuses(role);

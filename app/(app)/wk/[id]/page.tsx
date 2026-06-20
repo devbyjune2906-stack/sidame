@@ -12,7 +12,7 @@ import {
   hariLibur,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { canManageStatus } from "@/lib/rbac";
+import { canManageStatus, canWrite } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { hitungDeadline, statusSla, type SlaUnit } from "@/lib/sla";
 import { Badge, Button, Card, Input, Label } from "@/components/ui";
@@ -95,7 +95,8 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
   const liburRows = await db.select({ tanggal: hariLibur.tanggal }).from(hariLibur);
   const liburList = liburRows.map((r) => r.tanggal);
 
-  const canManage = canManageStatus(user.role, wk.statusWk as StatusWk);
+  // Staf hanya bisa lihat -- tombol Mulai/Selesaikan hanya muncul untuk Admin dan Admin Pokja
+  const canManage = canManageStatus(user.role, wk.statusWk as StatusWk) && canWrite(user.role);
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">

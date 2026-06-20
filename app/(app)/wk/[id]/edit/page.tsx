@@ -13,7 +13,7 @@ import {
   dmedEDetail,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { allowedStatuses, canManageStatus, isDmew, isDmen } from "@/lib/rbac";
+import { allowedStatuses, canManageStatus, canWrite, isDmew, isDmen } from "@/lib/rbac";
 import { STATUS_WK_VALUES, type StatusWk } from "@/lib/constants";
 import { WkForm, type WkInitial } from "../../wk-form";
 import { updateWk } from "../../actions";
@@ -134,8 +134,8 @@ export default async function EditWkPage({ params }: { params: Promise<{ id: str
   const [wk] = await db.select().from(wilayahKerja).where(eq(wilayahKerja.id, id)).limit(1);
   if (!wk) notFound();
 
-  if (!canManageStatus(user.role, wk.statusWk as StatusWk)) {
-    redirect("/wk");
+  if (!canWrite(user.role) || !canManageStatus(user.role, wk.statusWk as StatusWk)) {
+    redirect(`/wk/${id}`);
   }
 
   const allowed = allowedStatuses(user.role);

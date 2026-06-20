@@ -15,7 +15,7 @@ import {
   processTemplate,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { canManageStatus, isDmen } from "@/lib/rbac";
+import { canManageStatus, canWrite, isDmen } from "@/lib/rbac";
 import { type StatusWk } from "@/lib/constants";
 import {
   dmewTemplateId,
@@ -207,6 +207,10 @@ export async function createWk(_prev: ActionState, formData: FormData): Promise<
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  if (!canWrite(user.role)) {
+    return { error: "Anda tidak berwenang melakukan tindakan ini." };
+  }
+
   const parsed = parse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Data tidak valid" };
   const data = parsed.data;
@@ -248,6 +252,10 @@ export async function createWk(_prev: ActionState, formData: FormData): Promise<
 export async function updateWk(id: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+
+  if (!canWrite(user.role)) {
+    return { error: "Anda tidak berwenang melakukan tindakan ini." };
+  }
 
   const [existing] = await db.select().from(wilayahKerja).where(eq(wilayahKerja.id, id)).limit(1);
   if (!existing) return { error: "Data tidak ditemukan." };
@@ -294,6 +302,7 @@ export async function updateWk(id: string, _prev: ActionState, formData: FormDat
 export async function deleteWk(formData: FormData) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  if (!canWrite(user.role)) return;
 
   const id = String(formData.get("id") ?? "");
   if (!id) return;
