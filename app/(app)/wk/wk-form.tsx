@@ -33,6 +33,7 @@ export function WkForm({
   kabupatenList,
   submitLabel,
   hasProcess = false,
+  userPokja,
 }: {
   action: (prev: { error?: string } | null, fd: FormData) => Promise<{ error?: string } | null>;
   initial?: WkInitial;
@@ -42,6 +43,8 @@ export function WkForm({
   submitLabel: string;
   /** true kalau WK ini sudah punya wk_process (sub-pokja/jalur terkunci, tidak bisa diganti) */
   hasProcess?: boolean;
+  /** "DMEW" | "DMEN" untuk non-admin; undefined = Admin (bisa pilih) */
+  userPokja?: "DMEW" | "DMEN";
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const statusLocked = selectableStatuses.length === 1;
@@ -164,7 +167,9 @@ export function WkForm({
           </div>
         </div>
 
-        {statusWk === "SEDANG_DILELANG" && <DmewFields initial={initial.dmew} locked={hasProcess} />}
+        {statusWk === "SEDANG_DILELANG" && (
+          <DmewFields initial={initial.dmew} locked={hasProcess} userPokja={userPokja} />
+        )}
         {statusWk === "POD_I" && <DmedFields initial={initial.dmed} locked={hasProcess} />}
 
         {state?.error && (

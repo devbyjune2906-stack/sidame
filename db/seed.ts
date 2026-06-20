@@ -8,6 +8,9 @@ import {
   hariLibur,
   provinsi,
   kabupaten,
+  direktorat,
+  pokja,
+  masterSubPokja,
 } from "./schema";
 import { eq, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -130,6 +133,75 @@ async function seedAdmin() {
   console.log("  + admin:", email, "(password dari SEED_ADMIN_PASSWORD)");
 }
 
+/* ===== MASTER HIERARKI ORGANISASI ===== */
+
+const DIREKTORAT_DATA = {
+  kode: "DME",
+  nama: "Direktorat Pembinaan Usaha Hulu Migas",
+};
+
+const POKJA_DATA = [
+  { kode: "DMEW", nama: "Pengembangan Wilayah Kerja Minyak dan Gas Bumi Konvensional" },
+  { kode: "DMED", nama: "Pengembangan Usaha Hulu Minyak dan Gas Bumi" },
+  { kode: "DMEE", nama: "Pengawasan Eksplorasi Minyak dan Gas Bumi" },
+  { kode: "DMEP", nama: "Pengawasan Eksploitasi Minyak dan Gas Bumi" },
+  { kode: "DMEN", nama: "Pengembangan Wilayah Kerja Minyak dan Gas Bumi Non Konvensional" },
+];
+
+const SUB_POKJA_DATA: { pokjaKode: string; kode: string; nama: string }[] = [
+  { pokjaKode: "DMEW", kode: "DMEW-S", nama: "DMEW-S" },
+  { pokjaKode: "DMEW", kode: "DMEW-T", nama: "DMEW-T" },
+  { pokjaKode: "DMED", kode: "DMED-T", nama: "DMED-T" },
+  { pokjaKode: "DMED", kode: "DMED-E", nama: "DMED-E" },
+  { pokjaKode: "DMEE", kode: "DMEE-L", nama: "DMEE-L" },
+  { pokjaKode: "DMEE", kode: "DMEE-M", nama: "DMEE-M" },
+  { pokjaKode: "DMEP", kode: "DMEP-L", nama: "DMEP-L" },
+  { pokjaKode: "DMEP", kode: "DMEP-P", nama: "DMEP-P" },
+  { pokjaKode: "DMEN", kode: "DMEN-N", nama: "DMEN-N" },
+  { pokjaKode: "DMEN", kode: "DMEN-K", nama: "DMEN-K" },
+];
+
+async function seedDirektorat() {
+  const existing = await db.select().from(direktorat).where(eq(direktorat.kode, DIREKTORAT_DATA.kode));
+  if (existing.length === 0) {
+    await db.insert(direktorat).values(DIREKTORAT_DATA);
+    console.log("  + direktorat:", DIREKTORAT_DATA.nama);
+  } else {
+    await db.update(direktorat).set({ nama: DIREKTORAT_DATA.nama }).where(eq(direktorat.kode, DIREKTORAT_DATA.kode));
+    console.log("  = direktorat di-update");
+  }
+}
+
+async function seedPokja() {
+  const [dir] = await db.select().from(direktorat).where(eq(direktorat.kode, DIREKTORAT_DATA.kode));
+  if (!dir) return;
+  for (const p of POKJA_DATA) {
+    const existing = await db.select().from(pokja).where(eq(pokja.kode, p.kode));
+    if (existing.length === 0) {
+      await db.insert(pokja).values({ ...p, direktoratId: dir.id });
+      console.log("  + pokja:", p.kode);
+    } else {
+      await db.update(pokja).set({ nama: p.nama }).where(eq(pokja.kode, p.kode));
+    }
+  }
+}
+
+async function seedMasterSubPokja() {
+  const pokjaRows = await db.select().from(pokja);
+  const pokjaIdByKode = new Map(pokjaRows.map((p) => [p.kode, p.id]));
+  for (const sp of SUB_POKJA_DATA) {
+    const pokjaId = pokjaIdByKode.get(sp.pokjaKode);
+    if (!pokjaId) continue;
+    const existing = await db.select().from(masterSubPokja).where(eq(masterSubPokja.kode, sp.kode));
+    if (existing.length === 0) {
+      await db.insert(masterSubPokja).values({ kode: sp.kode, nama: sp.nama, pokjaId });
+      console.log("  + sub pokja:", sp.kode);
+    } else {
+      await db.update(masterSubPokja).set({ nama: sp.nama }).where(eq(masterSubPokja.kode, sp.kode));
+    }
+  }
+}
+
 type ExtraField = { key: string; label: string };
 
 type StageDef = {
@@ -236,6 +308,51 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
       { urutan: 5, nama: "Persetujuan MESDM", slaUnit: "TANPA_SLA" },
     ],
   },
+  // DMEN -- struktur sama dengan DMEW, beda di jenis WK (Non Konvensional)
+  {
+    id: "DMEN_REGULER",
+    nama: "DMEN-N Reguler",
+    subpokja: "DMEN-N",
+    stages: [
+      { urutan: 1, nama: "Tim WK / Usulan dari KKKS", slaValue: 4, slaUnit: "BULAN" },
+      { urutan: 2, nama: "Penyiapan WK yang dilelang", slaUnit: "TANPA_SLA" },
+      { urutan: 3, nama: "Pertimbangan SKK Migas/BPMA", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 4,
+        nama: "SK TNC (Split, Komitmen Pasti, Signature Bonus)",
+        slaUnit: "TANPA_SLA",
+        extraFields: SK_TNC_FIELDS,
+      },
+    ],
+  },
+  {
+    id: "DMEN_JOINT_STUDY",
+    nama: "DMEN-N Joint Study",
+    subpokja: "DMEN-N",
+    stages: [{ urutan: 1, nama: "Langsung / Usulan dari KKKS", slaUnit: "TANPA_SLA" }],
+  },
+  {
+    id: "DMEN_T_REGULER",
+    nama: "DMEN-K Reguler",
+    subpokja: "DMEN-K",
+    stages: [
+      { urutan: 1, nama: "Masa Lelang Reguler", slaValue: 120, slaUnit: "HARI_KALENDER" },
+      { urutan: 2, nama: "Penetapan Pemenang (surat Dirjen Migas)", slaUnit: "TANPA_SLA" },
+      { urutan: 3, nama: "Pembahasan Kontrak", slaUnit: "TANPA_SLA" },
+      { urutan: 4, nama: "TTD Kontrak", slaUnit: "TANPA_SLA" },
+    ],
+  },
+  {
+    id: "DMEN_T_JOINT_STUDY",
+    nama: "DMEN-K Joint Study",
+    subpokja: "DMEN-K",
+    stages: [
+      { urutan: 1, nama: "Masa Lelang Joint Study", slaValue: 45, slaUnit: "HARI_KALENDER" },
+      { urutan: 2, nama: "Penetapan Pemenang (surat Dirjen Migas)", slaUnit: "TANPA_SLA" },
+      { urutan: 3, nama: "Pembahasan Kontrak", slaUnit: "TANPA_SLA" },
+      { urutan: 4, nama: "TTD Kontrak", slaUnit: "TANPA_SLA" },
+    ],
+  },
 ];
 
 async function seedTemplates() {
@@ -295,6 +412,9 @@ async function main() {
   await seedAdmin();
   await seedTemplates();
   await seedHariLibur();
+  await seedDirektorat();
+  await seedPokja();
+  await seedMasterSubPokja();
   console.log("Selesai.");
   process.exit(0);
 }

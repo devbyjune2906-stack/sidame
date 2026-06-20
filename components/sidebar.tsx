@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { isAdmin, isPokjaAdmin, isDmed } from "@/lib/rbac";
+import { isAdmin, isPokjaAdmin, isDmed, isDmen } from "@/lib/rbac";
 import { logout } from "@/app/(app)/actions";
 
 const NAV = [
@@ -16,10 +16,15 @@ const DMED_NAV = [
   { href: "/wk/dmed-e", label: "DMED-E" },
 ];
 
+const DMEN_NAV = [
+  { href: "/wk/dmen", label: "WK Non Konvensional" },
+];
+
 export function Sidebar({ user }: { user: { nama: string; role: string } }) {
   const pathname = usePathname();
   const showAdminMenu = isAdmin(user.role) || isPokjaAdmin(user.role);
   const showDmedMenu = isAdmin(user.role) || isDmed(user.role);
+  const showDmenMenu = isAdmin(user.role) || isDmen(user.role);
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-line bg-surface">
@@ -54,6 +59,27 @@ export function Sidebar({ user }: { user: { nama: string; role: string } }) {
           <div className="pt-3">
             <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">Sub Pokja DMED</p>
             {DMED_NAV.map((item) => {
+              const active = pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "block rounded-lg px-3 py-2 text-sm font-medium transition",
+                    active ? "bg-petroleum/10 text-petroleum" : "text-ink hover:bg-line/50"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+        {showDmenMenu && (
+          <div className="pt-3">
+            <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">Sub Pokja DMEN</p>
+            {DMEN_NAV.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link

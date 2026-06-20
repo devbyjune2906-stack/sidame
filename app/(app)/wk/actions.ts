@@ -15,9 +15,17 @@ import {
   processTemplate,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { canManageStatus } from "@/lib/rbac";
+import { canManageStatus, isDmen } from "@/lib/rbac";
 import { type StatusWk } from "@/lib/constants";
-import { dmewTemplateId, dmedTemplateId, type DmewJalur, type DmedJenis } from "@/lib/process-map";
+import {
+  dmewTemplateId,
+  dmenTemplateId,
+  dmedTemplateId,
+  type DmewJalur,
+  type DmenSubpokja,
+  type DmewSubpokja,
+  type DmedJenis,
+} from "@/lib/process-map";
 import { createWkProcess } from "@/lib/process-engine";
 
 const schema = z.object({
@@ -132,14 +140,23 @@ function dmedEFieldsFromForm(fd: FormData) {
   };
 }
 
-/** Buat detail row + wk_process untuk WK DMEW/DMED yang baru dibuat. */
+/** Buat detail row + wk_process untuk WK DMEW/DMEN/DMED yang baru dibuat. */
 async function createProcessAndDetail(wkId: string, statusWk: StatusWk, formData: FormData) {
   if (statusWk === "SEDANG_DILELANG") {
-    const subpokja = (str(formData, "subpokjaDmew") ?? "DMEW-S") as "DMEW-S" | "DMEW-T";
+    const pokjaCode = (str(formData, "pokjaDmew") ?? "DMEW") as "DMEW" | "DMEN";
     const jalur = (str(formData, "jalurDmew") ?? "REGULER") as DmewJalur;
-    const templateId = dmewTemplateId(subpokja, jalur);
+    let templateId: string;
 
-    await db.insert(dmewLelangDetail).values({ wkId, subpokja, jalur });
+    if (pokjaCode === "DMEN") {
+      const subpokja = (str(formData, "subpokjaDmew") ?? "DMEN-N") as DmenSubpokja;
+      templateId = dmenTemplateId(subpokja, jalur);
+      await db.insert(dmewLelangDetail).values({ wkId, subpokja, jalur });
+    } else {
+      const subpokja = (str(formData, "subpokjaDmew") ?? "DMEW-S") as DmewSubpokja;
+      templateId = dmewTemplateId(subpokja, jalur);
+      await db.insert(dmewLelangDetail).values({ wkId, subpokja, jalur });
+    }
+
     await createWkProcess(wkId, templateId);
     return;
   }
@@ -198,6 +215,13 @@ export async function createWk(_prev: ActionState, formData: FormData): Promise<
     return { error: "Anda tidak berwenang menambah data pada status WK ini." };
   }
 
+  // Tentukan jenisWk untuk WK yang masuk SEDANG_DILELANG
+  let jenisWkValue: "KONVENSIONAL" | "NON_KONVENSIONAL" | null = null;
+  if (data.statusWk === "SEDANG_DILELANG") {
+    const pokjaCode = str(formData, "pokjaDmew") ?? (isDmen(user.role) ? "DMEN" : "DMEW");
+    jenisWkValue = pokjaCode === "DMEN" ? "NON_KONVENSIONAL" : "KONVENSIONAL";
+  }
+
   const [created] = await db
     .insert(wilayahKerja)
     .values({
@@ -209,6 +233,7 @@ export async function createWk(_prev: ActionState, formData: FormData): Promise<
       kabupatenId: data.kabupatenId ?? null,
       typeContract: data.typeContract ?? null,
       statusWk: data.statusWk,
+      jenisWk: jenisWkValue,
       startPsc: toDate(data.startPsc),
       endPsc: toDate(data.endPsc),
     })

@@ -2,6 +2,7 @@
 // Dipakai saat membuat WK baru untuk menentukan template mana yang dipasangkan.
 
 export type DmewSubpokja = "DMEW-S" | "DMEW-T";
+export type DmenSubpokja = "DMEN-N" | "DMEN-K";
 export type DmewJalur = "REGULER" | "JOINT_STUDY";
 
 export type DmedSubpokja = "DMED-T" | "DMED-E";
@@ -12,6 +13,13 @@ export function dmewTemplateId(subpokja: DmewSubpokja, jalur: DmewJalur): string
     return jalur === "REGULER" ? "DMEW_REGULER" : "DMEW_JOINT_STUDY";
   }
   return jalur === "REGULER" ? "DMEW_T_REGULER" : "DMEW_T_JOINT_STUDY";
+}
+
+export function dmenTemplateId(subpokja: DmenSubpokja, jalur: DmewJalur): string {
+  if (subpokja === "DMEN-N") {
+    return jalur === "REGULER" ? "DMEN_REGULER" : "DMEN_JOINT_STUDY";
+  }
+  return jalur === "REGULER" ? "DMEN_T_REGULER" : "DMEN_T_JOINT_STUDY";
 }
 
 export function dmedTemplateId(subpokja: DmedSubpokja, jenis?: DmedJenis): string | null {

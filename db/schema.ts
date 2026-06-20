@@ -59,6 +59,31 @@ export const kabupaten = pgTable("kabupaten", {
   provinsiId: integer("provinsi_id").references(() => provinsi.id),
 });
 
+/* ===================== HIERARKI ORGANISASI ===================== */
+export const direktorat = pgTable("direktorat", {
+  id: serial("id").primaryKey(),
+  kode: text("kode").notNull().unique(),
+  nama: text("nama").notNull(),
+});
+
+export const pokja = pgTable("pokja", {
+  id: serial("id").primaryKey(),
+  direktoratId: integer("direktorat_id")
+    .notNull()
+    .references(() => direktorat.id),
+  kode: text("kode").notNull().unique(),
+  nama: text("nama").notNull(),
+});
+
+export const masterSubPokja = pgTable("master_sub_pokja", {
+  id: serial("id").primaryKey(),
+  pokjaId: integer("pokja_id")
+    .notNull()
+    .references(() => pokja.id),
+  kode: text("kode").notNull().unique(),
+  nama: text("nama").notNull(),
+});
+
 /* ===================== MASTER WK ===================== */
 export const wilayahKerja = pgTable("wilayah_kerja", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -71,6 +96,8 @@ export const wilayahKerja = pgTable("wilayah_kerja", {
   kabupatenId: integer("kabupaten_id").references(() => kabupaten.id),
   typeContract: typeContract("type_contract"),
   statusWk: statusWk("status_wk").notNull(),
+  // KONVENSIONAL (DMEW) | NON_KONVENSIONAL (DMEN) -- null = belum ditentukan
+  jenisWk: text("jenis_wk"),
   startPsc: timestamp("start_psc"),
   endPsc: timestamp("end_psc"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -255,4 +282,17 @@ export const kabupatenRelations = relations(kabupaten, ({ one }) => ({
 
 export const dmedEDetailRelations = relations(dmedEDetail, ({ one }) => ({
   wk: one(wilayahKerja, { fields: [dmedEDetail.wkId], references: [wilayahKerja.id] }),
+}));
+
+export const direktoratRelations = relations(direktorat, ({ many }) => ({
+  pokjas: many(pokja),
+}));
+
+export const pokjaRelations = relations(pokja, ({ one, many }) => ({
+  direktorat: one(direktorat, { fields: [pokja.direktoratId], references: [direktorat.id] }),
+  subPokjas: many(masterSubPokja),
+}));
+
+export const masterSubPokjaRelations = relations(masterSubPokja, ({ one }) => ({
+  pokja: one(pokja, { fields: [masterSubPokja.pokjaId], references: [pokja.id] }),
 }));

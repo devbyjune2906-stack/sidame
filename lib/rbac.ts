@@ -1,4 +1,4 @@
-import { inArray, sql, type SQL } from "drizzle-orm";
+import { inArray, sql, and, or, isNull, eq, type SQL } from "drizzle-orm";
 import { wilayahKerja } from "@/db/schema";
 import { STATUS_BY_ROLE, POKJA_ROLE_PAIRS, type StatusWk } from "./constants";
 
@@ -31,6 +31,16 @@ export function isDmed(role: string): boolean {
   return role === POKJA_ROLE_PAIRS.DMED.staf || role === POKJA_ROLE_PAIRS.DMED.admin;
 }
 
+/** True kalau role termasuk Pokja DMEW (staf atau admin pokja). */
+export function isDmew(role: string): boolean {
+  return role === POKJA_ROLE_PAIRS.DMEW.staf || role === POKJA_ROLE_PAIRS.DMEW.admin;
+}
+
+/** True kalau role termasuk Pokja DMEN (staf atau admin pokja). */
+export function isDmen(role: string): boolean {
+  return role === POKJA_ROLE_PAIRS.DMEN.staf || role === POKJA_ROLE_PAIRS.DMEN.admin;
+}
+
 /** Boleh kelola (create/update/delete) data dengan status tertentu? */
 export function canManageStatus(role: string, status: StatusWk): boolean {
   const allowed = allowedStatuses(role);
@@ -43,5 +53,16 @@ export function statusWhere(role: string): SQL | undefined {
   const allowed = allowedStatuses(role);
   if (allowed === "ALL") return undefined;
   if (allowed.length === 0) return sql`false`;
-  return inArray(wilayahKerja.statusWk, allowed);
+
+  const statusFilter = inArray(wilayahKerja.statusWk, allowed);
+
+  // DMEW hanya lihat WK konvensional; DMEN hanya lihat WK non-konvensional
+  if (isDmew(role)) {
+    return and(statusFilter, or(isNull(wilayahKerja.jenisWk), eq(wilayahKerja.jenisWk, "KONVENSIONAL")));
+  }
+  if (isDmen(role)) {
+    return and(statusFilter, eq(wilayahKerja.jenisWk, "NON_KONVENSIONAL"));
+  }
+
+  return statusFilter;
 }

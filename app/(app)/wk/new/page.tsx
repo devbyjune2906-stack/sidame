@@ -3,7 +3,7 @@ import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { provinsi, kabupaten } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { allowedStatuses } from "@/lib/rbac";
+import { allowedStatuses, isDmew, isDmen } from "@/lib/rbac";
 import { STATUS_WK_VALUES, type StatusWk } from "@/lib/constants";
 import { WkForm } from "../wk-form";
 import { createWk } from "../actions";
@@ -14,6 +14,8 @@ export default async function NewWkPage() {
 
   const allowed = allowedStatuses(user.role);
   const selectable: StatusWk[] = allowed === "ALL" ? STATUS_WK_VALUES : allowed;
+
+  const userPokja = isDmew(user.role) ? "DMEW" : isDmen(user.role) ? "DMEN" : undefined;
 
   const provinsiList = await db
     .select({ id: provinsi.id, nama: provinsi.nama })
@@ -34,6 +36,7 @@ export default async function NewWkPage() {
         provinsiList={provinsiList}
         kabupatenList={kabupatenList}
         submitLabel="Simpan"
+        userPokja={userPokja}
       />
     </div>
   );

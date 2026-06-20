@@ -13,7 +13,7 @@ import {
   dmedEDetail,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { allowedStatuses, canManageStatus } from "@/lib/rbac";
+import { allowedStatuses, canManageStatus, isDmew, isDmen } from "@/lib/rbac";
 import { STATUS_WK_VALUES, type StatusWk } from "@/lib/constants";
 import { WkForm, type WkInitial } from "../../wk-form";
 import { updateWk } from "../../actions";
@@ -33,9 +33,10 @@ async function loadProcessInitial(wkId: string): Promise<{ dmew?: WkInitial["dme
 
   if (!proc) return { hasProcess: false };
 
-  if (proc.subpokja === "DMEW-S" || proc.subpokja === "DMEW-T") {
+  if (["DMEW-S", "DMEW-T", "DMEN-N", "DMEN-K"].includes(proc.subpokja ?? "")) {
     const [detail] = await db.select().from(dmewLelangDetail).where(eq(dmewLelangDetail.wkId, wkId)).limit(1);
-    return { hasProcess: true, dmew: { subpokja: detail?.subpokja, jalur: detail?.jalur } };
+    const pokja = (detail?.subpokja ?? "").startsWith("DMEN") ? "DMEN" : "DMEW";
+    return { hasProcess: true, dmew: { pokja, subpokja: detail?.subpokja, jalur: detail?.jalur } };
   }
 
   if (proc.templateId === "DMED_PODI") {
@@ -139,6 +140,7 @@ export default async function EditWkPage({ params }: { params: Promise<{ id: str
 
   const allowed = allowedStatuses(user.role);
   const selectable: StatusWk[] = allowed === "ALL" ? STATUS_WK_VALUES : allowed;
+  const userPokja = isDmew(user.role) ? "DMEW" : isDmen(user.role) ? "DMEN" : undefined;
 
   const provinsiList = await db
     .select({ id: provinsi.id, nama: provinsi.nama })
@@ -165,6 +167,7 @@ export default async function EditWkPage({ params }: { params: Promise<{ id: str
         kabupatenList={kabupatenList}
         submitLabel="Simpan Perubahan"
         hasProcess={hasProcess}
+        userPokja={userPokja}
         initial={{
           namaWk: wk.namaWk,
           lapangan: wk.lapangan,
