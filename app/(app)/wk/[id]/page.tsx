@@ -19,6 +19,71 @@ import { Badge, Button, Card, Input, Label } from "@/components/ui";
 import { startStage, completeStage } from "./timeline-actions";
 import AddProcessForm from "./add-process-form";
 
+type ExtraFieldDef = { key: string; label: string; type?: "text" | "checkbox" };
+
+function StageValues({ vals, fields }: { vals: Record<string, string>; fields: ExtraFieldDef[] }) {
+  const entries = fields
+    .map((f) => ({ label: f.label, value: vals[f.key], type: f.type }))
+    .filter((e) => e.value !== undefined);
+  if (entries.length === 0) return null;
+  return (
+    <div className="grid gap-2 rounded-lg bg-line/20 p-3 text-xs sm:grid-cols-2">
+      {entries.map((e) => (
+        <p key={e.label}>
+          <span className="text-muted">{e.label}: </span>
+          <span className="font-medium text-ink">
+            {e.type === "checkbox" ? (e.value === "true" ? "✓ Ya" : "✗ Tidak") : e.value}
+          </span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function CompleteStageForm({
+  stageProgressId,
+  extra,
+  action,
+}: {
+  stageProgressId: string;
+  extra: ExtraFieldDef[];
+  action: (formData: FormData) => Promise<void>;
+}) {
+  const checkboxKeys = extra.filter((f) => f.type === "checkbox").map((f) => f.key).join(",");
+  return (
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="stageProgressId" value={stageProgressId} />
+      <input type="hidden" name="_checkboxKeys" value={checkboxKeys} />
+      {extra.length > 0 && (
+        <div className="space-y-2">
+          {extra.map((f) =>
+            f.type === "checkbox" ? (
+              <label key={f.key} className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  name={`extra_${f.key}`}
+                  className="h-4 w-4 rounded border-line accent-petroleum"
+                />
+                <span className="text-sm text-ink">{f.label}</span>
+              </label>
+            ) : (
+              <div key={f.key}>
+                <Label htmlFor={`extra_${f.key}_${stageProgressId}`}>{f.label}</Label>
+                <Input id={`extra_${f.key}_${stageProgressId}`} name={`extra_${f.key}`} />
+              </div>
+            )
+          )}
+        </div>
+      )}
+      <div>
+        <Label htmlFor={`catatan_${stageProgressId}`}>Catatan</Label>
+        <Input id={`catatan_${stageProgressId}`} name="catatan" />
+      </div>
+      <Button type="submit">Selesaikan Tahap</Button>
+    </form>
+  );
+}
+
 const SLA_LABEL: Record<string, string> = {
   HARI_KALENDER: "hari kalender",
   HARI_KERJA: "hari kerja",
@@ -163,7 +228,7 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
                   : null;
               const sla = s.status === "SELESAI" ? "TANPA_SLA" : statusSla(deadline);
               const extra =
-                (s.extraFields as { fields: { key: string; label: string }[] } | null)?.fields ?? [];
+                (s.extraFields as { fields: { key: string; label: string; type?: "text" | "checkbox" }[] } | null)?.fields ?? [];
 
               return (
                 <Card key={s.id} className="space-y-3">
@@ -208,25 +273,13 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
                     </form>
                   )}
 
+                  {/* Nilai extra fields untuk tahap yang sudah selesai */}
+                  {s.status === "SELESAI" && s.values != null && extra.length > 0
+                    ? <StageValues vals={s.values as Record<string, string>} fields={extra} />
+                    : null}
+
                   {userCanManageThisProc && s.status === "BERJALAN" && (
-                    <form action={completeStage} className="space-y-3">
-                      <input type="hidden" name="stageProgressId" value={s.id} />
-                      {extra.length > 0 && (
-                        <div className="grid gap-3 sm:grid-cols-3">
-                          {extra.map((f) => (
-                            <div key={f.key}>
-                              <Label htmlFor={`extra_${f.key}_${s.id}`}>{f.label}</Label>
-                              <Input id={`extra_${f.key}_${s.id}`} name={`extra_${f.key}`} />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div>
-                        <Label htmlFor={`catatan_${s.id}`}>Catatan</Label>
-                        <Input id={`catatan_${s.id}`} name="catatan" />
-                      </div>
-                      <Button type="submit">Selesaikan Tahap</Button>
-                    </form>
+                    <CompleteStageForm stageProgressId={s.id} extra={extra} action={completeStage} />
                   )}
                 </Card>
               );

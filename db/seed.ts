@@ -12,7 +12,7 @@ import {
   pokja,
   masterSubPokja,
 } from "./schema";
-import { eq, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { ROLE_LIST } from "../lib/constants";
 import { KABUPATEN_KOTA_BY_PROVINSI, KABUPATEN_NON_ADMINISTRATIF } from "./data/kabupaten-kota";
@@ -202,7 +202,7 @@ async function seedMasterSubPokja() {
   }
 }
 
-type ExtraField = { key: string; label: string };
+type ExtraField = { key: string; label: string; type?: "text" | "checkbox" };
 
 type StageDef = {
   urutan: number;
@@ -213,9 +213,10 @@ type StageDef = {
 };
 
 const SK_TNC_FIELDS: ExtraField[] = [
-  { key: "split", label: "Split" },
-  { key: "komitmenPasti", label: "Komitmen Pasti (PB)" },
-  { key: "signatureBonus", label: "Signature Bonus" },
+  { key: "split", label: "Split", type: "text" },
+  { key: "komitmenPasti", label: "Komitmen Pasti (PB)", type: "text" },
+  { key: "signatureBonus", label: "Signature Bonus", type: "text" },
+  { key: "semua_selesai", label: "Semua progress sudah selesai, lanjut ke Sub Pokja berikutnya", type: "checkbox" },
 ];
 
 const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[] }[] = [
@@ -224,12 +225,28 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     nama: "DMEW-S Reguler",
     subpokja: "DMEW-S",
     stages: [
-      { urutan: 1, nama: "Tim WK / Usulan dari KKKS", slaValue: 4, slaUnit: "BULAN" },
-      { urutan: 2, nama: "Penyiapan WK yang dilelang", slaUnit: "TANPA_SLA" },
-      { urutan: 3, nama: "Pertimbangan SKK Migas/BPMA", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 1,
+        nama: "Tim WK / Usulan dari KKKS",
+        slaValue: 4,
+        slaUnit: "BULAN",
+        extraFields: [{ key: "kirim_dokumen", label: "Sudah mengirim dokumen", type: "checkbox" }],
+      },
+      {
+        urutan: 2,
+        nama: "Penyiapan WK yang Dilelang",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "dok_lengkap", label: "Dokumen lengkap", type: "checkbox" }],
+      },
+      {
+        urutan: 3,
+        nama: "Pertimbangan SKK Migas / BPMA",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "rek_terbit", label: "Rekomendasi SKK Migas / BPMA sudah terbit", type: "checkbox" }],
+      },
       {
         urutan: 4,
-        nama: "SK TNC (Split, Komitmen Pasti, Signature Bonus)",
+        nama: "SK TNC",
         slaUnit: "TANPA_SLA",
         extraFields: SK_TNC_FIELDS,
       },
@@ -239,7 +256,14 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     id: "DMEW_JOINT_STUDY",
     nama: "DMEW-S Joint Study",
     subpokja: "DMEW-S",
-    stages: [{ urutan: 1, nama: "Langsung / Usulan dari KKKS", slaUnit: "TANPA_SLA" }],
+    stages: [
+      {
+        urutan: 1,
+        nama: "Cek Dokumen dan Administrasi",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "terpenuhi", label: "Dokumen dan administrasi terpenuhi", type: "checkbox" }],
+      },
+    ],
   },
   {
     id: "DMEW_T_REGULER",
@@ -314,12 +338,28 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     nama: "DMEN-N Reguler",
     subpokja: "DMEN-N",
     stages: [
-      { urutan: 1, nama: "Tim WK / Usulan dari KKKS", slaValue: 4, slaUnit: "BULAN" },
-      { urutan: 2, nama: "Penyiapan WK yang dilelang", slaUnit: "TANPA_SLA" },
-      { urutan: 3, nama: "Pertimbangan SKK Migas/BPMA", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 1,
+        nama: "Tim WK / Usulan dari KKKS",
+        slaValue: 4,
+        slaUnit: "BULAN",
+        extraFields: [{ key: "kirim_dokumen", label: "Sudah mengirim dokumen", type: "checkbox" }],
+      },
+      {
+        urutan: 2,
+        nama: "Penyiapan WK yang Dilelang",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "dok_lengkap", label: "Dokumen lengkap", type: "checkbox" }],
+      },
+      {
+        urutan: 3,
+        nama: "Pertimbangan SKK Migas / BPMA",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "rek_terbit", label: "Rekomendasi SKK Migas / BPMA sudah terbit", type: "checkbox" }],
+      },
       {
         urutan: 4,
-        nama: "SK TNC (Split, Komitmen Pasti, Signature Bonus)",
+        nama: "SK TNC",
         slaUnit: "TANPA_SLA",
         extraFields: SK_TNC_FIELDS,
       },
@@ -329,7 +369,14 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     id: "DMEN_JOINT_STUDY",
     nama: "DMEN-N Joint Study",
     subpokja: "DMEN-N",
-    stages: [{ urutan: 1, nama: "Langsung / Usulan dari KKKS", slaUnit: "TANPA_SLA" }],
+    stages: [
+      {
+        urutan: 1,
+        nama: "Cek Dokumen dan Administrasi",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "terpenuhi", label: "Dokumen dan administrasi terpenuhi", type: "checkbox" }],
+      },
+    ],
   },
   {
     id: "DMEN_T_REGULER",
@@ -363,6 +410,25 @@ async function seedTemplates() {
         .update(processTemplate)
         .set({ nama: t.nama, subpokja: t.subpokja })
         .where(eq(processTemplate.id, t.id));
+      // Juga update stages yang sudah ada (nama, SLA, extraFields) berdasarkan urutan
+      for (const s of t.stages) {
+        const existingStage = await db
+          .select({ id: stageTemplate.id })
+          .from(stageTemplate)
+          .where(and(eq(stageTemplate.templateId, t.id), eq(stageTemplate.urutan, s.urutan)))
+          .limit(1);
+        if (existingStage.length > 0) {
+          await db
+            .update(stageTemplate)
+            .set({
+              nama: s.nama,
+              slaValue: s.slaValue ?? null,
+              slaUnit: s.slaUnit ?? "TANPA_SLA",
+              extraFields: s.extraFields ? { fields: s.extraFields } : null,
+            })
+            .where(eq(stageTemplate.id, existingStage[0].id));
+        }
+      }
       console.log("  = template di-update:", t.id);
       continue;
     }

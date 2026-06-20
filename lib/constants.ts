@@ -72,6 +72,13 @@ export const STATUS_BY_ROLE: Record<string, StatusWk[] | "ALL"> = {
   [ROLE.DMEN_ADMIN]: ["SEDANG_DILELANG"],
 };
 
+/**
+ * Sub Pokja yang TIDAK mentrigger transisi statusWk saat selesai.
+ * Mereka menyerahkan WK ke Sub Pokja berikutnya dalam pokja yang sama.
+ * DMEW-S → DMEW-T,  DMEN-N → DMEN-K  (masih SEDANG_DILELANG)
+ */
+export const NON_TRANSITION_SUBPOKJAS = new Set(["DMEW-S", "DMEN-N"]);
+
 /** Transisi status otomatis saat semua tahap proses selesai. */
 export const NEXT_STATUS_WK: Partial<Record<StatusWk, StatusWk>> = {
   SEDANG_DILELANG: "EKSPLORASI",
