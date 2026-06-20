@@ -22,13 +22,19 @@ const POKJA_SECTIONS: {
   {
     key: "dmew",
     label: "Pokja DMEW",
-    items: [{ href: "/wk/dmew", label: "WK Konvensional" }],
+    items: [
+      { href: "/wk/dmew-s", label: "DMEW-S" },
+      { href: "/wk/dmew-t", label: "DMEW-T" },
+    ],
     show: (r) => isAdmin(r) || isDmew(r),
   },
   {
     key: "dmee",
     label: "Pokja DMEE",
-    items: [{ href: "/wk/dmee", label: "WK Eksplorasi" }],
+    items: [
+      { href: "/wk/dmee-l", label: "DMEE-L" },
+      { href: "/wk/dmee-m", label: "DMEE-M" },
+    ],
     show: (r) => isAdmin(r) || isDmee(r),
   },
   {
@@ -43,13 +49,19 @@ const POKJA_SECTIONS: {
   {
     key: "dmep",
     label: "Pokja DMEP",
-    items: [{ href: "/wk/dmep", label: "WK Onstream" }],
+    items: [
+      { href: "/wk/dmep-l", label: "DMEP-L" },
+      { href: "/wk/dmep-p", label: "DMEP-P" },
+    ],
     show: (r) => isAdmin(r) || isDmep(r),
   },
   {
     key: "dmen",
     label: "Pokja DMEN",
-    items: [{ href: "/wk/dmen", label: "WK Non Konvensional" }],
+    items: [
+      { href: "/wk/dmen-n", label: "DMEN-N" },
+      { href: "/wk/dmen-k", label: "DMEN-K" },
+    ],
     show: (r) => isAdmin(r) || isDmen(r),
   },
 ];
