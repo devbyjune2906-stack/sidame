@@ -4,9 +4,10 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { wilayahKerja, provinsi, kabupaten, dmewLelangDetail } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { isAdmin, isDmew } from "@/lib/rbac";
+import { canWrite, isAdmin, isDmew } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { Badge } from "@/components/ui";
+import { deleteWk } from "../actions";
 
 const JALUR_LABEL: Record<string, string> = { REGULER: "Reguler", JOINT_STUDY: "Joint Study" };
 
@@ -14,6 +15,7 @@ export default async function DmewSPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (!isAdmin(user.role) && !isDmew(user.role)) redirect("/wk");
+  const userCanWrite = canWrite(user.role);
 
   const rows = await db
     .select({
@@ -76,9 +78,24 @@ export default async function DmewSPage() {
                   </Badge>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link href={`/wk/${r.id}`} className="text-sm font-medium text-petroleum hover:underline">
-                    Lihat
-                  </Link>
+                  <div className="flex items-center justify-end gap-3">
+                    <Link href={`/wk/${r.id}`} className="text-sm font-medium text-petroleum hover:underline">
+                      Lihat
+                    </Link>
+                    {userCanWrite && (
+                      <Link href={`/wk/${r.id}/edit`} className="text-sm font-medium text-ink hover:underline">
+                        Edit
+                      </Link>
+                    )}
+                    {userCanWrite && (
+                      <form action={deleteWk}>
+                        <input type="hidden" name="id" value={r.id} />
+                        <button type="submit" className="text-sm font-medium text-danger hover:underline">
+                          Hapus
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
