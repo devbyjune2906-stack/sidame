@@ -7,13 +7,15 @@ import { db } from "@/db";
 import { wkStageProgress, wkProcess, wilayahKerja, processTemplate } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { canManageStatus, canWrite } from "@/lib/rbac";
-import { NEXT_STATUS_WK, NON_TRANSITION_SUBPOKJAS, type StatusWk } from "@/lib/constants";
+import { JOINT_STUDY_TEMPLATE_IDS, NEXT_STATUS_WK, NON_TRANSITION_SUBPOKJAS, type StatusWk } from "@/lib/constants";
+import { ensureManualProcess } from "@/lib/process-engine";
 
 type AuthResult = {
   wkId: string;
   wkProcessId: string;
   statusWk: string;
   subpokja: string | null;
+  templateId: string;
 } | null;
 
 async function authorizeStage(stageProgressId: string): Promise<AuthResult> {
@@ -26,6 +28,7 @@ async function authorizeStage(stageProgressId: string): Promise<AuthResult> {
       wkProcessId: wkProcess.id,
       statusWk: wilayahKerja.statusWk,
       subpokja: processTemplate.subpokja,
+      templateId: wkProcess.templateId,
     })
     .from(wkStageProgress)
     .innerJoin(wkProcess, eq(wkStageProgress.wkProcessId, wkProcess.id))
@@ -37,7 +40,7 @@ async function authorizeStage(stageProgressId: string): Promise<AuthResult> {
   if (!row) return null;
   if (!canWrite(user.role)) return null;
   if (!canManageStatus(user.role, row.statusWk as StatusWk)) return null;
-  return { wkId: row.wkId, wkProcessId: row.wkProcessId, statusWk: row.statusWk, subpokja: row.subpokja };
+  return { wkId: row.wkId, wkProcessId: row.wkProcessId, statusWk: row.statusWk, subpokja: row.subpokja, templateId: row.templateId };
 }
 
 export async function startStage(formData: FormData) {
@@ -60,7 +63,7 @@ export async function completeStage(formData: FormData) {
   const auth = await authorizeStage(stageProgressId);
   if (!auth) return;
 
-  const { wkId, wkProcessId, statusWk, subpokja } = auth;
+  const { wkId, wkProcessId, statusWk, subpokja, templateId } = auth;
   const catatan = String(formData.get("catatan") ?? "").trim() || null;
 
   // Kumpulkan extra fields: checkbox → "true"/"false", text → nilai isian
@@ -100,6 +103,15 @@ export async function completeStage(formData: FormData) {
       )
     );
 
+  // Joint Study: jika terpenuhi=false saat tahap terakhir selesai, WK otomatis Tidak Dilanjutkan
+  if (remaining === 0 && JOINT_STUDY_TEMPLATE_IDS.has(templateId) && values["terpenuhi"] === "false") {
+    await db
+      .update(wilayahKerja)
+      .set({ statusWk: "TIDAK_DILANJUTKAN", updatedAt: new Date() })
+      .where(eq(wilayahKerja.id, wkId));
+    redirect("/wk");
+  }
+
   // Auto-transition: DMEW-S dan DMEN-N menyerahkan ke sub-pokja berikutnya
   // dalam pokja yang sama -- statusWk tidak berubah
   if (remaining === 0 && (!subpokja || !NON_TRANSITION_SUBPOKJAS.has(subpokja))) {
@@ -109,6 +121,11 @@ export async function completeStage(formData: FormData) {
         .update(wilayahKerja)
         .set({ statusWk: nextStatus, updatedAt: new Date() })
         .where(eq(wilayahKerja.id, wkId));
+
+      // EKSPLORASI: auto-masukkan WK ke antrian DMEE-L (DMEW-T atau DMEN-K sudah selesai)
+      if (nextStatus === "EKSPLORASI") {
+        await ensureManualProcess(wkId, "DMEE-L");
+      }
     }
   }
 

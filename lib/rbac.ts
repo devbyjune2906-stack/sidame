@@ -59,6 +59,14 @@ export function canWrite(role: string): boolean {
   return isAdmin(role) || isPokjaAdmin(role);
 }
 
+/**
+ * Boleh membuat WK baru?
+ * Hanya Admin, DMEW, dan DMEN — pokja lain (DMEE, DMED, DMEP) menerima WK dari pipeline otomatis.
+ */
+export function canCreateWk(role: string): boolean {
+  return isAdmin(role) || isDmew(role) || isDmen(role);
+}
+
 /** Boleh kelola (create/update/delete) data dengan status tertentu? */
 export function canManageStatus(role: string, status: StatusWk): boolean {
   const allowed = allowedStatuses(role);

@@ -3,7 +3,7 @@ import { asc } from "drizzle-orm";
 import { db } from "@/db";
 import { provinsi, kabupaten } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { allowedStatuses, canWrite, isDmew, isDmen } from "@/lib/rbac";
+import { allowedStatuses, canCreateWk, isDmew, isDmen } from "@/lib/rbac";
 import { STATUS_WK_VALUES, type StatusWk } from "@/lib/constants";
 import { WkForm } from "../wk-form";
 import { createWk } from "../actions";
@@ -11,7 +11,7 @@ import { createWk } from "../actions";
 export default async function NewWkPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (!canWrite(user.role)) redirect("/wk");
+  if (!canCreateWk(user.role)) redirect("/wk");
 
   const allowed = allowedStatuses(user.role);
   const selectable: StatusWk[] = allowed === "ALL" ? STATUS_WK_VALUES : allowed;

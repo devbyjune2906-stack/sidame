@@ -81,6 +81,9 @@ export const STATUS_BY_ROLE: Record<string, StatusWk[] | "ALL"> = {
  */
 export const NON_TRANSITION_SUBPOKJAS = new Set(["DMEW-S", "DMEN-N"]);
 
+/** Template ID untuk jalur Joint Study — saat terpenuhi=false, WK otomatis Tidak Dilanjutkan. */
+export const JOINT_STUDY_TEMPLATE_IDS = new Set(["DMEW_JOINT_STUDY", "DMEN_JOINT_STUDY"]);
+
 /** Transisi status otomatis saat semua tahap proses selesai. */
 export const NEXT_STATUS_WK: Partial<Record<StatusWk, StatusWk>> = {
   SEDANG_DILELANG: "EKSPLORASI",

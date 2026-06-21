@@ -19,7 +19,10 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const where = statusWhere(user.role);
+  // Dashboard menampilkan gambaran lengkap: Admin melihat semua WK termasuk TIDAK_DILANJUTKAN.
+  // statusWhere selalu exclude TIDAK_DILANJUTKAN (dimaksud untuk list pipeline), sehingga
+  // Admin di dashboard menggunakan undefined (tanpa filter status).
+  const where = isAdmin(user.role) ? undefined : statusWhere(user.role);
   const withWhere = (extra?: SQL) => {
     const parts = [where, extra].filter((p): p is SQL => p !== undefined);
     return parts.length ? and(...parts) : undefined;
