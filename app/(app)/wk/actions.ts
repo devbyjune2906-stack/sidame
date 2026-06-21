@@ -315,9 +315,7 @@ export async function deleteWk(formData: FormData) {
   const [existing] = await db.select().from(wilayahKerja).where(eq(wilayahKerja.id, id)).limit(1);
   if (!existing) return;
 
-  if (!canManageStatus(user.role, existing.statusWk as StatusWk)) {
-    throw new Error("Tidak berwenang menghapus data ini.");
-  }
+  if (!canManageStatus(user.role, existing.statusWk as StatusWk)) return;
 
   await db.delete(wilayahKerja).where(eq(wilayahKerja.id, id));
   revalidatePath("/wk");

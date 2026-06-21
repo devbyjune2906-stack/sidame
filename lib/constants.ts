@@ -67,11 +67,11 @@ export const STATUS_BY_ROLE: Record<string, StatusWk[] | "ALL"> = {
   [ROLE.DMEP]: ["ONSTREAM"],
   [ROLE.DMEN]: ["SEDANG_DILELANG"],
   // Admin Pokja punya hak data WK yang sama dengan staf di pokjanya
-  [ROLE.DMEW_ADMIN]: ["WK_USULAN_BARU", "SEDANG_DILELANG"],
+  [ROLE.DMEW_ADMIN]: ["WK_USULAN_BARU", "SEDANG_DILELANG", "TIDAK_DILANJUTKAN"],
   [ROLE.DMEE_ADMIN]: ["EKSPLORASI"],
   [ROLE.DMED_ADMIN]: ["POD_I"],
   [ROLE.DMEP_ADMIN]: ["ONSTREAM"],
-  [ROLE.DMEN_ADMIN]: ["SEDANG_DILELANG"],
+  [ROLE.DMEN_ADMIN]: ["SEDANG_DILELANG", "TIDAK_DILANJUTKAN"],
 };
 
 /**
