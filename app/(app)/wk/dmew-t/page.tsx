@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { wilayahKerja, provinsi, kabupaten, dmewLelangDetail } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
@@ -32,7 +32,12 @@ export default async function DmewTPage() {
     .innerJoin(wilayahKerja, eq(dmewLelangDetail.wkId, wilayahKerja.id))
     .leftJoin(provinsi, eq(wilayahKerja.provinsiId, provinsi.id))
     .leftJoin(kabupaten, eq(wilayahKerja.kabupatenId, kabupaten.id))
-    .where(eq(dmewLelangDetail.subpokja, "DMEW-T"))
+    .where(
+      and(
+        eq(dmewLelangDetail.subpokja, "DMEW-T"),
+        inArray(wilayahKerja.statusWk, ["SEDANG_DILELANG", "WK_USULAN_BARU"])
+      )
+    )
     .orderBy(asc(wilayahKerja.namaWk));
 
   return (
