@@ -34,6 +34,9 @@ export default async function WkListPage({
 
   const userCanWrite = canWrite(user.role);
   const userCanCreate = canCreateWk(user.role);
+  const emptyMsg = userCanCreate
+    ? "Belum ada data. Klik tombol + Tambah WK untuk menambah."
+    : "Belum ada data. WK akan masuk otomatis setelah disetujui dari tahap sebelumnya.";
   const sp = await searchParams;
   const filters = parseFilters(sp);
   const page = Math.max(1, Number(Array.isArray(sp.page) ? sp.page[0] : sp.page) || 1);
@@ -112,9 +115,7 @@ export default async function WkListPage({
             {rows.length === 0 && (
               <tr>
                 <td colSpan={7} className=”px-4 py-10 text-center text-muted”>
-                  {userCanCreate
-                    ? 'Belum ada data. Klik “+ Tambah WK” untuk menambah.'
-                    : “Belum ada data. WK akan masuk otomatis setelah disetujui dari tahap sebelumnya.”}
+                  {emptyMsg}
                 </td>
               </tr>
             )}
