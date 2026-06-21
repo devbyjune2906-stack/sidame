@@ -36,7 +36,7 @@ const schema = z.object({
   provinsiId: z.coerce.number().int().positive().optional(),
   kabupatenId: z.coerce.number().int().positive().optional(),
   typeContract: z.enum(["COST_RECOVERY", "GROSS_SPLIT"]).optional(),
-  statusWk: z.enum(["SEDANG_DILELANG", "EKSPLORASI", "POD_I", "ONSTREAM"]),
+  statusWk: z.enum(["WK_USULAN_BARU", "SEDANG_DILELANG", "EKSPLORASI", "POD_I", "ONSTREAM"]),
   startPsc: z.string().optional(),
   endPsc: z.string().optional(),
 });
@@ -142,7 +142,7 @@ function dmedEFieldsFromForm(fd: FormData) {
 
 /** Buat detail row + wk_process untuk WK DMEW/DMEN/DMED yang baru dibuat. */
 async function createProcessAndDetail(wkId: string, statusWk: StatusWk, formData: FormData) {
-  if (statusWk === "SEDANG_DILELANG") {
+  if (statusWk === "SEDANG_DILELANG" || statusWk === "WK_USULAN_BARU") {
     const pokjaCode = (str(formData, "pokjaDmew") ?? "DMEW") as "DMEW" | "DMEN";
     const jalur = (str(formData, "jalurDmew") ?? "REGULER") as DmewJalur;
     let templateId: string;
@@ -224,9 +224,9 @@ export async function createWk(_prev: ActionState, formData: FormData): Promise<
     return { error: "Anda tidak berwenang menambah data pada status WK ini." };
   }
 
-  // Tentukan jenisWk untuk WK yang masuk SEDANG_DILELANG
+  // Tentukan jenisWk untuk WK yang masuk pipeline DMEW/DMEN
   let jenisWkValue: "KONVENSIONAL" | "NON_KONVENSIONAL" | null = null;
-  if (data.statusWk === "SEDANG_DILELANG") {
+  if (data.statusWk === "SEDANG_DILELANG" || data.statusWk === "WK_USULAN_BARU") {
     const pokjaCode = str(formData, "pokjaDmew") ?? (isDmen(user.role) ? "DMEN" : "DMEW");
     jenisWkValue = pokjaCode === "DMEN" ? "NON_KONVENSIONAL" : "KONVENSIONAL";
   }

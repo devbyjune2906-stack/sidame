@@ -157,7 +157,7 @@ export function WkForm({
           </div>
         </div>
 
-        {statusWk === "SEDANG_DILELANG" && (
+        {(statusWk === "SEDANG_DILELANG" || statusWk === "WK_USULAN_BARU") && (
           <DmewFields initial={initial.dmew} locked={hasProcess} userPokja={userPokja} />
         )}
         {statusWk === "POD_I" && <DmedFields initial={initial.dmed} locked={hasProcess} />}

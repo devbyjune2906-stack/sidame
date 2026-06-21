@@ -171,7 +171,7 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
   const liburList = liburRows.map((r) => r.tanggal);
 
   const showTidakDilanjutkan =
-    wk.statusWk === "SEDANG_DILELANG" &&
+    (wk.statusWk === "SEDANG_DILELANG" || wk.statusWk === "WK_USULAN_BARU") &&
     canWrite(user.role) &&
     (isAdmin(user.role) || isDmew(user.role) || isDmen(user.role));
 

@@ -16,6 +16,7 @@ import { relations } from "drizzle-orm";
 export const typeContract = pgEnum("type_contract", ["COST_RECOVERY", "GROSS_SPLIT"]);
 
 export const statusWk = pgEnum("status_wk", [
+  "WK_USULAN_BARU", // -> Pokja DMEW (usulan, belum dilelang)
   "SEDANG_DILELANG", // -> Pokja DMEW
   "EKSPLORASI", // -> Pokja DMEE
   "POD_I", // -> Pokja DMED

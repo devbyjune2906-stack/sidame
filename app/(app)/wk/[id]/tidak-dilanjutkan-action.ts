@@ -21,7 +21,7 @@ export async function markTidakDilanjutkan(formData: FormData) {
     .where(eq(wilayahKerja.id, wkId))
     .limit(1);
 
-  if (!wk || wk.statusWk !== "SEDANG_DILELANG") return;
+  if (!wk || !["SEDANG_DILELANG", "WK_USULAN_BARU"].includes(wk.statusWk)) return;
 
   await db
     .update(wilayahKerja)
