@@ -1,0 +1,17 @@
+# Paksa semua file teks memakai LF agar SWC/Next.js di Docker Linux tidak error
+* text=auto eol=lf
+
+# Eksplisit untuk file kode
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.js   text eol=lf
+*.jsx  text eol=lf
+*.json text eol=lf
+*.css  text eol=lf
+*.md   text eol=lf
+*.env* text eol=lf
+
+# File biner tetap binary
+*.png  binary
+*.jpg  binary
+*.ico  binary
