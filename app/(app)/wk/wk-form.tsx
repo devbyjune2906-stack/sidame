@@ -74,9 +74,9 @@ export function WkForm({
   const kabupatenOptions = useMemo(
     () =>
       kabupatenList.filter(
-        (k) => k.provinsiId === null || (firstProvinsiId !== null && k.provinsiId === firstProvinsiId)
+        (k) => k.provinsiId === null || (k.provinsiId !== null && selectedProvinsiIds.has(k.provinsiId))
       ),
-    [kabupatenList, firstProvinsiId]
+    [kabupatenList, selectedProvinsiIds]
   );
 
   return (
