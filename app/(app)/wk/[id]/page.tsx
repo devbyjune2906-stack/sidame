@@ -20,6 +20,7 @@ import { startStage, completeStage } from "./timeline-actions";
 import { startNextLelangSubpokja } from "./process-actions";
 import AddProcessForm from "./add-process-form";
 import TidakDilanjutkanButton from "./tidak-dilanjutkan-button";
+import LanjutkanKeDmeeButton from "./lanjutkan-ke-dmee-button";
 
 type ExtraFieldDef = { key: string; label: string; type?: "text" | "checkbox" };
 
@@ -170,10 +171,16 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
   const liburRows = await db.select({ tanggal: hariLibur.tanggal }).from(hariLibur);
   const liburList = liburRows.map((r) => r.tanggal);
 
+  const canPushToDmee =
+    canWrite(user.role) && (isAdmin(user.role) || isDmew(user.role) || isDmen(user.role));
+
   const showTidakDilanjutkan =
     (wk.statusWk === "SEDANG_DILELANG" || wk.statusWk === "WK_USULAN_BARU") &&
-    canWrite(user.role) &&
-    (isAdmin(user.role) || isDmew(user.role) || isDmen(user.role));
+    canPushToDmee;
+
+  const showLanjutkanKeDmee =
+    (wk.statusWk === "SEDANG_DILELANG" || wk.statusWk === "WK_USULAN_BARU") &&
+    canPushToDmee;
 
   // Tombol "Mulai DMEW-T" atau "Mulai DMEN-K" — muncul saat sub-pokja awal selesai semua
   // dan belum ada proses sub-pokja berikutnya
@@ -216,7 +223,10 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
             </Badge>
           </p>
         </div>
-        {showTidakDilanjutkan && <TidakDilanjutkanButton wkId={wk.id} />}
+        <div className="flex flex-wrap gap-2">
+          {showLanjutkanKeDmee && <LanjutkanKeDmeeButton wkId={wk.id} />}
+          {showTidakDilanjutkan && <TidakDilanjutkanButton wkId={wk.id} />}
+        </div>
       </header>
 
       {/* History: all processes */}
