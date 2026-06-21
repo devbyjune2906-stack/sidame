@@ -12,7 +12,7 @@ import {
   hariLibur,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { canManageStatus, canManageSubpokja, canWrite, isAdmin, isDmew, isDmen, subpokjasForRole } from "@/lib/rbac";
+import { canManageStatus, canManageSubpokja, canWrite, isAdmin, isDmee, isDmew, isDmen, subpokjasForRole, visibleSubpokjas } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { hitungDeadline, statusSla, type SlaUnit } from "@/lib/sla";
 import { Badge, Button, Card, Input, Label } from "@/components/ui";
@@ -21,6 +21,7 @@ import { startNextLelangSubpokja } from "./process-actions";
 import AddProcessForm from "./add-process-form";
 import TidakDilanjutkanButton from "./tidak-dilanjutkan-button";
 import LanjutkanKeDmeeButton from "./lanjutkan-ke-dmee-button";
+import LanjutkanKeDmedButton from "./lanjutkan-ke-dmed-button";
 
 type ExtraFieldDef = { key: string; label: string; type?: "text" | "checkbox" };
 
@@ -171,6 +172,12 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
   const liburRows = await db.select({ tanggal: hariLibur.tanggal }).from(hariLibur);
   const liburList = liburRows.map((r) => r.tanggal);
 
+  // Filter proses yang terlihat berdasarkan role (setiap pokja hanya lihat proses miliknya)
+  const visible = visibleSubpokjas(user.role);
+  const visibleProcs = visible === "ALL"
+    ? procWithStages
+    : procWithStages.filter((p) => visible.includes(p.subpokja ?? ""));
+
   const canPushToDmee =
     canWrite(user.role) && (isAdmin(user.role) || isDmew(user.role) || isDmen(user.role));
 
@@ -181,6 +188,15 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
   const showLanjutkanKeDmee =
     (wk.statusWk === "SEDANG_DILELANG" || wk.statusWk === "WK_USULAN_BARU") &&
     canPushToDmee;
+
+  const dmeeMDone = procWithStages.some(
+    (p) => p.subpokja === "DMEE-M" && p.stages.length > 0 && p.stages.every((s) => s.status === "SELESAI")
+  );
+  const showLanjutkanKeDmed =
+    wk.statusWk === "EKSPLORASI" &&
+    canWrite(user.role) &&
+    (isAdmin(user.role) || isDmee(user.role)) &&
+    dmeeMDone;
 
   // Tombol "Mulai DMEW-T" atau "Mulai DMEN-K" — muncul saat sub-pokja awal selesai semua
   // dan belum ada proses sub-pokja berikutnya
@@ -225,18 +241,19 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
         </div>
         <div className="flex flex-wrap gap-2">
           {showLanjutkanKeDmee && <LanjutkanKeDmeeButton wkId={wk.id} />}
+          {showLanjutkanKeDmed && <LanjutkanKeDmedButton wkId={wk.id} />}
           {showTidakDilanjutkan && <TidakDilanjutkanButton wkId={wk.id} />}
         </div>
       </header>
 
-      {/* History: all processes */}
-      {procWithStages.length === 0 && (
+      {/* History: processes visible to this role */}
+      {visibleProcs.length === 0 && (
         <Card>
           <p className="text-sm text-muted">Belum ada proses/tahapan untuk WK ini.</p>
         </Card>
       )}
 
-      {procWithStages.map((proc) => {
+      {visibleProcs.map((proc) => {
         const userCanManageThisProc =
           canWrite(user.role) &&
           canManageStatus(user.role, wk.statusWk as StatusWk) &&

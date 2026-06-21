@@ -85,6 +85,20 @@ export function subpokjasForRole(role: string): string[] {
   return [];
 }
 
+/**
+ * Sub Pokja yang TERLIHAT oleh role ini di halaman detail WK.
+ * Admin melihat semua; setiap pokja hanya melihat subpokja miliknya sendiri.
+ */
+export function visibleSubpokjas(role: string): string[] | "ALL" {
+  if (isAdmin(role)) return "ALL";
+  if (isDmew(role)) return ["DMEW-S", "DMEW-T"];
+  if (isDmen(role)) return ["DMEN-N", "DMEN-K"];
+  if (isDmee(role)) return ["DMEE-L", "DMEE-M"];
+  if (isDmed(role)) return ["DMED-T", "DMED-E"];
+  if (isDmep(role)) return ["DMEP-L", "DMEP-P"];
+  return [];
+}
+
 /** Apakah user bisa mengelola tahapan untuk sub pokja tertentu? */
 export function canManageSubpokja(role: string, subpokja: string | null): boolean {
   if (!canWrite(role)) return false;
