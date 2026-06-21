@@ -94,10 +94,11 @@ export const wilayahKerja = pgTable("wilayah_kerja", {
   lapangan: text("lapangan"),
   operatorK3s: text("operator_k3s"),
   pemegangSaham: text("pemegang_saham"),
-  // Wilayah Admin: multi-provinsi (comma-separated IDs) + 1 Kabupaten/Kota
-  provinsiId: integer("provinsi_id").references(() => provinsi.id), // provinsi pertama (untuk filter kabupaten)
+  // Wilayah Admin: multi-provinsi + multi-kabupaten (comma-separated IDs)
+  provinsiId: integer("provinsi_id").references(() => provinsi.id), // provinsi pertama (backward compat)
   provinsiIds: text("provinsi_ids"), // semua provinsi, mis. "1,3,5"
-  kabupatenId: integer("kabupaten_id").references(() => kabupaten.id),
+  kabupatenId: integer("kabupaten_id").references(() => kabupaten.id), // kabupaten pertama (backward compat)
+  kabupatenIds: text("kabupaten_ids"), // semua kabupaten/kota, mis. "12,45,67"
   typeContract: typeContract("type_contract"),
   statusWk: statusWk("status_wk").notNull(),
   // KONVENSIONAL (DMEW) | NON_KONVENSIONAL (DMEN) -- null = belum ditentukan

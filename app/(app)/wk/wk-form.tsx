@@ -18,6 +18,7 @@ export type WkInitial = {
   provinsiId?: number | null;
   provinsiIds?: string | null;
   kabupatenId?: number | null;
+  kabupatenIds?: string | null;
   typeContract?: string | null;
   statusWk?: string;
   startPsc?: string;
@@ -62,8 +63,41 @@ export function WkForm({
 
   const firstProvinsiId = useMemo(() => [...selectedProvinsiIds][0] ?? null, [selectedProvinsiIds]);
 
+  // Inisialisasi multi-select kabupaten
+  const initSelectedKabupatenIds = useMemo<Set<number>>(() => {
+    if (initial.kabupatenIds) {
+      return new Set(initial.kabupatenIds.split(",").map(Number).filter(Boolean));
+    }
+    return initial.kabupatenId ? new Set([initial.kabupatenId]) : new Set();
+  }, [initial.kabupatenId, initial.kabupatenIds]);
+
+  const [selectedKabupatenIds, setSelectedKabupatenIds] = useState<Set<number>>(initSelectedKabupatenIds);
+
+  const firstKabupatenId = useMemo(() => [...selectedKabupatenIds][0] ?? null, [selectedKabupatenIds]);
+
   function toggleProvinsi(id: number) {
     setSelectedProvinsiIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        // Saat provinsi di-deselect, hapus kabupaten dari provinsi tersebut
+        next.delete(id);
+        const kabupatenDiProvinsi = new Set(
+          kabupatenList.filter((k) => k.provinsiId === id).map((k) => k.id)
+        );
+        setSelectedKabupatenIds((kPrev) => {
+          const kNext = new Set(kPrev);
+          kabupatenDiProvinsi.forEach((kId) => kNext.delete(kId));
+          return kNext;
+        });
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function toggleKabupaten(id: number) {
+    setSelectedKabupatenIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -133,19 +167,36 @@ export function WkForm({
         </div>
 
         <div>
-          <Label htmlFor="kabupatenId">Kabupaten/Kota</Label>
-          <Select
-            id="kabupatenId"
-            name="kabupatenId"
-            defaultValue={initial.kabupatenId?.toString() ?? ""}
-          >
-            <option value="">— Pilih kabupaten/kota —</option>
-            {kabupatenOptions.map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.nama}
-              </option>
-            ))}
-          </Select>
+          <Label>Kabupaten/Kota</Label>
+          {selectedProvinsiIds.size === 0 ? (
+            <p className="mt-1 rounded-xl border border-line px-3 py-2 text-xs text-muted">
+              Pilih provinsi terlebih dahulu.
+            </p>
+          ) : (
+            <div className="mt-1 max-h-44 overflow-y-auto rounded-xl border border-line p-2">
+              <div className="flex flex-wrap gap-1.5">
+                {kabupatenOptions.map((k) => (
+                  <button
+                    key={k.id}
+                    type="button"
+                    onClick={() => toggleKabupaten(k.id)}
+                    className={
+                      selectedKabupatenIds.has(k.id)
+                        ? "rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
+                        : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
+                    }
+                  >
+                    {k.nama}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {selectedKabupatenIds.size > 0 && (
+            <p className="mt-1 text-xs text-muted">{selectedKabupatenIds.size} kabupaten/kota dipilih</p>
+          )}
+          <input type="hidden" name="kabupatenId" value={firstKabupatenId?.toString() ?? ""} />
+          <input type="hidden" name="kabupatenIds" value={[...selectedKabupatenIds].join(",")} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
