@@ -37,16 +37,17 @@ export const POKJA_ROLE_PAIRS: Record<"DMEW" | "DMEE" | "DMED" | "DMEP" | "DMEN"
   DMEN: { staf: ROLE.DMEN, admin: ROLE.DMEN_ADMIN },
 };
 
-export type StatusWk = "SEDANG_DILELANG" | "EKSPLORASI" | "POD_I" | "ONSTREAM";
+export type StatusWk = "SEDANG_DILELANG" | "EKSPLORASI" | "POD_I" | "ONSTREAM" | "TIDAK_DILANJUTKAN";
 export type TypeContract = "COST_RECOVERY" | "GROSS_SPLIT";
 
-export const STATUS_WK_VALUES: StatusWk[] = ["SEDANG_DILELANG", "EKSPLORASI", "POD_I", "ONSTREAM"];
+export const STATUS_WK_VALUES: StatusWk[] = ["SEDANG_DILELANG", "EKSPLORASI", "POD_I", "ONSTREAM", "TIDAK_DILANJUTKAN"];
 
 export const STATUS_WK_LABEL: Record<StatusWk, string> = {
   SEDANG_DILELANG: "Sedang Dilelang",
   EKSPLORASI: "Eksplorasi",
   POD_I: "POD I",
   ONSTREAM: "Onstream",
+  TIDAK_DILANJUTKAN: "Tidak Dilanjutkan",
 };
 
 export const TYPE_CONTRACT_VALUES: TypeContract[] = ["COST_RECOVERY", "GROSS_SPLIT"];
@@ -100,6 +101,7 @@ export const STATUS_BADGE: Record<StatusWk, string> = {
   EKSPLORASI: "bg-petroleum-light/10 text-petroleum",
   POD_I: "bg-petroleum/10 text-petroleum-dark",
   ONSTREAM: "bg-ok/10 text-ok",
+  TIDAK_DILANJUTKAN: "bg-danger/10 text-danger",
 };
 
 export type JenisPod =

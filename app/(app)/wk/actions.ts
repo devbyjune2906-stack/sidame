@@ -150,11 +150,12 @@ async function createProcessAndDetail(wkId: string, statusWk: StatusWk, formData
     if (pokjaCode === "DMEN") {
       const subpokja = (str(formData, "subpokjaDmew") ?? "DMEN-N") as DmenSubpokja;
       templateId = dmenTemplateId(subpokja, jalur);
-      await db.insert(dmewLelangDetail).values({ wkId, subpokja, jalur });
+      await db.insert(dmewLelangDetail).values({ wkId, subpokja, jalur, diusulkanWkBaru: false });
     } else {
       const subpokja = (str(formData, "subpokjaDmew") ?? "DMEW-S") as DmewSubpokja;
       templateId = dmewTemplateId(subpokja, jalur);
-      await db.insert(dmewLelangDetail).values({ wkId, subpokja, jalur });
+      const diusulkanWkBaru = formData.get("diusulkanWkBaru") === "on";
+      await db.insert(dmewLelangDetail).values({ wkId, subpokja, jalur, diusulkanWkBaru });
     }
 
     await createWkProcess(wkId, templateId);
@@ -200,7 +201,11 @@ async function updateDetailForExistingProcess(wkId: string, formData: FormData) 
   } else if (proc.templateId === "DMED_E") {
     await db.update(dmedEDetail).set(dmedEFieldsFromForm(formData)).where(eq(dmedEDetail.wkId, wkId));
   }
-  // DMEW: tidak ada field detail yang bisa diubah (subpokja/jalur terkunci)
+  // DMEW: subpokja/jalur terkunci, tapi diusulkanWkBaru bisa diubah
+  if (["DMEW-S", "DMEW-T"].includes(proc.subpokja ?? "")) {
+    const diusulkanWkBaru = formData.get("diusulkanWkBaru") === "on";
+    await db.update(dmewLelangDetail).set({ diusulkanWkBaru }).where(eq(dmewLelangDetail.wkId, wkId));
+  }
 }
 
 export async function createWk(_prev: ActionState, formData: FormData): Promise<ActionState> {

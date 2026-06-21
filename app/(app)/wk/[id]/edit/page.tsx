@@ -36,7 +36,10 @@ async function loadProcessInitial(wkId: string): Promise<{ dmew?: WkInitial["dme
   if (["DMEW-S", "DMEW-T", "DMEN-N", "DMEN-K"].includes(proc.subpokja ?? "")) {
     const [detail] = await db.select().from(dmewLelangDetail).where(eq(dmewLelangDetail.wkId, wkId)).limit(1);
     const pokja = (detail?.subpokja ?? "").startsWith("DMEN") ? "DMEN" : "DMEW";
-    return { hasProcess: true, dmew: { pokja, subpokja: detail?.subpokja, jalur: detail?.jalur } };
+    return {
+      hasProcess: true,
+      dmew: { pokja, subpokja: detail?.subpokja, jalur: detail?.jalur, diusulkanWkBaru: detail?.diusulkanWkBaru },
+    };
   }
 
   if (proc.templateId === "DMED_PODI") {

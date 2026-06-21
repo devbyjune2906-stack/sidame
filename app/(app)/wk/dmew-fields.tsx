@@ -7,6 +7,7 @@ export type DmewInitial = {
   pokja?: string | null; // "DMEW" | "DMEN"
   subpokja?: string | null;
   jalur?: string | null;
+  diusulkanWkBaru?: boolean | null;
 };
 
 const JALUR_LABEL: Record<string, string> = { REGULER: "Reguler", JOINT_STUDY: "Joint Study" };
@@ -51,13 +52,24 @@ export function DmewFields({
 
   if (locked) {
     return (
-      <div className="space-y-2 rounded-lg border border-line p-4">
+      <div className="space-y-3 rounded-lg border border-line p-4">
         <p className="text-sm font-semibold text-ink">Sub Pokja {pokjaKode}</p>
         <div className="flex gap-2">
           <Badge className="bg-petroleum/10 text-petroleum-dark">{initial?.subpokja ?? "—"}</Badge>
           <Badge className="bg-line/40 text-ink">{JALUR_LABEL[initial?.jalur ?? ""] ?? "—"}</Badge>
         </div>
         <p className="text-xs text-muted">Sub pokja & jalur tidak dapat diubah setelah WK dibuat.</p>
+        {pokjaKode === "DMEW" && (
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              name="diusulkanWkBaru"
+              defaultChecked={initial?.diusulkanWkBaru ?? false}
+              className="h-4 w-4 rounded border-line accent-petroleum"
+            />
+            <span className="text-sm text-ink">Diusulkan sebagai WK Baru</span>
+          </label>
+        )}
       </div>
     );
   }
@@ -113,6 +125,18 @@ export function DmewFields({
           </Select>
         </div>
       </div>
+
+      {pokjaKode === "DMEW" && (
+        <label className="flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            name="diusulkanWkBaru"
+            defaultChecked={initial?.diusulkanWkBaru ?? false}
+            className="h-4 w-4 rounded border-line accent-petroleum"
+          />
+          <span className="text-sm text-ink">Diusulkan sebagai WK Baru</span>
+        </label>
+      )}
     </div>
   );
 }

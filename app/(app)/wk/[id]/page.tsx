@@ -12,12 +12,14 @@ import {
   hariLibur,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { canManageStatus, canManageSubpokja, canWrite, subpokjasForRole } from "@/lib/rbac";
+import { canManageStatus, canManageSubpokja, canWrite, isAdmin, isDmew, isDmen, subpokjasForRole } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { hitungDeadline, statusSla, type SlaUnit } from "@/lib/sla";
 import { Badge, Button, Card, Input, Label } from "@/components/ui";
 import { startStage, completeStage } from "./timeline-actions";
+import { startNextLelangSubpokja } from "./process-actions";
 import AddProcessForm from "./add-process-form";
+import TidakDilanjutkanButton from "./tidak-dilanjutkan-button";
 
 type ExtraFieldDef = { key: string; label: string; type?: "text" | "checkbox" };
 
@@ -168,6 +170,26 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
   const liburRows = await db.select({ tanggal: hariLibur.tanggal }).from(hariLibur);
   const liburList = liburRows.map((r) => r.tanggal);
 
+  const showTidakDilanjutkan =
+    wk.statusWk === "SEDANG_DILELANG" &&
+    canWrite(user.role) &&
+    (isAdmin(user.role) || isDmew(user.role) || isDmen(user.role));
+
+  // Tombol "Mulai DMEW-T" atau "Mulai DMEN-K" — muncul saat sub-pokja awal selesai semua
+  // dan belum ada proses sub-pokja berikutnya
+  const canStartNext = canWrite(user.role) && (isAdmin(user.role) || isDmew(user.role) || isDmen(user.role));
+  const dmewSDone = procWithStages.some(
+    (p) => p.subpokja === "DMEW-S" && p.stages.length > 0 && p.stages.every((s) => s.status === "SELESAI")
+  );
+  const hasDmewT = procWithStages.some((p) => p.subpokja === "DMEW-T");
+  const dmenNDone = procWithStages.some(
+    (p) => p.subpokja === "DMEN-N" && p.stages.length > 0 && p.stages.every((s) => s.status === "SELESAI")
+  );
+  const hasDmenK = procWithStages.some((p) => p.subpokja === "DMEN-K");
+
+  const showStartDmewT = canStartNext && dmewSDone && !hasDmewT;
+  const showStartDmenK = canStartNext && dmenNDone && !hasDmenK;
+
   // Determine which sub-pokjas this user can manage & which already have a process
   const allowedSubpokjas = subpokjasForRole(user.role);
   const existingSubpokjas = new Set(allProcs.map((p) => p.subpokja ?? ""));
@@ -182,16 +204,19 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <header>
-        <h1 className="font-display text-2xl font-bold text-ink">{wk.namaWk}</h1>
-        <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
-          <span>
-            {wk.provinsiNama ?? "—"} / {wk.kabupatenNama ?? "—"}
-          </span>
-          <Badge className={STATUS_BADGE[wk.statusWk as StatusWk]}>
-            {STATUS_WK_LABEL[wk.statusWk as StatusWk]}
-          </Badge>
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink">{wk.namaWk}</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+            <span>
+              {wk.provinsiNama ?? "—"} / {wk.kabupatenNama ?? "—"}
+            </span>
+            <Badge className={STATUS_BADGE[wk.statusWk as StatusWk]}>
+              {STATUS_WK_LABEL[wk.statusWk as StatusWk]}
+            </Badge>
+          </p>
+        </div>
+        {showTidakDilanjutkan && <TidakDilanjutkanButton wkId={wk.id} />}
       </header>
 
       {/* History: all processes */}
@@ -291,6 +316,34 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
       {/* Form tambah proses manual untuk Admin Pokja */}
       {showAddForm && (
         <AddProcessForm wkId={id} subpokjaOptions={availableSubpokjas} />
+      )}
+
+      {/* Mulai proses DMEW-T setelah DMEW-S selesai */}
+      {showStartDmewT && (
+        <Card className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-medium text-ink">DMEW-S selesai</p>
+            <p className="text-sm text-muted">Semua tahap DMEW-S sudah diselesaikan. Lanjutkan ke DMEW-T.</p>
+          </div>
+          <form action={startNextLelangSubpokja}>
+            <input type="hidden" name="wkId" value={id} />
+            <Button type="submit">Mulai DMEW-T</Button>
+          </form>
+        </Card>
+      )}
+
+      {/* Mulai proses DMEN-K setelah DMEN-N selesai */}
+      {showStartDmenK && (
+        <Card className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-medium text-ink">DMEN-N selesai</p>
+            <p className="text-sm text-muted">Semua tahap DMEN-N sudah diselesaikan. Lanjutkan ke DMEN-K.</p>
+          </div>
+          <form action={startNextLelangSubpokja}>
+            <input type="hidden" name="wkId" value={id} />
+            <Button type="submit">Mulai DMEN-K</Button>
+          </form>
+        </Card>
       )}
     </div>
   );

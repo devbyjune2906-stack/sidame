@@ -1,4 +1,4 @@
-import { inArray, sql, and, or, isNull, eq, type SQL } from "drizzle-orm";
+import { inArray, ne, sql, and, or, isNull, eq, type SQL } from "drizzle-orm";
 import { wilayahKerja } from "@/db/schema";
 import { STATUS_BY_ROLE, POKJA_ROLE_PAIRS, type StatusWk } from "./constants";
 
@@ -87,10 +87,11 @@ export function canManageSubpokja(role: string, subpokja: string | null): boolea
   return subpokjasForRole(role).includes(sp);
 }
 
-/** Klausa WHERE untuk membatasi query berdasarkan role. undefined = tanpa batas (Admin). */
+/** Klausa WHERE untuk membatasi query berdasarkan role. TIDAK_DILANJUTKAN selalu dikecualikan dari list. */
 export function statusWhere(role: string): SQL | undefined {
+  const excludeStopped = ne(wilayahKerja.statusWk, "TIDAK_DILANJUTKAN");
   const allowed = allowedStatuses(role);
-  if (allowed === "ALL") return undefined;
+  if (allowed === "ALL") return excludeStopped;
   if (allowed.length === 0) return sql`false`;
 
   const statusFilter = inArray(wilayahKerja.statusWk, allowed);

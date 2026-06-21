@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, count, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
 import {
   processTemplate,
@@ -10,10 +10,13 @@ import {
   wkProcess,
   wkStageProgress,
   wilayahKerja,
+  dmewLelangDetail,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { canManageStatus, canWrite, subpokjasForRole } from "@/lib/rbac";
+import { canManageStatus, canWrite, isAdmin, isDmew, isDmen, subpokjasForRole } from "@/lib/rbac";
 import { type StatusWk } from "@/lib/constants";
+import { createWkProcess } from "@/lib/process-engine";
+import { dmewTemplateId, dmenTemplateId, type DmewJalur } from "@/lib/process-map";
 
 type StageInput = {
   nama: string;
@@ -116,4 +119,73 @@ export async function addManualProcess(
 
   revalidatePath(`/wk/${wkId}`);
   return null;
+}
+
+/**
+ * Mulai proses sub-pokja berikutnya dalam jalur lelang:
+ * DMEW-S → DMEW-T, atau DMEN-N → DMEN-K.
+ * Memperbarui dmewLelangDetail.subpokja dan membuat wkProcess baru dari template.
+ */
+export async function startNextLelangSubpokja(formData: FormData) {
+  const wkId = String(formData.get("wkId") ?? "");
+  if (!wkId) return;
+
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  if (!canWrite(user.role)) return;
+  if (!isAdmin(user.role) && !isDmew(user.role) && !isDmen(user.role)) return;
+
+  // Ambil detail lelang: subpokja saat ini dan jalur
+  const [detail] = await db
+    .select({ subpokja: dmewLelangDetail.subpokja, jalur: dmewLelangDetail.jalur })
+    .from(dmewLelangDetail)
+    .where(eq(dmewLelangDetail.wkId, wkId))
+    .limit(1);
+  if (!detail) return;
+
+  const currentSubpokja = detail.subpokja;
+  const jalur = (detail.jalur ?? "REGULER") as DmewJalur;
+
+  // Tentukan sub-pokja berikutnya dan template
+  let nextSubpokja: string;
+  let templateId: string;
+  if (currentSubpokja === "DMEW-S") {
+    nextSubpokja = "DMEW-T";
+    templateId = dmewTemplateId("DMEW-T", jalur);
+  } else if (currentSubpokja === "DMEN-N") {
+    nextSubpokja = "DMEN-K";
+    templateId = dmenTemplateId("DMEN-K", jalur);
+  } else {
+    return; // bukan sub-pokja yang bisa dipindah
+  }
+
+  // Pastikan semua tahap sub-pokja saat ini sudah selesai
+  const [proc] = await db
+    .select({ id: wkProcess.id })
+    .from(wkProcess)
+    .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+    .where(and(eq(wkProcess.wkId, wkId), eq(processTemplate.subpokja, currentSubpokja)))
+    .limit(1);
+  if (!proc) return;
+
+  const [{ remaining }] = await db
+    .select({ remaining: count() })
+    .from(wkStageProgress)
+    .where(and(eq(wkStageProgress.wkProcessId, proc.id), ne(wkStageProgress.status, "SELESAI")));
+  if (remaining > 0) return;
+
+  // Pastikan proses sub-pokja berikutnya belum ada
+  const [existing] = await db
+    .select({ id: wkProcess.id })
+    .from(wkProcess)
+    .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+    .where(and(eq(wkProcess.wkId, wkId), eq(processTemplate.subpokja, nextSubpokja)))
+    .limit(1);
+  if (existing) return;
+
+  // Pindahkan subpokja di detail lelang dan buat proses baru
+  await db.update(dmewLelangDetail).set({ subpokja: nextSubpokja }).where(eq(dmewLelangDetail.wkId, wkId));
+  await createWkProcess(wkId, templateId);
+
+  revalidatePath(`/wk/${wkId}`);
 }

@@ -270,10 +270,35 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     nama: "DMEW-T Reguler",
     subpokja: "DMEW-T",
     stages: [
-      { urutan: 1, nama: "Masa Lelang Reguler", slaValue: 120, slaUnit: "HARI_KALENDER" },
-      { urutan: 2, nama: "Penetapan Pemenang (surat Dirjen Migas)", slaUnit: "TANPA_SLA" },
-      { urutan: 3, nama: "Pembahasan Kontrak", slaUnit: "TANPA_SLA" },
-      { urutan: 4, nama: "TTD Kontrak", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 1,
+        nama: "Masa Lelang Reguler",
+        slaValue: 120,
+        slaUnit: "HARI_KALENDER",
+        extraFields: [{ key: "pengumuman_terbit", label: "Pengumuman lelang sudah diterbitkan", type: "checkbox" }],
+      },
+      {
+        urutan: 2,
+        nama: "Penetapan Pemenang (surat Dirjen Migas)",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "surat_pemenang_terbit", label: "Surat penetapan pemenang dari Dirjen Migas sudah terbit", type: "checkbox" }],
+      },
+      {
+        urutan: 3,
+        nama: "Pembahasan Kontrak",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "kontrak_disepakati", label: "Kontrak sudah disepakati semua pihak", type: "checkbox" }],
+      },
+      {
+        urutan: 4,
+        nama: "TTD Kontrak",
+        slaUnit: "TANPA_SLA",
+        extraFields: [
+          { key: "kontrak_ditandatangani", label: "Kontrak sudah ditandatangani", type: "checkbox" },
+          { key: "nomor_kontrak", label: "Nomor Kontrak", type: "text" },
+          { key: "tanggal_ttd", label: "Tanggal TTD", type: "text" },
+        ],
+      },
     ],
   },
   {
@@ -281,10 +306,35 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     nama: "DMEW-T Joint Study",
     subpokja: "DMEW-T",
     stages: [
-      { urutan: 1, nama: "Masa Lelang Joint Study", slaValue: 45, slaUnit: "HARI_KALENDER" },
-      { urutan: 2, nama: "Penetapan Pemenang (surat Dirjen Migas)", slaUnit: "TANPA_SLA" },
-      { urutan: 3, nama: "Pembahasan Kontrak", slaUnit: "TANPA_SLA" },
-      { urutan: 4, nama: "TTD Kontrak", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 1,
+        nama: "Masa Lelang Joint Study",
+        slaValue: 45,
+        slaUnit: "HARI_KALENDER",
+        extraFields: [{ key: "pengumuman_terbit", label: "Pengumuman lelang sudah diterbitkan", type: "checkbox" }],
+      },
+      {
+        urutan: 2,
+        nama: "Penetapan Pemenang (surat Dirjen Migas)",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "surat_pemenang_terbit", label: "Surat penetapan pemenang dari Dirjen Migas sudah terbit", type: "checkbox" }],
+      },
+      {
+        urutan: 3,
+        nama: "Pembahasan Kontrak",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "kontrak_disepakati", label: "Kontrak sudah disepakati semua pihak", type: "checkbox" }],
+      },
+      {
+        urutan: 4,
+        nama: "TTD Kontrak",
+        slaUnit: "TANPA_SLA",
+        extraFields: [
+          { key: "kontrak_ditandatangani", label: "Kontrak sudah ditandatangani", type: "checkbox" },
+          { key: "nomor_kontrak", label: "Nomor Kontrak", type: "text" },
+          { key: "tanggal_ttd", label: "Tanggal TTD", type: "text" },
+        ],
+      },
     ],
   },
   {
@@ -383,10 +433,35 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     nama: "DMEN-K Reguler",
     subpokja: "DMEN-K",
     stages: [
-      { urutan: 1, nama: "Masa Lelang Reguler", slaValue: 120, slaUnit: "HARI_KALENDER" },
-      { urutan: 2, nama: "Penetapan Pemenang (surat Dirjen Migas)", slaUnit: "TANPA_SLA" },
-      { urutan: 3, nama: "Pembahasan Kontrak", slaUnit: "TANPA_SLA" },
-      { urutan: 4, nama: "TTD Kontrak", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 1,
+        nama: "Masa Lelang Reguler",
+        slaValue: 120,
+        slaUnit: "HARI_KALENDER",
+        extraFields: [{ key: "pengumuman_terbit", label: "Pengumuman lelang sudah diterbitkan", type: "checkbox" }],
+      },
+      {
+        urutan: 2,
+        nama: "Penetapan Pemenang (surat Dirjen Migas)",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "surat_pemenang_terbit", label: "Surat penetapan pemenang dari Dirjen Migas sudah terbit", type: "checkbox" }],
+      },
+      {
+        urutan: 3,
+        nama: "Pembahasan Kontrak",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "kontrak_disepakati", label: "Kontrak sudah disepakati semua pihak", type: "checkbox" }],
+      },
+      {
+        urutan: 4,
+        nama: "TTD Kontrak",
+        slaUnit: "TANPA_SLA",
+        extraFields: [
+          { key: "kontrak_ditandatangani", label: "Kontrak sudah ditandatangani", type: "checkbox" },
+          { key: "nomor_kontrak", label: "Nomor Kontrak", type: "text" },
+          { key: "tanggal_ttd", label: "Tanggal TTD", type: "text" },
+        ],
+      },
     ],
   },
   {
@@ -394,10 +469,35 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     nama: "DMEN-K Joint Study",
     subpokja: "DMEN-K",
     stages: [
-      { urutan: 1, nama: "Masa Lelang Joint Study", slaValue: 45, slaUnit: "HARI_KALENDER" },
-      { urutan: 2, nama: "Penetapan Pemenang (surat Dirjen Migas)", slaUnit: "TANPA_SLA" },
-      { urutan: 3, nama: "Pembahasan Kontrak", slaUnit: "TANPA_SLA" },
-      { urutan: 4, nama: "TTD Kontrak", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 1,
+        nama: "Masa Lelang Joint Study",
+        slaValue: 45,
+        slaUnit: "HARI_KALENDER",
+        extraFields: [{ key: "pengumuman_terbit", label: "Pengumuman lelang sudah diterbitkan", type: "checkbox" }],
+      },
+      {
+        urutan: 2,
+        nama: "Penetapan Pemenang (surat Dirjen Migas)",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "surat_pemenang_terbit", label: "Surat penetapan pemenang dari Dirjen Migas sudah terbit", type: "checkbox" }],
+      },
+      {
+        urutan: 3,
+        nama: "Pembahasan Kontrak",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "kontrak_disepakati", label: "Kontrak sudah disepakati semua pihak", type: "checkbox" }],
+      },
+      {
+        urutan: 4,
+        nama: "TTD Kontrak",
+        slaUnit: "TANPA_SLA",
+        extraFields: [
+          { key: "kontrak_ditandatangani", label: "Kontrak sudah ditandatangani", type: "checkbox" },
+          { key: "nomor_kontrak", label: "Nomor Kontrak", type: "text" },
+          { key: "tanggal_ttd", label: "Tanggal TTD", type: "text" },
+        ],
+      },
     ],
   },
 ];

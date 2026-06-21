@@ -47,7 +47,6 @@ export function WkForm({
   userPokja?: "DMEW" | "DMEN";
 }) {
   const [state, formAction, pending] = useActionState(action, null);
-  const statusLocked = selectableStatuses.length === 1;
   const [statusWk, setStatusWk] = useState(initial.statusWk ?? selectableStatuses[0]);
 
   const [provinsiId, setProvinsiId] = useState(initial.provinsiId?.toString() ?? "");
@@ -133,11 +132,10 @@ export function WkForm({
             <Label htmlFor="statusWk">Status WK *</Label>
             <Select
               id="statusWk"
-              name={statusLocked ? undefined : "statusWk"}
+              name="statusWk"
               value={statusWk}
               onChange={(e) => setStatusWk(e.target.value as StatusWk)}
-              required={!statusLocked}
-              disabled={statusLocked}
+              required
             >
               {selectableStatuses.map((s) => (
                 <option key={s} value={s}>
@@ -145,14 +143,6 @@ export function WkForm({
                 </option>
               ))}
             </Select>
-            {statusLocked && (
-              <>
-                <input type="hidden" name="statusWk" value={selectableStatuses[0]} />
-                <p className="mt-1 text-xs text-muted">
-                  Status terkunci sesuai kewenangan Pokja Anda.
-                </p>
-              </>
-            )}
           </div>
         </div>
 

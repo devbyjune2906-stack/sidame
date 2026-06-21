@@ -3,6 +3,7 @@ import {
   serial,
   text,
   integer,
+  boolean,
   doublePrecision,
   timestamp,
   jsonb,
@@ -19,6 +20,7 @@ export const statusWk = pgEnum("status_wk", [
   "EKSPLORASI", // -> Pokja DMEE
   "POD_I", // -> Pokja DMED
   "ONSTREAM", // -> Pokja DMEP
+  "TIDAK_DILANJUTKAN", // WK dihentikan, tidak masuk pipeline manapun
 ]);
 
 export const slaUnit = pgEnum("sla_unit", ["HARI_KALENDER", "HARI_KERJA", "BULAN", "TANPA_SLA"]);
@@ -171,8 +173,9 @@ export const dmewLelangDetail = pgTable("dmew_lelang_detail", {
     .notNull()
     .unique()
     .references(() => wilayahKerja.id, { onDelete: "cascade" }),
-  subpokja: text("subpokja"), // DMEW-S | DMEW-T
+  subpokja: text("subpokja"), // DMEW-S | DMEW-T | DMEN-N | DMEN-K
   jalur: text("jalur"), // REGULER | JOINT_STUDY
+  diusulkanWkBaru: boolean("diusulkan_wk_baru").default(false).notNull(),
 });
 
 export const dmedPodiDetail = pgTable("dmed_podi_detail", {
