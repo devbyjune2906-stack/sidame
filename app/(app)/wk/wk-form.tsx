@@ -16,6 +16,7 @@ export type WkInitial = {
   operatorK3s?: string | null;
   pemegangSaham?: string | null;
   provinsiId?: number | null;
+  provinsiIds?: string | null;
   kabupatenId?: number | null;
   typeContract?: string | null;
   statusWk?: string;
@@ -49,13 +50,33 @@ export function WkForm({
   const [state, formAction, pending] = useActionState(action, null);
   const [statusWk, setStatusWk] = useState(initial.statusWk ?? selectableStatuses[0]);
 
-  const [provinsiId, setProvinsiId] = useState(initial.provinsiId?.toString() ?? "");
+  // Inisialisasi dari provinsiIds (multi) atau provinsiId (single/lama)
+  const initSelectedIds = useMemo<Set<number>>(() => {
+    if (initial.provinsiIds) {
+      return new Set(initial.provinsiIds.split(",").map(Number).filter(Boolean));
+    }
+    return initial.provinsiId ? new Set([initial.provinsiId]) : new Set();
+  }, [initial.provinsiId, initial.provinsiIds]);
+
+  const [selectedProvinsiIds, setSelectedProvinsiIds] = useState<Set<number>>(initSelectedIds);
+
+  const firstProvinsiId = useMemo(() => [...selectedProvinsiIds][0] ?? null, [selectedProvinsiIds]);
+
+  function toggleProvinsi(id: number) {
+    setSelectedProvinsiIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   const kabupatenOptions = useMemo(
     () =>
       kabupatenList.filter(
-        (k) => k.provinsiId === null || (provinsiId !== "" && k.provinsiId === Number(provinsiId))
+        (k) => k.provinsiId === null || (firstProvinsiId !== null && k.provinsiId === firstProvinsiId)
       ),
-    [kabupatenList, provinsiId]
+    [kabupatenList, firstProvinsiId]
   );
 
   return (
@@ -82,38 +103,49 @@ export function WkForm({
           <Input id="pemegangSaham" name="pemegangSaham" defaultValue={initial.pemegangSaham ?? ""} />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="provinsiId">Provinsi</Label>
-            <Select
-              id="provinsiId"
-              name="provinsiId"
-              value={provinsiId}
-              onChange={(e) => setProvinsiId(e.target.value)}
-            >
-              <option value="">— Pilih provinsi —</option>
+        <div>
+          <Label>Provinsi</Label>
+          <div className="mt-1 max-h-44 overflow-y-auto rounded-xl border border-line p-2">
+            <div className="flex flex-wrap gap-1.5">
               {provinsiList.map((p) => (
-                <option key={p.id} value={p.id}>
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => toggleProvinsi(p.id)}
+                  className={
+                    selectedProvinsiIds.has(p.id)
+                      ? "rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
+                      : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
+                  }
+                >
                   {p.nama}
-                </option>
+                </button>
               ))}
-            </Select>
+            </div>
           </div>
-          <div>
-            <Label htmlFor="kabupatenId">Kabupaten/Kota</Label>
-            <Select
-              id="kabupatenId"
-              name="kabupatenId"
-              defaultValue={initial.kabupatenId?.toString() ?? ""}
-            >
-              <option value="">— Pilih kabupaten/kota —</option>
-              {kabupatenOptions.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.nama}
-                </option>
-              ))}
-            </Select>
-          </div>
+          {selectedProvinsiIds.size > 0 && (
+            <p className="mt-1 text-xs text-muted">
+              {selectedProvinsiIds.size} provinsi dipilih
+            </p>
+          )}
+          <input type="hidden" name="provinsiId" value={firstProvinsiId?.toString() ?? ""} />
+          <input type="hidden" name="provinsiIds" value={[...selectedProvinsiIds].join(",")} />
+        </div>
+
+        <div>
+          <Label htmlFor="kabupatenId">Kabupaten/Kota</Label>
+          <Select
+            id="kabupatenId"
+            name="kabupatenId"
+            defaultValue={initial.kabupatenId?.toString() ?? ""}
+          >
+            <option value="">— Pilih kabupaten/kota —</option>
+            {kabupatenOptions.map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.nama}
+              </option>
+            ))}
+          </Select>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

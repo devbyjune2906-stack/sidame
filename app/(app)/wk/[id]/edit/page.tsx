@@ -177,6 +177,7 @@ export default async function EditWkPage({ params }: { params: Promise<{ id: str
           operatorK3s: wk.operatorK3s,
           pemegangSaham: wk.pemegangSaham,
           provinsiId: wk.provinsiId,
+          provinsiIds: wk.provinsiIds,
           kabupatenId: wk.kabupatenId,
           typeContract: wk.typeContract,
           statusWk: wk.statusWk,

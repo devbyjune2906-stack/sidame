@@ -94,8 +94,9 @@ export const wilayahKerja = pgTable("wilayah_kerja", {
   lapangan: text("lapangan"),
   operatorK3s: text("operator_k3s"),
   pemegangSaham: text("pemegang_saham"),
-  // Wilayah Admin: 1 Provinsi + 1 Kabupaten/Kota
-  provinsiId: integer("provinsi_id").references(() => provinsi.id),
+  // Wilayah Admin: multi-provinsi (comma-separated IDs) + 1 Kabupaten/Kota
+  provinsiId: integer("provinsi_id").references(() => provinsi.id), // provinsi pertama (untuk filter kabupaten)
+  provinsiIds: text("provinsi_ids"), // semua provinsi, mis. "1,3,5"
   kabupatenId: integer("kabupaten_id").references(() => kabupaten.id),
   typeContract: typeContract("type_contract"),
   statusWk: statusWk("status_wk").notNull(),
