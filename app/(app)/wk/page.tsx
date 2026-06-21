@@ -113,7 +113,7 @@ export default async function WkListPage({
               <tr>
                 <td colSpan={7} className=”px-4 py-10 text-center text-muted”>
                   {userCanCreate
-                    ? `Belum ada data. Klik “+ Tambah WK” untuk menambah.`
+                    ? 'Belum ada data. Klik “+ Tambah WK” untuk menambah.'
                     : “Belum ada data. WK akan masuk otomatis setelah disetujui dari tahap sebelumnya.”}
                 </td>
               </tr>
