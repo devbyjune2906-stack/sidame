@@ -254,6 +254,15 @@ export const dmedEDetail = pgTable("dmed_e_detail", {
   statusKkks: text("status_kkks"),
   tglEfekPi10: timestamp("tgl_efek_pi10"),
   tglPerstMesdm: timestamp("tgl_perst_mesdm"),
+  data: jsonb("data"),
+});
+
+export const dmedEFieldDef = pgTable("dmed_e_field_def", {
+  id: serial("id").primaryKey(),
+  nama: text("nama").notNull(),
+  key: text("key").notNull().unique(),
+  tipe: text("tipe").notNull().default("text"),
+  urutan: integer("urutan").notNull().default(0),
 });
 
 export const dmepDetail = pgTable("dmep_detail", {
@@ -264,6 +273,15 @@ export const dmepDetail = pgTable("dmep_detail", {
     .references(() => wilayahKerja.id, { onDelete: "cascade" }),
   sisaCadanganMinyak: doublePrecision("sisa_cadangan_minyak"),
   sisaCadanganGas: doublePrecision("sisa_cadangan_gas"),
+  data: jsonb("data"),
+});
+
+export const dmepFieldDef = pgTable("dmep_field_def", {
+  id: serial("id").primaryKey(),
+  nama: text("nama").notNull(),
+  key: text("key").notNull().unique(),
+  tipe: text("tipe").notNull().default("text"),
+  urutan: integer("urutan").notNull().default(0),
 });
 
 export const dmepProduksiBulanan = pgTable(
