@@ -123,11 +123,13 @@ export function EditStageValuesButton({
   wkId,
   extra,
   currentValues,
+  currentCatatan,
 }: {
   stageProgressId: string;
   wkId: string;
   extra: ExtraField[];
   currentValues: Record<string, string>;
+  currentCatatan?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const checkboxKeys = extra.filter((f) => f.type === "checkbox").map((f) => f.key).join(",");
@@ -177,6 +179,16 @@ export function EditStageValuesButton({
           </div>
         )
       )}
+      <div>
+        <label className="text-xs text-muted">Catatan</label>
+        <Textarea
+          name="catatan"
+          defaultValue={currentCatatan ?? ""}
+          rows={3}
+          className="mt-1 text-sm"
+          placeholder="Tulis catatan di sini..."
+        />
+      </div>
       <div className="flex gap-2">
         <Button type="submit" className="h-7 px-3 py-0 text-xs">
           Simpan

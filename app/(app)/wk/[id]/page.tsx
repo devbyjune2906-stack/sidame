@@ -345,6 +345,7 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
                           wkId={id}
                           extra={extra}
                           currentValues={(s.values as Record<string, string>) ?? {}}
+                          currentCatatan={s.catatan}
                         />
                       )}
                     </div>

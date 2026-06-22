@@ -33,9 +33,14 @@ export async function editStageValues(formData: FormData) {
     if (!(k in values)) values[k] = "false";
   }
 
+  const catatan = String(formData.get("catatan") ?? "").trim();
+
   await db
     .update(wkStageProgress)
-    .set({ values: Object.keys(values).length > 0 ? values : null })
+    .set({
+      values: Object.keys(values).length > 0 ? values : null,
+      catatan: catatan || null,
+    })
     .where(eq(wkStageProgress.id, stageProgressId));
 
   revalidatePath(`/wk/${wkId}`);
