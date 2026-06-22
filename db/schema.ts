@@ -169,6 +169,16 @@ export const dmeeDetail = pgTable("dmee_detail", {
     .unique()
     .references(() => wilayahKerja.id, { onDelete: "cascade" }),
   luasWilayahSisa: doublePrecision("luas_wilayah_sisa"),
+  data: jsonb("data"), // nilai field dinamis: { [fieldKey]: string }
+});
+
+// Definisi kolom dinamis khusus Pokja DMEE — Admin bisa tambah/hapus
+export const dmeeFieldDef = pgTable("dmee_field_def", {
+  id: serial("id").primaryKey(),
+  nama: text("nama").notNull(),           // Label tampilan, mis. "Jenis Reservoir"
+  key: text("key").notNull().unique(),    // Kunci storage, mis. "jenis_reservoir"
+  tipe: text("tipe").notNull().default("text"), // "text" | "number" | "date"
+  urutan: integer("urutan").notNull().default(0),
 });
 
 export const dmewLelangDetail = pgTable("dmew_lelang_detail", {
