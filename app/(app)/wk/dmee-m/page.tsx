@@ -9,6 +9,7 @@ import {
   wkProcess,
   processTemplate,
   dmeeDetail,
+  dmeeFieldDef,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { canWrite, isAdmin, isDmee } from "@/lib/rbac";
@@ -20,25 +21,32 @@ export default async function DmeeMPage() {
   if (!user) redirect("/login");
   if (!isAdmin(user.role) && !isDmee(user.role)) redirect("/wk");
 
-  const rows = await db
-    .select({
-      id: wilayahKerja.id,
-      namaWk: wilayahKerja.namaWk,
-      lapangan: wilayahKerja.lapangan,
-      operatorK3s: wilayahKerja.operatorK3s,
-      provinsiNama: provinsi.nama,
-      kabupatenNama: kabupaten.nama,
-      statusWk: wilayahKerja.statusWk,
-      luasWilayahSisa: dmeeDetail.luasWilayahSisa,
-    })
-    .from(wkProcess)
-    .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
-    .innerJoin(wilayahKerja, eq(wkProcess.wkId, wilayahKerja.id))
-    .leftJoin(provinsi, eq(wilayahKerja.provinsiId, provinsi.id))
-    .leftJoin(kabupaten, eq(wilayahKerja.kabupatenId, kabupaten.id))
-    .leftJoin(dmeeDetail, eq(dmeeDetail.wkId, wilayahKerja.id))
-    .where(eq(processTemplate.subpokja, "DMEE-M"))
-    .orderBy(asc(wilayahKerja.namaWk));
+  const [rows, fieldDefs] = await Promise.all([
+    db
+      .select({
+        id: wilayahKerja.id,
+        namaWk: wilayahKerja.namaWk,
+        lapangan: wilayahKerja.lapangan,
+        operatorK3s: wilayahKerja.operatorK3s,
+        provinsiNama: provinsi.nama,
+        kabupatenNama: kabupaten.nama,
+        statusWk: wilayahKerja.statusWk,
+        luasWilayahSisa: dmeeDetail.luasWilayahSisa,
+        data: dmeeDetail.data,
+      })
+      .from(wkProcess)
+      .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+      .innerJoin(wilayahKerja, eq(wkProcess.wkId, wilayahKerja.id))
+      .leftJoin(provinsi, eq(wilayahKerja.provinsiId, provinsi.id))
+      .leftJoin(kabupaten, eq(wilayahKerja.kabupatenId, kabupaten.id))
+      .leftJoin(dmeeDetail, eq(dmeeDetail.wkId, wilayahKerja.id))
+      .where(eq(processTemplate.subpokja, "DMEE-M"))
+      .orderBy(asc(wilayahKerja.namaWk)),
+    db
+      .select()
+      .from(dmeeFieldDef)
+      .orderBy(asc(dmeeFieldDef.urutan), asc(dmeeFieldDef.id)),
+  ]);
 
   const userCanEdit = canWrite(user.role);
 
@@ -69,6 +77,9 @@ export default async function DmeeMPage() {
               <th className="px-4 py-3 font-semibold">Provinsi</th>
               <th className="px-4 py-3 font-semibold">Kabupaten/Kota</th>
               <th className="px-4 py-3 font-semibold">Luas Sisa (km²)</th>
+              {fieldDefs.map((f) => (
+                <th key={f.id} className="px-4 py-3 font-semibold">{f.nama}</th>
+              ))}
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 text-right font-semibold">Aksi</th>
             </tr>
@@ -76,46 +87,54 @@ export default async function DmeeMPage() {
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-muted">
+                <td colSpan={8 + fieldDefs.length} className="px-4 py-10 text-center text-muted">
                   Belum ada data DMEE-M.
                 </td>
               </tr>
             )}
-            {rows.map((r) => (
-              <tr key={r.id} className="border-b border-line/60 last:border-0 hover:bg-sand/60">
-                <td className="px-4 py-3 font-medium text-ink">{r.namaWk}</td>
-                <td className="px-4 py-3 text-ink">{r.lapangan ?? "—"}</td>
-                <td className="px-4 py-3 text-ink">{r.operatorK3s ?? "—"}</td>
-                <td className="px-4 py-3 text-ink">{r.provinsiNama ?? "—"}</td>
-                <td className="px-4 py-3 text-ink">{r.kabupatenNama ?? "—"}</td>
-                <td className="px-4 py-3 text-ink">
-                  {r.luasWilayahSisa != null ? r.luasWilayahSisa.toLocaleString("id-ID") : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <Badge className={STATUS_BADGE[r.statusWk as StatusWk]}>
-                    {STATUS_WK_LABEL[r.statusWk as StatusWk]}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex items-center justify-end gap-3">
-                    {userCanEdit && (
+            {rows.map((r) => {
+              const dynData = (r.data ?? {}) as Record<string, string>;
+              return (
+                <tr key={r.id} className="border-b border-line/60 last:border-0 hover:bg-sand/60">
+                  <td className="px-4 py-3 font-medium text-ink">{r.namaWk}</td>
+                  <td className="px-4 py-3 text-ink">{r.lapangan ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{r.operatorK3s ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{r.provinsiNama ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{r.kabupatenNama ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">
+                    {r.luasWilayahSisa != null ? r.luasWilayahSisa.toLocaleString("id-ID") : "—"}
+                  </td>
+                  {fieldDefs.map((f) => (
+                    <td key={f.id} className="px-4 py-3 text-ink">
+                      {dynData[f.key] ? dynData[f.key] : "—"}
+                    </td>
+                  ))}
+                  <td className="px-4 py-3">
+                    <Badge className={STATUS_BADGE[r.statusWk as StatusWk]}>
+                      {STATUS_WK_LABEL[r.statusWk as StatusWk]}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-3">
+                      {userCanEdit && (
+                        <Link
+                          href={`/wk/dmee/${r.id}/edit`}
+                          className="text-sm font-medium text-petroleum hover:underline"
+                        >
+                          Edit
+                        </Link>
+                      )}
                       <Link
-                        href={`/wk/dmee/${r.id}/edit`}
+                        href={`/wk/${r.id}`}
                         className="text-sm font-medium text-petroleum hover:underline"
                       >
-                        Edit
+                        Lihat
                       </Link>
-                    )}
-                    <Link
-                      href={`/wk/${r.id}`}
-                      className="text-sm font-medium text-petroleum hover:underline"
-                    >
-                      Lihat
-                    </Link>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
