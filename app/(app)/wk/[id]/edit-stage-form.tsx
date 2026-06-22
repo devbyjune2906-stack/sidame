@@ -72,12 +72,14 @@ export function CatatanSection({
   currentCatatan: string | null;
 }) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [value, setValue] = useState(currentCatatan ?? "");
 
   useEffect(() => { setValue(currentCatatan ?? ""); }, [currentCatatan]);
 
   async function handleSimpan(formData: FormData) {
     await editStageCatatan(formData);
+    setOpen(false);
     router.refresh();
   }
 
@@ -87,7 +89,38 @@ export function CatatanSection({
     fd.set("wkId", wkId);
     fd.set("catatan", "");
     await editStageCatatan(fd);
+    setOpen(false);
     router.refresh();
+  }
+
+  if (!open) {
+    return (
+      <div className="flex items-start gap-2">
+        {currentCatatan ? (
+          <>
+            <div className="flex-1">
+              <p className="text-xs font-medium text-muted">Catatan</p>
+              <p className="mt-0.5 text-sm text-ink">{currentCatatan}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="shrink-0 text-xs text-muted hover:text-petroleum"
+            >
+              ✎ Edit
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-xs text-muted hover:text-petroleum"
+          >
+            + Tambah catatan
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -103,6 +136,7 @@ export function CatatanSection({
           rows={3}
           className="text-sm"
           placeholder="Tulis catatan di sini..."
+          autoFocus
         />
         <div className="flex gap-2">
           <Button type="submit" className="h-7 px-3 py-0 text-xs">
@@ -117,6 +151,13 @@ export function CatatanSection({
               Hapus
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => { setValue(currentCatatan ?? ""); setOpen(false); }}
+            className="text-xs text-muted hover:text-danger"
+          >
+            Batal
+          </button>
         </div>
       </form>
     </div>
