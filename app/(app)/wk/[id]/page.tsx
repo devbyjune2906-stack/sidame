@@ -22,7 +22,7 @@ import AddProcessForm from "./add-process-form";
 import TidakDilanjutkanButton from "./tidak-dilanjutkan-button";
 import LanjutkanKeDmeeButton from "./lanjutkan-ke-dmee-button";
 import LanjutkanKeDmedButton from "./lanjutkan-ke-dmed-button";
-import { EditStageNameButton, CatatanSection } from "./edit-stage-form";
+import { CatatanSection, EditStageValuesButton } from "./edit-stage-form";
 
 type ExtraFieldDef = { key: string; label: string; type?: "text" | "checkbox" };
 
@@ -284,16 +284,7 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
                 <Card key={s.id} className="space-y-3">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs text-muted">Tahap {s.urutan}</p>
-                        {userCanManageThisProc && (
-                          <EditStageNameButton
-                            stageProgressId={s.id}
-                            wkId={id}
-                            currentNama={s.namaOverride ?? s.nama}
-                          />
-                        )}
-                      </div>
+                      <p className="text-xs text-muted">Tahap {s.urutan}</p>
                       <p className="font-medium text-ink">{s.namaOverride ?? s.nama}</p>
                       {s.slaUnit !== "TANPA_SLA" && (
                         <p className="text-xs text-muted">
@@ -343,9 +334,21 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
                   )}
 
                   {/* Nilai extra fields untuk tahap yang sudah selesai */}
-                  {s.status === "SELESAI" && s.values != null && extra.length > 0
-                    ? <StageValues vals={s.values as Record<string, string>} fields={extra} />
-                    : null}
+                  {s.status === "SELESAI" && extra.length > 0 && (
+                    <div className="space-y-2">
+                      {s.values != null && (
+                        <StageValues vals={s.values as Record<string, string>} fields={extra} />
+                      )}
+                      {userCanManageThisProc && (
+                        <EditStageValuesButton
+                          stageProgressId={s.id}
+                          wkId={id}
+                          extra={extra}
+                          currentValues={(s.values as Record<string, string>) ?? {}}
+                        />
+                      )}
+                    </div>
+                  )}
 
                   {userCanManageThisProc && s.status === "BERJALAN" && (
                     <CompleteStageForm stageProgressId={s.id} extra={extra} action={completeStage} />
