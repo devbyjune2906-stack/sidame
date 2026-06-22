@@ -22,7 +22,7 @@ import AddProcessForm from "./add-process-form";
 import TidakDilanjutkanButton from "./tidak-dilanjutkan-button";
 import LanjutkanKeDmeeButton from "./lanjutkan-ke-dmee-button";
 import LanjutkanKeDmedButton from "./lanjutkan-ke-dmed-button";
-import { EditStageNameButton, EditCatatanButton } from "./edit-stage-form";
+import { EditStageNameButton, CatatanSection } from "./edit-stage-form";
 
 type ExtraFieldDef = { key: string; label: string; type?: "text" | "checkbox" };
 
@@ -49,12 +49,10 @@ function CompleteStageForm({
   stageProgressId,
   extra,
   action,
-  currentCatatan,
 }: {
   stageProgressId: string;
   extra: ExtraFieldDef[];
   action: (formData: FormData) => Promise<void>;
-  currentCatatan?: string | null;
 }) {
   const checkboxKeys = extra.filter((f) => f.type === "checkbox").map((f) => f.key).join(",");
   return (
@@ -82,10 +80,6 @@ function CompleteStageForm({
           )}
         </div>
       )}
-      <div>
-        <Label htmlFor={`catatan_${stageProgressId}`}>Catatan</Label>
-        <Input id={`catatan_${stageProgressId}`} name="catatan" defaultValue={currentCatatan ?? ""} />
-      </div>
       <Button type="submit">Selesaikan Tahap</Button>
     </form>
   );
@@ -327,18 +321,16 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
                     <p>Selesai: {fmtDate(s.completedDate)}</p>
                   </div>
 
-                  {/* Catatan: tampilkan jika ada, dan tombol edit untuk user yang bisa manage */}
-                  {(s.catatan || userCanManageThisProc) && (
-                    <div className="space-y-1">
-                      {s.catatan && <p className="text-sm text-ink">Catatan: {s.catatan}</p>}
-                      {userCanManageThisProc && (
-                        <EditCatatanButton
-                          stageProgressId={s.id}
-                          wkId={id}
-                          currentCatatan={s.catatan}
-                        />
-                      )}
-                    </div>
+                  {/* Catatan: editor untuk user yang bisa manage, teks saja untuk staf */}
+                  {userCanManageThisProc ? (
+                    <CatatanSection
+                      key={s.catatan ?? "empty"}
+                      stageProgressId={s.id}
+                      wkId={id}
+                      currentCatatan={s.catatan}
+                    />
+                  ) : (
+                    s.catatan && <p className="text-sm text-ink">Catatan: {s.catatan}</p>
                   )}
 
                   {userCanManageThisProc && s.status === "BELUM_MULAI" && (
@@ -356,7 +348,7 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
                     : null}
 
                   {userCanManageThisProc && s.status === "BERJALAN" && (
-                    <CompleteStageForm stageProgressId={s.id} extra={extra} action={completeStage} currentCatatan={s.catatan} />
+                    <CompleteStageForm stageProgressId={s.id} extra={extra} action={completeStage} />
                   )}
                 </Card>
               );
