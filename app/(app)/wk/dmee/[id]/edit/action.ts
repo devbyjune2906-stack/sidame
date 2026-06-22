@@ -3,9 +3,19 @@
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { dmeeDetail } from "@/db/schema";
+import { dmeeDetail, dmeeFieldDef } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { canWrite, isDmee, isAdmin } from "@/lib/rbac";
+
+function toKey(nama: string): string {
+  return nama
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "_");
+}
 
 export async function saveDmeeDetail(formData: FormData) {
   const user = await getCurrentUser();
@@ -49,4 +59,32 @@ export async function saveDmeeDetail(formData: FormData) {
   }
 
   redirect("/wk/dmee-l");
+}
+
+export async function addDmeeFieldFromEdit(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user || !isAdmin(user.role)) return;
+
+  const wkId = String(formData.get("wkId") ?? "");
+  const nama = String(formData.get("nama") ?? "").trim();
+  const tipe = String(formData.get("tipe") ?? "text");
+  const urutanRaw = formData.get("urutan");
+  const urutan = urutanRaw ? parseInt(String(urutanRaw)) : 0;
+
+  if (!nama || !wkId) return;
+
+  const key = toKey(nama);
+  if (!key) return;
+
+  const existing = await db
+    .select({ key: dmeeFieldDef.key })
+    .from(dmeeFieldDef)
+    .where(eq(dmeeFieldDef.key, key))
+    .limit(1);
+
+  const finalKey = existing.length > 0 ? `${key}_${Date.now()}` : key;
+
+  await db.insert(dmeeFieldDef).values({ nama, key: finalKey, tipe, urutan });
+
+  redirect(`/wk/dmee/${wkId}/edit`);
 }
