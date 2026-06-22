@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Input, Textarea } from "@/components/ui";
 import { editStageName, editStageCatatan, editStageValues } from "./edit-stage-action";
 
@@ -15,6 +16,7 @@ export function EditStageNameButton({
   wkId: string;
   currentNama: string;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   if (!open) {
@@ -33,6 +35,7 @@ export function EditStageNameButton({
   async function handleSubmit(formData: FormData) {
     await editStageName(formData);
     setOpen(false);
+    router.refresh();
   }
 
   return (
@@ -68,13 +71,14 @@ export function CatatanSection({
   wkId: string;
   currentCatatan: string | null;
 }) {
+  const router = useRouter();
   const [value, setValue] = useState(currentCatatan ?? "");
 
-  // Sync textarea when server refreshes the prop after save/delete
   useEffect(() => { setValue(currentCatatan ?? ""); }, [currentCatatan]);
 
   async function handleSimpan(formData: FormData) {
     await editStageCatatan(formData);
+    router.refresh();
   }
 
   async function handleHapus() {
@@ -83,6 +87,7 @@ export function CatatanSection({
     fd.set("wkId", wkId);
     fd.set("catatan", "");
     await editStageCatatan(fd);
+    router.refresh();
   }
 
   return (
@@ -131,6 +136,7 @@ export function EditStageValuesButton({
   currentValues: Record<string, string>;
   currentCatatan?: string | null;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const checkboxKeys = extra.filter((f) => f.type === "checkbox").map((f) => f.key).join(",");
 
@@ -150,6 +156,7 @@ export function EditStageValuesButton({
   async function handleSubmit(formData: FormData) {
     await editStageValues(formData);
     setOpen(false);
+    router.refresh();
   }
 
   return (
