@@ -22,6 +22,7 @@ import AddProcessForm from "./add-process-form";
 import TidakDilanjutkanButton from "./tidak-dilanjutkan-button";
 import LanjutkanKeDmeeButton from "./lanjutkan-ke-dmee-button";
 import LanjutkanKeDmedButton from "./lanjutkan-ke-dmed-button";
+import { EditStageNameButton } from "./edit-stage-form";
 
 type ExtraFieldDef = { key: string; label: string; type?: "text" | "checkbox" };
 
@@ -155,6 +156,7 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
           completedDate: wkStageProgress.completedDate,
           catatan: wkStageProgress.catatan,
           values: wkStageProgress.values,
+          namaOverride: wkStageProgress.namaOverride,
           urutan: stageTemplate.urutan,
           nama: stageTemplate.nama,
           slaValue: stageTemplate.slaValue,
@@ -285,9 +287,18 @@ export default async function WkDetailPage({ params }: { params: Promise<{ id: s
               return (
                 <Card key={s.id} className="space-y-3">
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <p className="text-xs text-muted">Tahap {s.urutan}</p>
-                      <p className="font-medium text-ink">{s.nama}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-muted">Tahap {s.urutan}</p>
+                        {userCanManageThisProc && (
+                          <EditStageNameButton
+                            stageProgressId={s.id}
+                            wkId={id}
+                            currentNama={s.namaOverride ?? s.nama}
+                          />
+                        )}
+                      </div>
+                      <p className="font-medium text-ink">{s.namaOverride ?? s.nama}</p>
                       {s.slaUnit !== "TANPA_SLA" && (
                         <p className="text-xs text-muted">
                           SLA: {s.slaValue} {SLA_LABEL[s.slaUnit]}

@@ -152,6 +152,7 @@ export const wkStageProgress = pgTable("wk_stage_progress", {
   completedDate: timestamp("completed_date"),
   values: jsonb("values"),
   catatan: text("catatan"),
+  namaOverride: text("nama_override"), // jika diisi, menggantikan nama dari stageTemplate
 });
 
 export const hariLibur = pgTable("hari_libur", {
