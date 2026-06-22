@@ -7,6 +7,7 @@ import {
   provinsi,
   wkProcess,
   processTemplate,
+  stageTemplate,
   wkStageProgress,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
@@ -143,18 +144,20 @@ export default async function DashboardPage() {
       const stageDetails = await db
         .select({
           processId: wkStageProgress.wkProcessId,
-          nama: wkStageProgress.nama,
+          nama: stageTemplate.nama,
+          namaOverride: wkStageProgress.namaOverride,
           status: wkStageProgress.status,
-          urutan: wkStageProgress.urutan,
+          urutan: stageTemplate.urutan,
         })
         .from(wkStageProgress)
+        .innerJoin(stageTemplate, eq(wkStageProgress.stageTemplateId, stageTemplate.id))
         .where(inArray(wkStageProgress.wkProcessId, processIds))
-        .orderBy(asc(wkStageProgress.urutan));
+        .orderBy(asc(stageTemplate.urutan));
 
-      const stagesByProcess = new Map<number, StageInfo[]>();
+      const stagesByProcess = new Map<string, StageInfo[]>();
       for (const s of stageDetails) {
         if (!stagesByProcess.has(s.processId)) stagesByProcess.set(s.processId, []);
-        stagesByProcess.get(s.processId)!.push({ nama: s.nama ?? "", status: s.status, urutan: s.urutan });
+        stagesByProcess.get(s.processId)!.push({ nama: s.namaOverride ?? s.nama, status: s.status, urutan: s.urutan });
       }
 
       // Filter: sembunyikan WK yang semua tahapnya sudah SELESAI
