@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { and, asc, count, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
   wilayahKerja,
@@ -44,12 +44,13 @@ const SUBPOKJA_COLOR: Record<string, string> = {
   "DMEP-P": "bg-ink/20 text-ink",
 };
 
+type StageInfo = { nama: string; status: string; urutan: number };
 type MilestoneRow = {
   wkId: string;
   wkNama: string;
   subpokja: string;
   statusWk: string;
-  total: number;
+  stages: StageInfo[];
   selesai: number;
   berjalan: number;
 };
@@ -139,38 +140,36 @@ export default async function DashboardPage() {
     if (procs.length > 0) {
       const processIds = procs.map((p) => p.processId);
 
-      const stageCounts = await db
+      const stageDetails = await db
         .select({
           processId: wkStageProgress.wkProcessId,
-          total: count(),
-          selesai: sql<number>`SUM(CASE WHEN ${wkStageProgress.status} = 'SELESAI' THEN 1 ELSE 0 END)`,
-          berjalan: sql<number>`SUM(CASE WHEN ${wkStageProgress.status} = 'BERJALAN' THEN 1 ELSE 0 END)`,
+          nama: wkStageProgress.nama,
+          status: wkStageProgress.status,
+          urutan: wkStageProgress.urutan,
         })
         .from(wkStageProgress)
         .where(inArray(wkStageProgress.wkProcessId, processIds))
-        .groupBy(wkStageProgress.wkProcessId);
+        .orderBy(asc(wkStageProgress.urutan));
 
-      const stageMap = new Map(stageCounts.map((s) => [s.processId, s]));
+      const stagesByProcess = new Map<number, StageInfo[]>();
+      for (const s of stageDetails) {
+        if (!stagesByProcess.has(s.processId)) stagesByProcess.set(s.processId, []);
+        stagesByProcess.get(s.processId)!.push({ nama: s.nama ?? "", status: s.status, urutan: s.urutan });
+      }
 
-      milestoneData = procs.map((p) => {
-        const s = stageMap.get(p.processId);
-        const total = s?.total ?? 0;
-        const selesai = Number(s?.selesai ?? 0);
-        const berjalan = Number(s?.berjalan ?? 0);
-        return {
-          wkId: p.wkId,
-          wkNama: p.wkNama,
-          subpokja: p.subpokja ?? "",
-          statusWk: p.statusWk,
-          total,
-          selesai,
-          berjalan,
-        };
-      });
+      // Filter: sembunyikan WK yang semua tahapnya sudah SELESAI
+      milestoneData = procs
+        .map((p) => {
+          const stages = stagesByProcess.get(p.processId) ?? [];
+          const selesai = stages.filter((s) => s.status === "SELESAI").length;
+          const berjalan = stages.filter((s) => s.status === "BERJALAN").length;
+          return { wkId: p.wkId, wkNama: p.wkNama, subpokja: p.subpokja ?? "", statusWk: p.statusWk, stages, selesai, berjalan };
+        })
+        .filter((r) => r.stages.length === 0 || r.selesai < r.stages.length);
 
       totalSelesai = milestoneData.reduce((acc, r) => acc + r.selesai, 0);
       totalBerjalan = milestoneData.reduce((acc, r) => acc + r.berjalan, 0);
-      const totalAll = milestoneData.reduce((acc, r) => acc + r.total, 0);
+      const totalAll = milestoneData.reduce((acc, r) => acc + r.stages.length, 0);
       totalBelumMulai = totalAll - totalSelesai - totalBerjalan;
     }
   }
@@ -220,81 +219,44 @@ export default async function DashboardPage() {
           <Card className="overflow-hidden p-0">
             {milestoneData.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted">
-                Belum ada data tahapan untuk sub-pokja ini.
+                Semua tahapan WK telah selesai atau belum ada data.
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-line bg-sand/40 text-left text-xs uppercase tracking-wide text-muted">
-                      <th className="px-4 py-3 font-semibold">Nama WK</th>
-                      <th className="px-4 py-3 font-semibold">Sub Pokja</th>
-                      <th className="px-4 py-3 font-semibold">Progress Tahap</th>
-                      <th className="px-4 py-3 text-right font-semibold">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {milestoneData.map((r, i) => {
-                      const pct = r.total > 0 ? Math.round((r.selesai / r.total) * 100) : 0;
-                      const allDone = r.total > 0 && r.selesai === r.total;
-                      const hasRunning = r.berjalan > 0;
-
-                      return (
-                        <tr
-                          key={`${r.wkId}-${r.subpokja}-${i}`}
-                          className="border-b border-line/60 last:border-0 hover:bg-sand/40"
-                        >
-                          <td className="px-4 py-3">
-                            <Link
-                              href={`/wk/${r.wkId}`}
-                              className="font-medium text-petroleum hover:underline"
-                            >
-                              {r.wkNama}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge className={SUBPOKJA_COLOR[r.subpokja] ?? "bg-line/40 text-ink"}>
-                              {r.subpokja}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 min-w-[220px]">
-                            {r.total === 0 ? (
-                              <span className="text-xs text-muted">Belum ada tahap</span>
-                            ) : (
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-between text-xs">
-                                  <span className="text-muted">
-                                    {r.selesai} / {r.total} tahap selesai
-                                  </span>
-                                  <span className="font-medium text-ink">{pct}%</span>
-                                </div>
-                                <div className="h-2 w-full overflow-hidden rounded-full bg-line/40">
-                                  <div
-                                    className={`h-2 rounded-full transition-all ${
-                                      allDone ? "bg-ok" : hasRunning ? "bg-petroleum" : "bg-line"
-                                    }`}
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            {allDone ? (
-                              <Badge className="bg-ok/10 text-ok">Semua Selesai</Badge>
-                            ) : hasRunning ? (
-                              <Badge className="bg-petroleum/10 text-petroleum-dark">Berjalan</Badge>
-                            ) : r.total === 0 ? (
-                              <Badge className="bg-line/40 text-muted">Belum Ada Tahap</Badge>
-                            ) : (
-                              <Badge className="bg-line/40 text-muted">Belum Mulai</Badge>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="divide-y divide-line/60">
+                {milestoneData.map((r, i) => {
+                  const hasRunning = r.berjalan > 0;
+                  return (
+                    <div key={`${r.wkId}-${r.subpokja}-${i}`} className="px-4 py-4 hover:bg-sand/30">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Link
+                            href={`/wk/${r.wkId}`}
+                            className="truncate font-semibold text-petroleum hover:underline"
+                          >
+                            {r.wkNama}
+                          </Link>
+                          <Badge className={`shrink-0 ${SUBPOKJA_COLOR[r.subpokja] ?? "bg-line/40 text-ink"}`}>
+                            {r.subpokja}
+                          </Badge>
+                        </div>
+                        <div className="ml-3 shrink-0">
+                          {hasRunning ? (
+                            <Badge className="bg-petroleum/10 text-petroleum-dark">Berjalan</Badge>
+                          ) : r.stages.length === 0 ? (
+                            <Badge className="bg-line/40 text-muted">Belum Ada Tahap</Badge>
+                          ) : (
+                            <Badge className="bg-line/40 text-muted">Belum Mulai</Badge>
+                          )}
+                        </div>
+                      </div>
+                      {r.stages.length === 0 ? (
+                        <p className="text-xs text-muted">Belum ada tahap terdaftar.</p>
+                      ) : (
+                        <MilestoneTimeline stages={r.stages} />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </Card>
@@ -357,5 +319,51 @@ function RankList({ rows }: { rows: { nama: string; c: number }[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function MilestoneTimeline({ stages }: { stages: StageInfo[] }) {
+  return (
+    <div className="overflow-x-auto pb-1">
+      <div className="flex min-w-max items-start py-1">
+        {stages.map((s, i) => {
+          const isDone = s.status === "SELESAI";
+          const isRunning = s.status === "BERJALAN";
+          const prevDone = i > 0 && stages[i - 1].status === "SELESAI";
+          return (
+            <div key={i} className="flex items-start">
+              {i > 0 && (
+                <div className={`mt-[9px] h-0.5 w-10 shrink-0 ${prevDone ? "bg-ok" : "bg-line/40"}`} />
+              )}
+              <div className="flex w-[72px] flex-col items-center gap-1.5">
+                <div
+                  className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 ${
+                    isDone
+                      ? "border-ok bg-ok"
+                      : isRunning
+                      ? "border-petroleum bg-petroleum"
+                      : "border-line bg-surface"
+                  }`}
+                >
+                  {isDone && (
+                    <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
+                  {isRunning && <div className="h-2 w-2 rounded-full bg-white" />}
+                </div>
+                <span className="line-clamp-2 w-full px-1 text-center text-[10px] leading-tight text-muted">
+                  {s.nama}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
