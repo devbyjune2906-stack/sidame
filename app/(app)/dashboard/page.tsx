@@ -168,7 +168,12 @@ export default async function DashboardPage() {
           const berjalan = stages.filter((s) => s.status === "BERJALAN").length;
           return { wkId: p.wkId, wkNama: p.wkNama, subpokja: p.subpokja ?? "", statusWk: p.statusWk, stages, selesai, berjalan };
         })
-        .filter((r) => r.stages.length === 0 || r.selesai < r.stages.length);
+        .filter((r) => {
+          if (r.stages.length === 0) return true;
+          // Sembunyikan jika tahap terakhir (urutan tertinggi) sudah SELESAI
+          const lastStage = r.stages[r.stages.length - 1];
+          return lastStage.status !== "SELESAI";
+        });
 
       totalSelesai = milestoneData.reduce((acc, r) => acc + r.selesai, 0);
       totalBerjalan = milestoneData.reduce((acc, r) => acc + r.berjalan, 0);
