@@ -194,58 +194,33 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* Grafik */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <h2 className="mb-2 font-display text-base font-semibold text-ink">Distribusi per Status</h2>
-          <StatusPie data={statusData} />
-        </Card>
-        <Card>
-          <h2 className="mb-2 font-display text-base font-semibold text-ink">Distribusi per Kontrak</h2>
-          <ContractBar data={contractData} />
-        </Card>
-      </div>
-
-      {/* Tabel ringkas */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <h2 className="mb-3 font-display text-base font-semibold text-ink">WK per Provinsi (Top 8)</h2>
-          <RankList rows={perProvinsi.map((r) => ({ nama: r.nama ?? "—", c: r.c }))} />
-        </Card>
-        <Card>
-          <h2 className="mb-3 font-display text-base font-semibold text-ink">WK per Operator/K3S (Top 8)</h2>
-          <RankList rows={perOperator.map((r) => ({ nama: r.nama ?? "—", c: r.c }))} />
-        </Card>
-      </div>
-
-      {/* Progress Milestone Tahapan */}
+      {/* Progress Milestone Tahapan — ditampilkan tepat di bawah stat cards */}
       {progressSubpokjas.length > 0 && (
-        <section className="space-y-4">
-          <h2 className="font-display text-lg font-semibold text-ink">
-            Progress Milestone Tahapan
-          </h2>
-
-          {/* Ringkasan tahap */}
-          <div className="grid grid-cols-3 gap-3">
-            <Card className="text-center">
-              <p className="text-xs text-ok">Tahap Selesai</p>
-              <p className="mt-1 font-display text-2xl font-bold text-ink">{totalSelesai}</p>
-            </Card>
-            <Card className="text-center">
-              <p className="text-xs text-warn">Sedang Berjalan</p>
-              <p className="mt-1 font-display text-2xl font-bold text-ink">{totalBerjalan}</p>
-            </Card>
-            <Card className="text-center">
-              <p className="text-xs text-muted">Belum Mulai</p>
-              <p className="mt-1 font-display text-2xl font-bold text-ink">{totalBelumMulai}</p>
-            </Card>
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold text-ink">
+              Progress Milestone Tahapan
+            </h2>
+            <div className="flex gap-4 text-sm">
+              <span className="flex items-center gap-1.5 text-ok">
+                <span className="inline-block h-2 w-2 rounded-full bg-ok" />
+                Selesai: <strong>{totalSelesai}</strong>
+              </span>
+              <span className="flex items-center gap-1.5 text-warn">
+                <span className="inline-block h-2 w-2 rounded-full bg-warn" />
+                Berjalan: <strong>{totalBerjalan}</strong>
+              </span>
+              <span className="flex items-center gap-1.5 text-muted">
+                <span className="inline-block h-2 w-2 rounded-full bg-line" />
+                Belum Mulai: <strong>{totalBelumMulai}</strong>
+              </span>
+            </div>
           </div>
 
-          {/* Tabel per WK */}
           <Card className="overflow-hidden p-0">
             {milestoneData.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted">
-                Belum ada data tahapan.
+                Belum ada data tahapan untuk sub-pokja ini.
               </p>
             ) : (
               <div className="overflow-x-auto">
@@ -282,7 +257,7 @@ export default async function DashboardPage() {
                               {r.subpokja}
                             </Badge>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 min-w-[220px]">
                             {r.total === 0 ? (
                               <span className="text-xs text-muted">Belum ada tahap</span>
                             ) : (
@@ -325,6 +300,30 @@ export default async function DashboardPage() {
           </Card>
         </section>
       )}
+
+      {/* Grafik */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <h2 className="mb-2 font-display text-base font-semibold text-ink">Distribusi per Status</h2>
+          <StatusPie data={statusData} />
+        </Card>
+        <Card>
+          <h2 className="mb-2 font-display text-base font-semibold text-ink">Distribusi per Kontrak</h2>
+          <ContractBar data={contractData} />
+        </Card>
+      </div>
+
+      {/* Tabel ringkas */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <h2 className="mb-3 font-display text-base font-semibold text-ink">WK per Provinsi (Top 8)</h2>
+          <RankList rows={perProvinsi.map((r) => ({ nama: r.nama ?? "—", c: r.c }))} />
+        </Card>
+        <Card>
+          <h2 className="mb-3 font-display text-base font-semibold text-ink">WK per Operator/K3S (Top 8)</h2>
+          <RankList rows={perOperator.map((r) => ({ nama: r.nama ?? "—", c: r.c }))} />
+        </Card>
+      </div>
     </div>
   );
 }
