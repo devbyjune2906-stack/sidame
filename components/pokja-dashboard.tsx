@@ -6,8 +6,70 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 
-const PIE_COLORS = ["#0B5E54", "#0F7A6E", "#C9821B", "#2E7D5B", "#6B8E86", "#B4322B"];
+// ── Color palette for dark dashboard ──────────────────────────────
+const BG_MAIN    = "#091520";
+const BG_HEADER  = "#0d2240";
+const BG_TITLE   = "#0a1e38";
+const BG_CARD    = "#0d1e30";
+const BG_CARD2   = "#081420";
+const BORDER     = "#1a3352";
+const PIE_COLORS = ["#1EB8A8", "#0B9E8E", "#C9821B", "#2E7D5B", "#6B8E86", "#B4322B"];
 
+const STATUS_ICON: Record<string, string> = {
+  WK_USULAN_BARU:    "🗂",
+  SEDANG_DILELANG:   "📋",
+  EKSPLORASI:        "🔍",
+  POD_I:             "📝",
+  ONSTREAM:          "⛽",
+  TIDAK_DILANJUTKAN: "⛔",
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  WK_USULAN_BARU:    "#1EB8A8",
+  SEDANG_DILELANG:   "#0B9E8E",
+  EKSPLORASI:        "#C9821B",
+  POD_I:             "#2E7D5B",
+  ONSTREAM:          "#4ade80",
+  TIDAK_DILANJUTKAN: "#B4322B",
+};
+
+const SUBPOKJA_BG: Record<string, string> = {
+  "DMEW-S": "#0B5E54",
+  "DMEW-T": "#0F7A6E",
+  "DMEN-N": "#2E7D5B",
+  "DMEN-K": "#0B5E54",
+  "DMEE-L": "#C9821B",
+  "DMEE-M": "#0B5E54",
+  "DMED-T": "#B4322B",
+  "DMED-E": "#0B5E54",
+  "DMEP-L": "#16211F",
+  "DMEP-P": "#0B5E54",
+};
+
+const POKJA_LINKS: Record<string, { label: string; href: string; bg: string }[]> = {
+  DMEW: [
+    { label: "Sub Pokja DMEW-S",         href: "/wk/dmew-s",  bg: "#0B5E54" },
+    { label: "Sub Pokja DMEW-T",         href: "/wk/dmew-t",  bg: "#0F7A6E" },
+  ],
+  DMEN: [
+    { label: "Sub Pokja DMEN-N",         href: "/wk/dmen-n",  bg: "#2E7D5B" },
+    { label: "Sub Pokja DMEN-K",         href: "/wk/dmen-k",  bg: "#0B5E54" },
+  ],
+  DMEE: [
+    { label: "Sub Pokja DMEE-L",         href: "/wk/dmee-l",  bg: "#C9821B" },
+    { label: "Sub Pokja DMEE-M",         href: "/wk/dmee-m",  bg: "#0B5E54" },
+  ],
+  DMED: [
+    { label: "DMED-T — Pengajuan POD I", href: "/wk/dmed-t",  bg: "#B4322B" },
+    { label: "DMED-E — Perpanjangan",    href: "/wk/dmed-e",  bg: "#0B5E54" },
+  ],
+  DMEP: [
+    { label: "Sub Pokja DMEP-L",         href: "/wk/dmep-l",  bg: "#16211F" },
+    { label: "Sub Pokja DMEP-P",         href: "/wk/dmep-p",  bg: "#0B5E54" },
+  ],
+};
+
+// ── Types ──────────────────────────────────────────────────────────
 type StatusItem = { name: string; value: number; key: string };
 type DataItem   = { name: string; value: number };
 type RankItem   = { nama: string; c: number };
@@ -21,51 +83,6 @@ export type MilestoneRow = {
   stages: StageInfo[];
   selesai: number;
   berjalan: number;
-};
-
-const STATUS_ICON: Record<string, string> = {
-  WK_USULAN_BARU:    "🗂",
-  SEDANG_DILELANG:   "📋",
-  EKSPLORASI:        "🔍",
-  POD_I:             "📝",
-  ONSTREAM:          "⛽",
-  TIDAK_DILANJUTKAN: "⛔",
-};
-
-const SUBPOKJA_COLOR: Record<string, string> = {
-  "DMEW-S": "bg-petroleum/10 text-petroleum-dark",
-  "DMEW-T": "bg-petroleum/20 text-petroleum-dark",
-  "DMEN-N": "bg-ok/10 text-ok",
-  "DMEN-K": "bg-ok/20 text-ok",
-  "DMEE-L": "bg-warn/10 text-warn",
-  "DMEE-M": "bg-warn/20 text-warn",
-  "DMED-T": "bg-danger/10 text-danger",
-  "DMED-E": "bg-danger/20 text-danger",
-  "DMEP-L": "bg-ink/10 text-ink",
-  "DMEP-P": "bg-ink/20 text-ink",
-};
-
-const POKJA_LINKS: Record<string, { label: string; href: string; color: string }[]> = {
-  DMEW: [
-    { label: "Sub Pokja DMEW-S",          href: "/wk/dmew-s",  color: "bg-petroleum text-white" },
-    { label: "Sub Pokja DMEW-T",          href: "/wk/dmew-t",  color: "bg-petroleum-light text-white" },
-  ],
-  DMEN: [
-    { label: "Sub Pokja DMEN-N",          href: "/wk/dmen-n",  color: "bg-ok text-white" },
-    { label: "Sub Pokja DMEN-K",          href: "/wk/dmen-k",  color: "bg-petroleum text-white" },
-  ],
-  DMEE: [
-    { label: "Sub Pokja DMEE-L",          href: "/wk/dmee-l",  color: "bg-warn text-white" },
-    { label: "Sub Pokja DMEE-M",          href: "/wk/dmee-m",  color: "bg-petroleum text-white" },
-  ],
-  DMED: [
-    { label: "DMED-T — Pengajuan POD I",  href: "/wk/dmed-t",  color: "bg-danger text-white" },
-    { label: "DMED-E — Perpanjangan",     href: "/wk/dmed-e",  color: "bg-petroleum text-white" },
-  ],
-  DMEP: [
-    { label: "Sub Pokja DMEP-L",          href: "/wk/dmep-l",  color: "bg-ink text-white" },
-    { label: "Sub Pokja DMEP-P",          href: "/wk/dmep-p",  color: "bg-petroleum text-white" },
-  ],
 };
 
 export type PokjaDashboardProps = {
@@ -82,6 +99,7 @@ export type PokjaDashboardProps = {
   totalBelumMulai: number;
 };
 
+// ── Main Component ─────────────────────────────────────────────────
 export function PokjaDashboard({
   pokja,
   userName,
@@ -98,251 +116,423 @@ export function PokjaDashboard({
   const activeStatuses = statusItems.filter(
     (s) => s.key !== "TIDAK_DILANJUTKAN" && s.value > 0,
   );
-  const tidakDilanjutkan = statusItems.find((s) => s.key === "TIDAK_DILANJUTKAN");
   const quickLinks = POKJA_LINKS[pokja] ?? [];
 
   return (
-    <div className="relative -mx-6 -mt-8 min-h-screen bg-[#F0F4F3]">
+    <div className="-mx-6 -mt-8 min-h-screen" style={{ background: BG_MAIN }}>
 
-      {/* ── Hero Header ───────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-petroleum px-6 py-5">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{ backgroundImage: "radial-gradient(circle at 70% 50%, #ffffff 0%, transparent 60%)" }}
-        />
-        <div className="relative flex items-center gap-4">
+      {/* ── Title bar ──────────────────────────────────────────── */}
+      <div
+        className="px-6 py-1.5 text-center"
+        style={{ background: BG_TITLE, borderBottom: `1px solid ${BORDER}` }}
+      >
+        <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">
+          DME UPSTREAM OIL &amp; GAS DATABASE: POKJA {pokja} — OPERATIONAL DASHBOARD
+        </p>
+      </div>
+
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div
+        className="flex items-center gap-6 px-6 py-4"
+        style={{ background: BG_HEADER, borderBottom: `1px solid ${BORDER}` }}
+      >
+        {/* Logo + org name */}
+        <div className="flex shrink-0 items-center gap-3">
           <img
             src="/logo-dme.png"
             alt="DME"
-            className="h-14 w-14 rounded-xl bg-white object-contain p-1 shadow"
+            className="h-16 w-16 rounded-xl bg-white/10 object-contain p-1 shadow-lg"
           />
-          <div className="flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-white/60">
-              DME UPSTREAM OIL &amp; GAS DATABASE
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
+              DIREKTORAT
             </p>
-            <h1 className="font-display text-2xl font-extrabold leading-tight text-white">
-              POKJA {pokja} — OPERATIONAL DASHBOARD
-            </h1>
-            <p className="mt-0.5 text-xs text-white/50">Selamat datang, {userName}</p>
-          </div>
-          <div className="hidden sm:block">
-            <span className="font-display text-5xl font-black tracking-tight text-white/20">
-              {pokja}
-            </span>
+            <p className="text-sm font-bold text-white/80">PEMBINAAN USAHA</p>
+            <p className="text-sm font-bold text-white/80">HULU MIGAS</p>
           </div>
         </div>
-      </div>
 
-      {/* ── Stat Cards ────────────────────────────────────────────── */}
-      <div className="px-6 py-4">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <div className="col-span-2 sm:col-span-1 rounded-xl bg-petroleum px-4 py-3 text-white shadow-card lg:col-span-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">Total WK</p>
-            <p className="mt-1 font-display text-4xl font-black">{total}</p>
-            <p className="mt-0.5 text-[11px] text-white/60">Wilayah Kerja</p>
-          </div>
-          {statusItems
-            .filter((s) => s.key !== "TIDAK_DILANJUTKAN")
-            .map((s) => (
-              <div key={s.key} className="rounded-xl bg-white px-4 py-3 shadow-card">
-                <p className="text-lg">{STATUS_ICON[s.key] ?? "📊"}</p>
-                <p className="mt-1 font-display text-3xl font-bold text-ink">{s.value}</p>
-                <p className="mt-0.5 text-[11px] leading-tight text-muted">{s.name}</p>
-              </div>
-            ))}
-        </div>
-        {tidakDilanjutkan && tidakDilanjutkan.value > 0 && (
-          <p className="mt-2 text-right text-xs text-muted">
-            ⛔ {tidakDilanjutkan.value} WK tidak dilanjutkan
+        {/* Big pokja watermark */}
+        <div className="flex-1 text-center">
+          <p
+            className="font-display font-black leading-none"
+            style={{ fontSize: "clamp(2rem, 6vw, 5rem)", color: "rgba(255,255,255,0.12)" }}
+          >
+            {pokja}
           </p>
-        )}
-      </div>
-
-      {/* ── Main Body ─────────────────────────────────────────────── */}
-      <div className="grid gap-4 px-6 pb-6 lg:grid-cols-4">
-
-        {/* Left: Sub Pokja links + Provinsi */}
-        <div className="flex flex-col gap-3 lg:col-span-1">
-          {quickLinks.length > 0 && (
-            <div className="rounded-xl bg-white p-4 shadow-card">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-muted">
-                Sub Pokja
-              </p>
-              <div className="flex flex-col gap-2">
-                {quickLinks.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-opacity hover:opacity-90 ${l.color}`}
-                  >
-                    <span>{l.label}</span>
-                    <svg className="h-4 w-4 opacity-70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="rounded-xl bg-white p-4 shadow-card">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-muted">
-              WK per Provinsi (Top 8)
-            </p>
-            <RankBar rows={perProvinsi} color="#0B5E54" />
-          </div>
         </div>
 
-        {/* Right: Charts */}
-        <div className="grid gap-4 lg:col-span-3 lg:grid-cols-2">
+        {/* Right info */}
+        <div className="shrink-0 text-right">
+          <p className="text-[10px] uppercase tracking-widest text-white/40">
+            Selamat datang
+          </p>
+          <p className="text-sm font-semibold text-white/80">{userName}</p>
+          <p className="mt-1 text-[10px] text-white/40">Total WK Pokja</p>
+          <p className="font-display text-3xl font-black text-white">{total}</p>
+        </div>
+      </div>
 
-          {/* Status Pie */}
-          <div className="rounded-xl bg-white p-4 shadow-card">
-            <p className="mb-1 text-sm font-semibold text-ink">Distribusi Status WK</p>
-            <p className="mb-2 text-[11px] text-muted">Pipeline Pokja {pokja}</p>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={activeStatuses}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={2}
-                >
-                  {activeStatuses.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
+      {/* ── Stat cards row ─────────────────────────────────────── */}
+      <div
+        className="grid grid-cols-3 gap-px sm:grid-cols-6"
+        style={{ background: BORDER, borderBottom: `1px solid ${BORDER}` }}
+      >
+        {statusItems
+          .filter((s) => s.key !== "TIDAK_DILANJUTKAN")
+          .map((s) => (
+            <StatCard key={s.key} stat={s} total={total} />
+          ))}
+      </div>
+
+      {/* ── Main body ──────────────────────────────────────────── */}
+      <div className="flex min-h-[360px]" style={{ borderBottom: `1px solid ${BORDER}` }}>
+
+        {/* Left: Quick Access */}
+        <div
+          className="flex w-52 shrink-0 flex-col gap-3 p-4"
+          style={{ background: BG_CARD2, borderRight: `1px solid ${BORDER}` }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+            Quick Access
+          </p>
+
+          {/* Filter placeholder */}
+          <div
+            className="rounded px-2 py-1.5 text-xs text-white/30"
+            style={{ background: BG_HEADER, border: `1px solid ${BORDER}` }}
+          >
+            Select Filter...
           </div>
 
-          {/* Contract Type Bar */}
-          <div className="rounded-xl bg-white p-4 shadow-card">
-            <p className="mb-1 text-sm font-semibold text-ink">Tipe Kontrak</p>
-            <p className="mb-2 text-[11px] text-muted">Cost Recovery vs Gross Split</p>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart
-                data={contractData.filter((d) => d.value > 0)}
-                layout="vertical"
-                margin={{ left: 8, right: 16 }}
+          <div className="flex flex-col gap-1.5">
+            {quickLinks.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="flex items-center justify-between rounded px-3 py-2.5 text-xs font-semibold text-white transition-opacity hover:opacity-85"
+                style={{ background: l.bg }}
               >
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-                  {contractData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                <span>{l.label}</span>
+                <svg
+                  className="h-3 w-3 opacity-70"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            ))}
           </div>
 
-          {/* Operator Ranking */}
-          <div className="rounded-xl bg-white p-4 shadow-card">
-            <p className="mb-1 text-sm font-semibold text-ink">Top Operator / K3S</p>
-            <p className="mb-3 text-[11px] text-muted">Berdasarkan jumlah WK</p>
-            <RankBar rows={perOperator} color="#0F7A6E" />
-          </div>
-
-          {/* Rekap Table */}
-          <div className="rounded-xl bg-white p-4 shadow-card">
-            <p className="mb-1 text-sm font-semibold text-ink">Rekap per Status</p>
-            <p className="mb-3 text-[11px] text-muted">Seluruh WK Pokja {pokja}</p>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-line text-left text-[11px] uppercase tracking-wide text-muted">
-                  <th className="pb-2 font-semibold">Status</th>
-                  <th className="pb-2 text-right font-semibold">Jumlah</th>
-                  <th className="pb-2 text-right font-semibold">%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {statusItems.filter((s) => s.value > 0).map((s) => (
-                  <tr key={s.key} className="border-b border-line/40 last:border-0">
-                    <td className="py-1.5 text-ink">
-                      <span className="mr-1">{STATUS_ICON[s.key]}</span>
-                      {s.name}
-                    </td>
-                    <td className="py-1.5 text-right font-medium text-ink">{s.value}</td>
-                    <td className="py-1.5 text-right text-muted">
-                      {total > 0 ? ((s.value / total) * 100).toFixed(1) : "0"}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Milestone Section ─────────────────────────────────────── */}
-      {milestoneData.length > 0 && (
-        <div className="px-6 pb-8">
-          <div className="rounded-xl bg-white p-4 shadow-card">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-semibold text-ink">Progress Milestone Tahapan</p>
-                <p className="text-[11px] text-muted">WK dalam proses — Pokja {pokja}</p>
-              </div>
-              <div className="flex gap-4 text-xs">
-                <span className="flex items-center gap-1.5 text-ok">
-                  <span className="inline-block h-2 w-2 rounded-full bg-ok" />
-                  Selesai: <strong>{totalSelesai}</strong>
-                </span>
-                <span className="flex items-center gap-1.5 text-warn">
-                  <span className="inline-block h-2 w-2 rounded-full bg-warn" />
-                  Berjalan: <strong>{totalBerjalan}</strong>
-                </span>
-                <span className="flex items-center gap-1.5 text-muted">
-                  <span className="inline-block h-2 w-2 rounded-full bg-line" />
-                  Belum Mulai: <strong>{totalBelumMulai}</strong>
-                </span>
-              </div>
-            </div>
-            <div className="divide-y divide-line/60">
-              {milestoneData.map((r, i) => (
-                <div key={`${r.wkId}-${r.subpokja}-${i}`} className="py-4 first:pt-0 hover:bg-sand/30">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Link
-                        href={`/wk/${r.wkId}`}
-                        className="truncate font-semibold text-petroleum hover:underline"
-                      >
-                        {r.wkNama}
-                      </Link>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${SUBPOKJA_COLOR[r.subpokja] ?? "bg-line/40 text-ink"}`}>
-                        {r.subpokja}
-                      </span>
-                    </div>
-                    <div className="ml-3 shrink-0">
-                      {r.berjalan > 0 ? (
-                        <span className="rounded-full bg-petroleum/10 px-2 py-0.5 text-[10px] font-semibold text-petroleum-dark">
-                          Berjalan
-                        </span>
-                      ) : r.stages.length === 0 ? (
-                        <span className="rounded-full bg-line/40 px-2 py-0.5 text-[10px] font-semibold text-muted">
-                          Belum Ada Tahap
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-line/40 px-2 py-0.5 text-[10px] font-semibold text-muted">
-                          Belum Mulai
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {r.stages.length === 0 ? (
-                    <p className="text-xs text-muted">Belum ada tahap terdaftar.</p>
-                  ) : (
-                    <MilestoneTimeline stages={r.stages} />
-                  )}
+          {/* Contract areas legend */}
+          <div className="mt-2">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/40">
+              Contract Areas
+            </p>
+            <div className="space-y-1.5">
+              {perProvinsi.slice(0, 6).map((p, i) => (
+                <div key={i} className="flex items-center gap-2 text-[11px]">
+                  <div
+                    className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                    style={{ background: PIE_COLORS[i % PIE_COLORS.length] }}
+                  />
+                  <span className="flex-1 truncate text-white/60">{p.nama}</span>
+                  <span className="font-semibold text-white/80">{p.c}</span>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Center: Province visualization */}
+        <div className="flex-1 p-5" style={{ background: BG_MAIN }}>
+          <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-white/40">
+            Sebaran WK per Provinsi — Pokja {pokja}
+          </p>
+          <ProvinceGrid rows={perProvinsi} total={total} />
+        </div>
+
+        {/* Right: Pie chart */}
+        <div
+          className="w-64 shrink-0 p-4"
+          style={{ background: BG_CARD2, borderLeft: `1px solid ${BORDER}` }}
+        >
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+            Distribusi Status
+          </p>
+          <p className="mb-2 text-[11px] text-white/40">Pipeline Pokja {pokja}</p>
+          <ResponsiveContainer width="100%" height={190}>
+            <PieChart>
+              <Pie
+                data={activeStatuses}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={45}
+                outerRadius={70}
+                paddingAngle={2}
+              >
+                {activeStatuses.map((_, i) => (
+                  <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  background: BG_HEADER,
+                  border: `1px solid ${BORDER}`,
+                  borderRadius: "8px",
+                  color: "white",
+                  fontSize: 11,
+                }}
+              />
+              <Legend
+                iconSize={8}
+                wrapperStyle={{ fontSize: 10, color: "rgba(255,255,255,0.55)" }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* ── Bottom: 4 panels ───────────────────────────────────── */}
+      <div
+        className="grid grid-cols-2 gap-px lg:grid-cols-4"
+        style={{ background: BORDER }}
+      >
+
+        {/* Panel 1: Contract type */}
+        <div className="p-4" style={{ background: BG_CARD }}>
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+            Tipe Kontrak
+          </p>
+          <p className="mb-3 text-[11px] text-white/30">Cost Recovery vs Gross Split</p>
+          <ResponsiveContainer width="100%" height={140}>
+            <BarChart
+              data={contractData.filter((d) => d.value > 0)}
+              layout="vertical"
+              margin={{ left: 0, right: 10, top: 0, bottom: 0 }}
+            >
+              <XAxis type="number" hide />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={85}
+                tick={{ fontSize: 10, fill: "rgba(255,255,255,0.55)" }}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: BG_HEADER,
+                  border: `1px solid ${BORDER}`,
+                  borderRadius: "6px",
+                  color: "white",
+                  fontSize: 10,
+                }}
+              />
+              <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                {contractData.map((_, i) => (
+                  <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Panel 2: Top operator */}
+        <div className="p-4" style={{ background: BG_CARD }}>
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+            Top Operator / K3S
+          </p>
+          <p className="mb-3 text-[11px] text-white/30">Berdasarkan jumlah WK</p>
+          <ul className="space-y-1.5">
+            {perOperator.slice(0, 8).map((r, i) => (
+              <li key={i} className="flex items-center gap-2">
+                <span
+                  className="w-4 shrink-0 text-right text-[10px] font-bold"
+                  style={{ color: PIE_COLORS[i % PIE_COLORS.length] }}
+                >
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="truncate text-[11px] text-white/70">{r.nama}</span>
+                    <span className="ml-2 shrink-0 text-[11px] font-bold text-white">{r.c}</span>
+                  </div>
+                  <div
+                    className="mt-0.5 h-0.5 rounded-full"
+                    style={{ background: "rgba(255,255,255,0.08)" }}
+                  >
+                    <div
+                      className="h-0.5 rounded-full"
+                      style={{
+                        width: `${(r.c / Math.max(...perOperator.map((x) => x.c), 1)) * 100}%`,
+                        background: PIE_COLORS[i % PIE_COLORS.length],
+                      }}
+                    />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Panel 3: Milestone summary */}
+        <div className="p-4" style={{ background: BG_CARD }}>
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+            Progress Milestone
+          </p>
+          <p className="mb-3 text-[11px] text-white/30">Tahapan WK dalam proses</p>
+          {milestoneData.length === 0 ? (
+            <p className="text-[11px] text-white/30">Belum ada data milestone.</p>
+          ) : (
+            <div className="space-y-4">
+              {[
+                { label: "Selesai",     value: totalSelesai,   color: "#4ade80" },
+                { label: "Berjalan",    value: totalBerjalan,  color: "#C9821B" },
+                { label: "Belum Mulai", value: totalBelumMulai,color: "#6B8E86" },
+              ].map((item) => {
+                const tot = totalSelesai + totalBerjalan + totalBelumMulai;
+                const pct = tot > 0 ? (item.value / tot) * 100 : 0;
+                return (
+                  <div key={item.label}>
+                    <div className="mb-1 flex items-center justify-between text-[11px]">
+                      <span className="text-white/60">{item.label}</span>
+                      <span className="font-bold text-white">{item.value}</span>
+                    </div>
+                    <div
+                      className="h-1.5 rounded-full"
+                      style={{ background: "rgba(255,255,255,0.08)" }}
+                    >
+                      <div
+                        className="h-1.5 rounded-full transition-all"
+                        style={{ width: `${pct}%`, background: item.color }}
+                      />
+                    </div>
+                    <p className="mt-0.5 text-right text-[10px]" style={{ color: item.color }}>
+                      {pct.toFixed(0)}%
+                    </p>
+                  </div>
+                );
+              })}
+              <p className="text-[10px] text-white/30">{milestoneData.length} WK terpantau</p>
+            </div>
+          )}
+        </div>
+
+        {/* Panel 4: Status recap table */}
+        <div className="p-4" style={{ background: BG_CARD }}>
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+            Rekap Status WK
+          </p>
+          <p className="mb-3 text-[11px] text-white/30">Seluruh WK Pokja {pokja}</p>
+          <table className="w-full">
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${BORDER}` }}>
+                <th className="pb-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-white/40">
+                  Status
+                </th>
+                <th className="pb-1.5 text-right text-[10px] font-semibold uppercase tracking-wide text-white/40">
+                  Jml
+                </th>
+                <th className="pb-1.5 text-right text-[10px] font-semibold uppercase tracking-wide text-white/40">
+                  %
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {statusItems.filter((s) => s.value > 0).map((s) => (
+                <tr key={s.key} style={{ borderBottom: `1px solid ${BORDER}30` }}>
+                  <td className="py-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ background: STATUS_COLOR[s.key] ?? "#6B8E86" }}
+                      />
+                      <span className="text-[11px] text-white/60">{s.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-1.5 text-right text-[11px] font-bold text-white">
+                    {s.value}
+                  </td>
+                  <td className="py-1.5 text-right text-[10px] text-white/40">
+                    {total > 0 ? ((s.value / total) * 100).toFixed(1) : "0"}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Milestone detail rows ────────────────────────────────── */}
+      {milestoneData.length > 0 && (
+        <div className="p-6" style={{ background: BG_MAIN }}>
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+            Detail Milestone Tahapan
+          </p>
+          <p className="mb-4 text-[11px] text-white/30">WK dalam proses — Pokja {pokja}</p>
+          <div
+            className="overflow-hidden rounded-lg"
+            style={{ border: `1px solid ${BORDER}` }}
+          >
+            {milestoneData.map((r, i) => (
+              <div
+                key={`${r.wkId}-${r.subpokja}-${i}`}
+                className="px-4 py-4 transition-colors"
+                style={{
+                  borderBottom: i < milestoneData.length - 1 ? `1px solid ${BORDER}` : "none",
+                  background: i % 2 === 0 ? BG_CARD2 : BG_CARD,
+                }}
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Link
+                      href={`/wk/${r.wkId}`}
+                      className="truncate text-sm font-semibold text-white hover:underline"
+                      style={{ textDecorationColor: "#1EB8A8" }}
+                    >
+                      {r.wkNama}
+                    </Link>
+                    <span
+                      className="shrink-0 rounded px-2 py-0.5 text-[10px] font-bold text-white"
+                      style={{ background: SUBPOKJA_BG[r.subpokja] ?? "#0B5E54" }}
+                    >
+                      {r.subpokja}
+                    </span>
+                  </div>
+                  <div className="ml-3 shrink-0">
+                    {r.berjalan > 0 ? (
+                      <span
+                        className="rounded px-2 py-0.5 text-[10px] font-bold text-white"
+                        style={{ background: "#0B5E54" }}
+                      >
+                        Berjalan
+                      </span>
+                    ) : r.stages.length === 0 ? (
+                      <span
+                        className="rounded px-2 py-0.5 text-[10px] font-bold"
+                        style={{ background: BORDER, color: "rgba(255,255,255,0.4)" }}
+                      >
+                        Belum Ada Tahap
+                      </span>
+                    ) : (
+                      <span
+                        className="rounded px-2 py-0.5 text-[10px] font-bold"
+                        style={{ background: BORDER, color: "rgba(255,255,255,0.4)" }}
+                      >
+                        Belum Mulai
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {r.stages.length === 0 ? (
+                  <p className="text-xs text-white/30">Belum ada tahap terdaftar.</p>
+                ) : (
+                  <MilestoneTimeline stages={r.stages} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -350,26 +540,68 @@ export function PokjaDashboard({
   );
 }
 
-function RankBar({ rows, color }: { rows: RankItem[]; color: string }) {
-  if (rows.length === 0) return <p className="text-xs text-muted">Belum ada data.</p>;
+// ── Sub-components ─────────────────────────────────────────────────
+
+function StatCard({ stat, total }: { stat: StatusItem; total: number }) {
+  const pct = total > 0 ? (stat.value / total) * 100 : 0;
+  const color = STATUS_COLOR[stat.key] ?? "#1EB8A8";
+  return (
+    <div className="flex flex-col gap-2 p-3" style={{ background: BG_CARD2 }}>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+        {stat.name}
+      </p>
+      <p className="font-display text-2xl font-black text-white">{stat.value}</p>
+      {/* Mini progress bar */}
+      <div className="h-1 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
+        <div
+          className="h-1 rounded-full"
+          style={{ width: `${pct}%`, background: color }}
+        />
+      </div>
+      <p className="text-[10px]" style={{ color }}>
+        {pct.toFixed(1)}% dari total
+      </p>
+    </div>
+  );
+}
+
+function ProvinceGrid({ rows, total }: { rows: RankItem[]; total: number }) {
+  if (rows.length === 0)
+    return <p className="text-sm text-white/30">Belum ada data provinsi.</p>;
   const max = Math.max(...rows.map((r) => r.c), 1);
   return (
-    <ul className="space-y-1.5">
-      {rows.map((r, i) => (
-        <li key={i} className="text-xs">
-          <div className="flex items-center justify-between">
-            <span className="truncate text-ink">{r.nama}</span>
-            <span className="ml-2 shrink-0 font-semibold text-muted">{r.c}</span>
-          </div>
-          <div className="mt-0.5 h-1.5 rounded-full bg-line">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      {rows.map((r, i) => {
+        const color   = PIE_COLORS[i % PIE_COLORS.length];
+        const barPct  = (r.c / max) * 100;
+        const totPct  = total > 0 ? ((r.c / total) * 100).toFixed(1) : "0";
+        return (
+          <div
+            key={i}
+            className="rounded-lg p-3"
+            style={{
+              background: `${color}18`,
+              border: `1px solid ${color}35`,
+            }}
+          >
+            <p className="truncate text-[11px] font-medium text-white/60">{r.nama}</p>
+            <p className="mt-1 font-display text-2xl font-bold text-white">{r.c}</p>
             <div
-              className="h-1.5 rounded-full"
-              style={{ width: `${(r.c / max) * 100}%`, backgroundColor: color }}
-            />
+              className="mt-2 h-1 rounded-full"
+              style={{ background: "rgba(255,255,255,0.08)" }}
+            >
+              <div
+                className="h-1 rounded-full"
+                style={{ width: `${barPct}%`, background: color }}
+              />
+            </div>
+            <p className="mt-1 text-[10px]" style={{ color }}>
+              {totPct}% total WK
+            </p>
           </div>
-        </li>
-      ))}
-    </ul>
+        );
+      })}
+    </div>
   );
 }
 
@@ -381,20 +613,20 @@ function MilestoneTimeline({ stages }: { stages: StageInfo[] }) {
           const isDone    = s.status === "SELESAI";
           const isRunning = s.status === "BERJALAN";
           const prevDone  = i > 0 && stages[i - 1].status === "SELESAI";
+          const dotColor  = isDone ? "#4ade80" : isRunning ? "#1EB8A8" : "#1a3352";
+          const lineColor = prevDone ? "#4ade80" : "#1a3352";
           return (
             <div key={i} className="flex items-start">
               {i > 0 && (
-                <div className={`mt-[9px] h-0.5 w-10 shrink-0 ${prevDone ? "bg-ok" : "bg-line/40"}`} />
+                <div
+                  className="mt-[9px] h-0.5 w-10 shrink-0"
+                  style={{ background: lineColor }}
+                />
               )}
               <div className="flex w-[72px] flex-col items-center gap-1.5">
                 <div
-                  className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 ${
-                    isDone
-                      ? "border-ok bg-ok"
-                      : isRunning
-                      ? "border-petroleum bg-petroleum"
-                      : "border-line bg-surface"
-                  }`}
+                  className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2"
+                  style={{ borderColor: dotColor, background: isDone || isRunning ? dotColor : BG_CARD2 }}
                 >
                   {isDone && (
                     <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -405,9 +637,11 @@ function MilestoneTimeline({ stages }: { stages: StageInfo[] }) {
                       />
                     </svg>
                   )}
-                  {isRunning && <div className="h-2 w-2 rounded-full bg-white" />}
+                  {isRunning && (
+                    <div className="h-2 w-2 rounded-full bg-white" />
+                  )}
                 </div>
-                <span className="line-clamp-2 w-full px-1 text-center text-[10px] leading-tight text-muted">
+                <span className="line-clamp-2 w-full px-1 text-center text-[10px] leading-tight text-white/40">
                   {s.nama}
                 </span>
               </div>
