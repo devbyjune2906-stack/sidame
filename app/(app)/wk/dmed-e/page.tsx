@@ -12,7 +12,7 @@ import {
   dmedEFieldDef,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { canWrite, isAdmin, isDmed } from "@/lib/rbac";
+import { canWrite, isAdmin, isDmed, canCreateWk } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { Badge } from "@/components/ui";
 
@@ -50,6 +50,7 @@ export default async function DmedEPage() {
   ]);
 
   const userCanEdit = canWrite(user.role);
+  const userCanCreate = canCreateWk(user.role);
 
   return (
     <div className="space-y-5">
@@ -58,14 +59,24 @@ export default async function DmedEPage() {
           <h1 className="font-display text-2xl font-bold text-ink">Sub Pokja DMED-E</h1>
           <p className="mt-1 text-sm text-muted">{rows.length} data ditemukan</p>
         </div>
-        {isAdmin(user.role) && (
-          <Link
-            href="/wk/dmed-e/pengaturan"
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm text-petroleum hover:bg-sand"
-          >
-            Kelola Kolom
-          </Link>
-        )}
+        <div className="flex gap-2">
+          {userCanCreate && (
+            <Link
+              href="/wk/new"
+              className="rounded-lg bg-petroleum px-3 py-1.5 text-sm font-medium text-white hover:bg-petroleum/90"
+            >
+              + Tambah WK
+            </Link>
+          )}
+          {isAdmin(user.role) && (
+            <Link
+              href="/wk/dmed-e/pengaturan"
+              className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm text-petroleum hover:bg-sand"
+            >
+              Kelola Kolom
+            </Link>
+          )}
+        </div>
       </header>
 
       <div className="overflow-x-auto rounded-xl border border-line bg-surface shadow-card">

@@ -12,7 +12,7 @@ import {
   dmedPi10Detail,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { isAdmin, isDmed } from "@/lib/rbac";
+import { isAdmin, isDmed, canCreateWk } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, TYPE_CONTRACT_LABEL, JENIS_POD_LABEL, type StatusWk, type TypeContract, type JenisPod } from "@/lib/constants";
 import { Badge, Card } from "@/components/ui";
 
@@ -106,13 +106,25 @@ export default async function DmedTPage() {
     .where(eq(wkProcess.templateId, "DMED_PI10"))
     .orderBy(asc(wilayahKerja.namaWk));
 
+  const userCanCreate = canCreateWk(user.role);
+
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="font-display text-2xl font-bold text-ink">Sub Pokja DMED-T</h1>
-        <p className="mt-1 text-sm text-muted">
-          {podiRows.length} data POD I &middot; {pi10Rows.length} data PI 10%
-        </p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink">Sub Pokja DMED-T</h1>
+          <p className="mt-1 text-sm text-muted">
+            {podiRows.length} data POD I &middot; {pi10Rows.length} data PI 10%
+          </p>
+        </div>
+        {userCanCreate && (
+          <Link
+            href="/wk/new"
+            className="rounded-lg bg-petroleum px-3 py-1.5 text-sm font-medium text-white hover:bg-petroleum/90"
+          >
+            + Tambah WK
+          </Link>
+        )}
       </header>
 
       <section className="space-y-3">
