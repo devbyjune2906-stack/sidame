@@ -173,7 +173,7 @@ export function DmedFields({ initial, locked = false }: { initial?: DmedInitial;
 
   return (
     <div className="space-y-4 rounded-lg border border-line p-4">
-      <p className="text-sm font-semibold text-ink">Sub Pokja DMED</p>
+      <p className="text-sm font-semibold text-ink">Sub Pokja {effectiveSubpokja}</p>
       {locked ? (
         <div className="space-y-2">
           <div className="flex gap-2">
