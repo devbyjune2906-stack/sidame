@@ -154,7 +154,7 @@ export function Sidebar({
       {/* Header */}
       <div className={cn("flex items-center gap-3 border-b border-line px-3 py-4", collapsed && "justify-center px-0")}>
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-petroleum font-display text-sm font-extrabold text-white">
-          SD
+          DME
         </div>
         {!collapsed && (
           <div>
