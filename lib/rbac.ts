@@ -67,6 +67,16 @@ export function canCreateWk(role: string): boolean {
   return isAdmin(role) || isDmew(role) || isDmen(role) || (isDmed(role) && isPokjaAdmin(role));
 }
 
+/** Nama singkat Pokja berdasarkan role (mis. "DMEW", "DMED"). Null untuk Admin global. */
+export function pokjaLabel(role: string): string | null {
+  if (isDmew(role)) return "DMEW";
+  if (isDmen(role)) return "DMEN";
+  if (isDmee(role)) return "DMEE";
+  if (isDmed(role)) return "DMED";
+  if (isDmep(role)) return "DMEP";
+  return null;
+}
+
 /** Boleh kelola (create/update/delete) data dengan status tertentu? */
 export function canManageStatus(role: string, status: StatusWk): boolean {
   const allowed = allowedStatuses(role);

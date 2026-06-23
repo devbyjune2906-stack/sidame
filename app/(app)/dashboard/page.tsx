@@ -11,7 +11,7 @@ import {
   wkStageProgress,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { isAdmin, statusWhere, visibleSubpokjas } from "@/lib/rbac";
+import { isAdmin, statusWhere, visibleSubpokjas, pokjaLabel } from "@/lib/rbac";
 import {
   STATUS_WK_LABEL,
   STATUS_WK_VALUES,
@@ -60,6 +60,7 @@ export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
+  const pokja = pokjaLabel(user.role);
   const where = isAdmin(user.role) ? undefined : statusWhere(user.role);
   const withWhere = (extra?: SQL) => {
     const parts = [where, extra].filter((p): p is SQL => p !== undefined);
@@ -185,11 +186,13 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-display text-2xl font-bold text-ink">Dashboard</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">
+          {pokja ? `Selamat Datang, Pokja ${pokja}!` : "Dashboard"}
+        </h1>
         <p className="mt-1 text-sm text-muted">
           {isAdmin(user.role)
             ? "Ringkasan seluruh Wilayah Kerja Migas."
-            : `Ringkasan WK yang menjadi kewenangan ${user.role}.`}
+            : `Ringkasan WK yang menjadi kewenangan Pokja ${pokja}.`}
         </p>
       </header>
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { isAdmin, isPokjaAdmin, isDmew, isDmee, isDmed, isDmep, isDmen } from "@/lib/rbac";
+import { isAdmin, isPokjaAdmin, isDmew, isDmee, isDmed, isDmep, isDmen, pokjaLabel } from "@/lib/rbac";
 import { logout } from "@/app/(app)/actions";
 
 type NavItem = { href: string; label: string };
@@ -124,6 +124,7 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const showAdminMenu = isAdmin(user.role) || isPokjaAdmin(user.role);
+  const pokja = pokjaLabel(user.role);
 
   return (
     <aside
@@ -158,7 +159,7 @@ export function Sidebar({
         {!collapsed && (
           <div>
             <p className="font-display text-base font-bold leading-none text-ink">SIDAME</p>
-            <p className="mt-1 text-xs text-muted">WK Migas Nasional</p>
+            <p className="mt-1 text-xs text-muted">{pokja ? `Pokja ${pokja}` : "WK Migas Nasional"}</p>
           </div>
         )}
       </div>
