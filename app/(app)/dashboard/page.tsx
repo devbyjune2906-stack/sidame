@@ -184,24 +184,19 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Banner — hanya untuk akun induk (Admin) */}
+    <div className="relative space-y-6">
+      {/* Watermark full-page — hanya untuk akun induk (Admin) */}
       {isAdmin(user.role) && (
-        <div className="relative overflow-hidden rounded-2xl shadow-card">
+        <div
+          className="pointer-events-none fixed inset-0 z-[1]"
+          aria-hidden="true"
+          style={{ mixBlendMode: "multiply" }}
+        >
           <img
-            src="/banner-dme.jpg"
-            alt="Direktorat Pembinaan Usaha Hulu Migas"
-            className="h-48 w-full object-cover"
+            src="/banner-dme.png"
+            alt=""
+            className="h-full w-full object-cover opacity-[0.08]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-petroleum/60 to-transparent" />
-          <div className="absolute bottom-0 left-0 p-5">
-            <p className="font-display text-xs font-semibold uppercase tracking-widest text-white/70">
-              Sistem Informasi
-            </p>
-            <p className="font-display text-xl font-bold text-white">
-              Database Migas Hulu
-            </p>
-          </div>
         </div>
       )}
 
