@@ -12,8 +12,8 @@ export type PodiInitial = {
   revisiPodI2?: string | null;
   perkiraanOnstream?: string | null;
   fluidaProduksi?: string | null;
-  cadanganGas?: number | null;
-  cadanganMinyak?: number | null;
+  cadanganGas?: string | null;
+  cadanganMinyak?: string | null;
   asumsiHargaGas?: number | null;
   asumsiHargaMinyak?: number | null;
   grossRevenue?: number | null;
@@ -108,8 +108,8 @@ function PodiFields({ initial }: { initial?: PodiInitial }) {
       <DateField name="revisiPodI2" label="Revisi POD I ke 2" initial={initial?.revisiPodI2} />
       <DateField name="perkiraanOnstream" label="Perkiraan Onstream" initial={initial?.perkiraanOnstream} />
       <TextField name="fluidaProduksi" label="Fluida Produksi" initial={initial?.fluidaProduksi} />
-      <NumberField name="cadanganGas" label="Cadangan Gas" initial={initial?.cadanganGas} />
-      <NumberField name="cadanganMinyak" label="Cadangan Minyak" initial={initial?.cadanganMinyak} />
+      <TextField name="cadanganGas" label="Cadangan Gas" initial={initial?.cadanganGas} />
+      <TextField name="cadanganMinyak" label="Cadangan Minyak" initial={initial?.cadanganMinyak} />
       <NumberField name="asumsiHargaGas" label="Asumsi Harga Gas (USD/MMBTU)" initial={initial?.asumsiHargaGas} />
       <NumberField name="asumsiHargaMinyak" label="Asumsi Harga Minyak (USD/BBL)" initial={initial?.asumsiHargaMinyak} />
       <NumberField name="grossRevenue" label="Gross Revenue (MM USD)" initial={initial?.grossRevenue} />

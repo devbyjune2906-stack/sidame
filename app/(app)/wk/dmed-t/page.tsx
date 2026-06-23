@@ -263,8 +263,8 @@ export default async function DmedTPage() {
                   <td className="px-3 py-3 text-ink">{fmtDate(r.revisiPodI2)}</td>
                   <td className="px-3 py-3 text-ink">{fmtDate(r.perkiraanOnstream)}</td>
                   <td className="px-3 py-3 text-ink">{r.fluidaProduksi ?? "—"}</td>
-                  <td className="px-3 py-3 text-ink">{fmtNum(r.cadanganGas)}</td>
-                  <td className="px-3 py-3 text-ink">{fmtNum(r.cadanganMinyak)}</td>
+                  <td className="px-3 py-3 text-ink">{r.cadanganGas ?? "—"}</td>
+                  <td className="px-3 py-3 text-ink">{r.cadanganMinyak ?? "—"}</td>
                   <td className="px-3 py-3 text-ink">{fmtNum(r.asumsiHargaGas)}</td>
                   <td className="px-3 py-3 text-ink">{fmtNum(r.asumsiHargaMinyak)}</td>
                   <td className="px-3 py-3 text-ink">{fmtNum(r.grossRevenue)}</td>
