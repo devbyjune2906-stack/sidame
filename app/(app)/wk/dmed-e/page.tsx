@@ -18,6 +18,17 @@ import { canWrite, isAdmin, isDmed, canCreateWk } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { Badge, Card } from "@/components/ui";
 
+function fmtDate(d: Date | null | undefined) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function sisaKontrakTahun(endPsc: Date | null | undefined): number | null {
+  if (!endPsc) return null;
+  const ms = new Date(endPsc).getTime() - Date.now();
+  return Math.floor(ms / (365.25 * 24 * 3600 * 1000));
+}
+
 export default async function DmedEPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -28,14 +39,13 @@ export default async function DmedEPage() {
       .select({
         id: wilayahKerja.id,
         namaWk: wilayahKerja.namaWk,
+        lapangan: wilayahKerja.lapangan,
+        operatorK3s: wilayahKerja.operatorK3s,
         provinsiNama: provinsi.nama,
         kabupatenNama: kabupaten.nama,
         statusWk: wilayahKerja.statusWk,
-        statusKesdmDjm: dmedEDetail.statusKesdmDjm,
-        statusSkkMigas: dmedEDetail.statusSkkMigas,
-        statusProvBumd: dmedEDetail.statusProvBumd,
-        statusKkks: dmedEDetail.statusKkks,
-        data: dmedEDetail.data,
+        endPsc: wilayahKerja.endPsc,
+        dynData: dmedEDetail.data,
       })
       .from(wkProcess)
       .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
@@ -107,12 +117,25 @@ export default async function DmedEPage() {
   const userCanEdit = canWrite(user.role);
   const userCanCreate = canCreateWk(user.role);
 
+  // Hitung WK dengan sisa kontrak ≤ 10 tahun untuk summary
+  const warnCount = rows.filter((r) => {
+    const sisa = sisaKontrakTahun(r.endPsc);
+    return sisa !== null && sisa <= 10;
+  }).length;
+
   return (
     <div className="space-y-5">
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold text-ink">Sub Pokja DMED-E</h1>
-          <p className="mt-1 text-sm text-muted">{rows.length} data ditemukan</p>
+          <p className="mt-1 text-sm text-muted">
+            {rows.length} data ditemukan
+            {warnCount > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-warn/15 px-2 py-0.5 text-xs font-medium text-warn">
+                ⚠ {warnCount} WK sisa kontrak ≤ 10 tahun
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex gap-2">
           {userCanCreate && (
@@ -139,12 +162,12 @@ export default async function DmedEPage() {
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
               <th className="px-4 py-3 font-semibold">Nama WK</th>
+              <th className="px-4 py-3 font-semibold">Lapangan</th>
+              <th className="px-4 py-3 font-semibold">Operator / K3S</th>
               <th className="px-4 py-3 font-semibold">Provinsi</th>
               <th className="px-4 py-3 font-semibold">Kabupaten/Kota</th>
-              <th className="px-4 py-3 font-semibold">Status KESDM/DJM</th>
-              <th className="px-4 py-3 font-semibold">Status SKK Migas</th>
-              <th className="px-4 py-3 font-semibold">Status Prov/BUMD</th>
-              <th className="px-4 py-3 font-semibold">Status KKKS</th>
+              <th className="px-4 py-3 font-semibold">Akhir Kontrak</th>
+              <th className="px-4 py-3 font-semibold">Sisa Kontrak</th>
               {fieldDefs.map((f) => (
                 <th key={f.id} className="px-4 py-3 font-semibold">{f.nama}</th>
               ))}
@@ -155,27 +178,59 @@ export default async function DmedEPage() {
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={9 + fieldDefs.length} className="px-4 py-10 text-center text-muted">
+                <td colSpan={8 + fieldDefs.length} className="px-4 py-10 text-center text-muted">
                   Belum ada data DMED-E.
                 </td>
               </tr>
             )}
             {rows.map((r) => {
-              const dynData = (r.data ?? {}) as Record<string, string>;
+              const sisa = sisaKontrakTahun(r.endPsc);
+              const isWarning = sisa !== null && sisa <= 10;
+              const isExpired = sisa !== null && sisa < 0;
               return (
-                <tr key={r.id} className="border-b border-line/60 last:border-0 hover:bg-sand/60">
-                  <td className="px-4 py-3 font-medium text-ink">{r.namaWk}</td>
+                <tr
+                  key={r.id}
+                  className={`border-b border-line/60 last:border-0 ${isWarning ? "bg-warn/5 hover:bg-warn/10" : "hover:bg-sand/60"}`}
+                >
+                  <td className="px-4 py-3 font-medium text-ink">
+                    <div className="flex items-center gap-2">
+                      <span>{r.namaWk}</span>
+                      {isExpired && (
+                        <span className="shrink-0 rounded-full bg-danger/15 px-1.5 py-0.5 text-[10px] font-semibold text-danger">
+                          BERAKHIR
+                        </span>
+                      )}
+                      {!isExpired && isWarning && (
+                        <span className="shrink-0 rounded-full bg-warn/20 px-1.5 py-0.5 text-[10px] font-semibold text-warn">
+                          ⚠ &lt;10 thn
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-ink">{r.lapangan ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink">{r.operatorK3s ?? "—"}</td>
                   <td className="px-4 py-3 text-ink">{r.provinsiNama ?? "—"}</td>
                   <td className="px-4 py-3 text-ink">{r.kabupatenNama ?? "—"}</td>
-                  <td className="px-4 py-3 text-ink">{r.statusKesdmDjm ?? "—"}</td>
-                  <td className="px-4 py-3 text-ink">{r.statusSkkMigas ?? "—"}</td>
-                  <td className="px-4 py-3 text-ink">{r.statusProvBumd ?? "—"}</td>
-                  <td className="px-4 py-3 text-ink">{r.statusKkks ?? "—"}</td>
-                  {fieldDefs.map((f) => (
-                    <td key={f.id} className="px-4 py-3 text-ink">
-                      {dynData[f.key] || "—"}
-                    </td>
-                  ))}
+                  <td className="px-4 py-3 text-ink">{fmtDate(r.endPsc)}</td>
+                  <td className="px-4 py-3">
+                    {sisa === null ? (
+                      <span className="text-muted">—</span>
+                    ) : isExpired ? (
+                      <span className="font-semibold text-danger">{Math.abs(sisa)} thn lalu</span>
+                    ) : (
+                      <span className={`font-medium ${isWarning ? "text-warn" : "text-ink"}`}>
+                        {sisa} tahun
+                      </span>
+                    )}
+                  </td>
+                  {fieldDefs.map((f) => {
+                    const dynData = (r.dynData ?? {}) as Record<string, string>;
+                    return (
+                      <td key={f.id} className="px-4 py-3 text-ink">
+                        {dynData[f.key] || "—"}
+                      </td>
+                    );
+                  })}
                   <td className="px-4 py-3">
                     <Badge className={STATUS_BADGE[r.statusWk as StatusWk]}>
                       {STATUS_WK_LABEL[r.statusWk as StatusWk]}
