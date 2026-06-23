@@ -18,11 +18,10 @@ import {
   TYPE_CONTRACT_LABEL,
   TYPE_CONTRACT_VALUES,
   type StatusWk,
-  type TypeContract,
 } from "@/lib/constants";
 import { Badge, Card } from "@/components/ui";
-import { StatusPie, ContractBar } from "@/components/charts";
 import { AdminDashboard } from "@/components/admin-dashboard";
+import { PokjaDashboard } from "@/components/pokja-dashboard";
 
 const ALL_SUBPOKJAS = [
   "DMEW-S", "DMEW-T",
@@ -265,144 +264,21 @@ export default async function DashboardPage() {
     );
   }
 
-  // ── Pokja: render dashboard standar ─────────────────────────
+  // ── Pokja: render operational dashboard ────────────────────────
   return (
-    <div className="relative space-y-6">
-      <header>
-        <h1 className="font-display text-2xl font-bold text-ink">
-          {`Selamat Datang, Pokja ${pokja}!`}
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          {`Ringkasan WK yang menjadi kewenangan Pokja ${pokja}.`}
-        </p>
-      </header>
-
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Total WK" value={total} highlight />
-        {statusData.map((s) => (
-          <Stat key={s.name} label={s.name} value={s.value} />
-        ))}
-      </div>
-
-      {progressSubpokjas.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-ink">
-              Progress Milestone Tahapan
-            </h2>
-            <div className="flex gap-4 text-sm">
-              <span className="flex items-center gap-1.5 text-ok">
-                <span className="inline-block h-2 w-2 rounded-full bg-ok" />
-                Selesai: <strong>{totalSelesai}</strong>
-              </span>
-              <span className="flex items-center gap-1.5 text-warn">
-                <span className="inline-block h-2 w-2 rounded-full bg-warn" />
-                Berjalan: <strong>{totalBerjalan}</strong>
-              </span>
-              <span className="flex items-center gap-1.5 text-muted">
-                <span className="inline-block h-2 w-2 rounded-full bg-line" />
-                Belum Mulai: <strong>{totalBelumMulai}</strong>
-              </span>
-            </div>
-          </div>
-          <Card className="overflow-hidden p-0">
-            {milestoneData.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-muted">
-                Semua tahapan WK telah selesai atau belum ada data.
-              </p>
-            ) : (
-              <div className="divide-y divide-line/60">
-                {milestoneData.map((r, i) => (
-                  <div key={`${r.wkId}-${r.subpokja}-${i}`} className="px-4 py-4 hover:bg-sand/30">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <Link
-                          href={`/wk/${r.wkId}`}
-                          className="truncate font-semibold text-petroleum hover:underline"
-                        >
-                          {r.wkNama}
-                        </Link>
-                        <Badge className={`shrink-0 ${SUBPOKJA_COLOR[r.subpokja] ?? "bg-line/40 text-ink"}`}>
-                          {r.subpokja}
-                        </Badge>
-                      </div>
-                      <div className="ml-3 shrink-0">
-                        {r.berjalan > 0 ? (
-                          <Badge className="bg-petroleum/10 text-petroleum-dark">Berjalan</Badge>
-                        ) : r.stages.length === 0 ? (
-                          <Badge className="bg-line/40 text-muted">Belum Ada Tahap</Badge>
-                        ) : (
-                          <Badge className="bg-line/40 text-muted">Belum Mulai</Badge>
-                        )}
-                      </div>
-                    </div>
-                    {r.stages.length === 0 ? (
-                      <p className="text-xs text-muted">Belum ada tahap terdaftar.</p>
-                    ) : (
-                      <MilestoneTimeline stages={r.stages} />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-        </section>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <h2 className="mb-2 font-display text-base font-semibold text-ink">Distribusi per Status</h2>
-          <StatusPie data={statusData} />
-        </Card>
-        <Card>
-          <h2 className="mb-2 font-display text-base font-semibold text-ink">Distribusi per Kontrak</h2>
-          <ContractBar data={contractData} />
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <h2 className="mb-3 font-display text-base font-semibold text-ink">WK per Provinsi (Top 8)</h2>
-          <RankList rows={perProvinsi.map((r) => ({ nama: r.nama ?? "—", c: r.c }))} />
-        </Card>
-        <Card>
-          <h2 className="mb-3 font-display text-base font-semibold text-ink">WK per Operator/K3S (Top 8)</h2>
-          <RankList rows={perOperator.map((r) => ({ nama: r.nama ?? "—", c: r.c }))} />
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
-  return (
-    <Card className={highlight ? "bg-petroleum text-white" : ""}>
-      <p className={`text-sm ${highlight ? "text-white/80" : "text-muted"}`}>{label}</p>
-      <p className="mt-2 font-display text-3xl font-bold">{value}</p>
-    </Card>
-  );
-}
-
-function RankList({ rows }: { rows: { nama: string; c: number }[] }) {
-  if (rows.length === 0) return <p className="text-sm text-muted">Belum ada data.</p>;
-  const max = Math.max(...rows.map((r) => r.c), 1);
-  return (
-    <ul className="space-y-2">
-      {rows.map((r, i) => (
-        <li key={i} className="text-sm">
-          <div className="flex items-center justify-between">
-            <span className="truncate text-ink">{r.nama}</span>
-            <span className="ml-2 shrink-0 font-medium text-muted">{r.c}</span>
-          </div>
-          <div className="mt-1 h-1.5 rounded-full bg-line">
-            <div
-              className="h-1.5 rounded-full bg-petroleum-light"
-              style={{ width: `${(r.c / max) * 100}%` }}
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
+    <PokjaDashboard
+      pokja={pokja ?? ""}
+      userName={user.nama}
+      total={total}
+      statusItems={statusItems}
+      contractData={contractData}
+      perProvinsi={perProvinsi.map((r) => ({ nama: r.nama ?? "—", c: r.c }))}
+      perOperator={perOperator.map((r) => ({ nama: r.nama ?? "—", c: r.c }))}
+      milestoneData={milestoneData}
+      totalSelesai={totalSelesai}
+      totalBerjalan={totalBerjalan}
+      totalBelumMulai={totalBelumMulai}
+    />
   );
 }
 
