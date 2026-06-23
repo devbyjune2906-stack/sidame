@@ -153,8 +153,8 @@ export function Sidebar({
 
       {/* Header */}
       <div className={cn("flex items-center gap-3 border-b border-line px-3 py-4", collapsed && "justify-center px-0")}>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-petroleum font-display text-sm font-extrabold text-white">
-          DME
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white overflow-hidden">
+          <img src="/logo-dme.png" alt="DME" className="h-full w-full object-contain" />
         </div>
         {!collapsed && (
           <div>
