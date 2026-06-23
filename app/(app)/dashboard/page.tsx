@@ -185,6 +185,26 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Banner — hanya untuk akun induk (Admin) */}
+      {isAdmin(user.role) && (
+        <div className="relative overflow-hidden rounded-2xl shadow-card">
+          <img
+            src="/banner-dme.jpg"
+            alt="Direktorat Pembinaan Usaha Hulu Migas"
+            className="h-48 w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-petroleum/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 p-5">
+            <p className="font-display text-xs font-semibold uppercase tracking-widest text-white/70">
+              Sistem Informasi
+            </p>
+            <p className="font-display text-xl font-bold text-white">
+              Database Migas Hulu
+            </p>
+          </div>
+        </div>
+      )}
+
       <header>
         <h1 className="font-display text-2xl font-bold text-ink">
           {pokja ? `Selamat Datang, Pokja ${pokja}!` : "Dashboard"}
