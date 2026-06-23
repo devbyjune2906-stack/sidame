@@ -22,8 +22,8 @@ import {
 } from "@/lib/constants";
 import { Badge, Card } from "@/components/ui";
 import { StatusPie, ContractBar } from "@/components/charts";
+import { AdminDashboard } from "@/components/admin-dashboard";
 
-// Sub-pokja yang termasuk dalam "pipeline lelang" — ditampilkan di bagian milestone
 const ALL_SUBPOKJAS = [
   "DMEW-S", "DMEW-T",
   "DMEN-N", "DMEN-K",
@@ -67,7 +67,7 @@ export default async function DashboardPage() {
     return parts.length ? and(...parts) : undefined;
   };
 
-  // ── Stat cards ────────────────────────────────────────────────
+  // ── Stat cards ──────────────────────────────────────────────
   const [{ total }] = await db
     .select({ total: count() })
     .from(wilayahKerja)
@@ -80,6 +80,11 @@ export default async function DashboardPage() {
     .groupBy(wilayahKerja.statusWk);
   const perStatusMap = new Map(perStatusRows.map((r) => [r.status, r.c]));
   const statusData = STATUS_WK_VALUES.map((s) => ({
+    name: STATUS_WK_LABEL[s],
+    value: perStatusMap.get(s) ?? 0,
+  }));
+  const statusItems = STATUS_WK_VALUES.map((s) => ({
+    key: s,
     name: STATUS_WK_LABEL[s],
     value: perStatusMap.get(s) ?? 0,
   }));
@@ -112,7 +117,7 @@ export default async function DashboardPage() {
     .orderBy(desc(count()))
     .limit(8);
 
-  // ── Milestone progress (per sub-pokja) ────────────────────────
+  // ── Milestone progress ──────────────────────────────────────
   const visible = visibleSubpokjas(user.role);
   const progressSubpokjas: string[] =
     visible === "ALL"
@@ -141,7 +146,6 @@ export default async function DashboardPage() {
 
     if (procs.length > 0) {
       const processIds = procs.map((p) => p.processId);
-
       const stageDetails = await db
         .select({
           processId: wkStageProgress.wkProcessId,
@@ -161,7 +165,6 @@ export default async function DashboardPage() {
         stagesByProcess.get(s.processId)!.push({ nama: s.namaOverride ?? s.nama, status: s.status, urutan: s.urutan });
       }
 
-      // Filter: sembunyikan WK yang semua tahapnya sudah SELESAI
       milestoneData = procs
         .map((p) => {
           const stages = stagesByProcess.get(p.processId) ?? [];
@@ -171,9 +174,7 @@ export default async function DashboardPage() {
         })
         .filter((r) => {
           if (r.stages.length === 0) return true;
-          // Sembunyikan jika tahap terakhir (urutan tertinggi) sudah SELESAI
-          const lastStage = r.stages[r.stages.length - 1];
-          return lastStage.status !== "SELESAI";
+          return r.stages[r.stages.length - 1].status !== "SELESAI";
         });
 
       totalSelesai = milestoneData.reduce((acc, r) => acc + r.selesai, 0);
@@ -183,35 +184,99 @@ export default async function DashboardPage() {
     }
   }
 
+  // ── Admin: render operational dashboard ─────────────────────
+  if (isAdmin(user.role)) {
+    return (
+      <>
+        <AdminDashboard
+          total={total}
+          statusItems={statusItems}
+          contractData={contractData}
+          perProvinsi={perProvinsi.map((r) => ({ nama: r.nama ?? "—", c: r.c }))}
+          perOperator={perOperator.map((r) => ({ nama: r.nama ?? "—", c: r.c }))}
+        />
+
+        {/* Milestone section tetap di bawah dashboard utama */}
+        {progressSubpokjas.length > 0 && (
+          <div className="mt-6 space-y-3 px-4 pb-6 sm:px-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-semibold text-ink">
+                Progress Milestone Tahapan
+              </h2>
+              <div className="flex gap-4 text-sm">
+                <span className="flex items-center gap-1.5 text-ok">
+                  <span className="inline-block h-2 w-2 rounded-full bg-ok" />
+                  Selesai: <strong>{totalSelesai}</strong>
+                </span>
+                <span className="flex items-center gap-1.5 text-warn">
+                  <span className="inline-block h-2 w-2 rounded-full bg-warn" />
+                  Berjalan: <strong>{totalBerjalan}</strong>
+                </span>
+                <span className="flex items-center gap-1.5 text-muted">
+                  <span className="inline-block h-2 w-2 rounded-full bg-line" />
+                  Belum Mulai: <strong>{totalBelumMulai}</strong>
+                </span>
+              </div>
+            </div>
+            <Card className="overflow-hidden p-0">
+              {milestoneData.length === 0 ? (
+                <p className="px-4 py-8 text-center text-sm text-muted">
+                  Semua tahapan WK telah selesai atau belum ada data.
+                </p>
+              ) : (
+                <div className="divide-y divide-line/60">
+                  {milestoneData.map((r, i) => (
+                    <div key={`${r.wkId}-${r.subpokja}-${i}`} className="px-4 py-4 hover:bg-sand/30">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Link
+                            href={`/wk/${r.wkId}`}
+                            className="truncate font-semibold text-petroleum hover:underline"
+                          >
+                            {r.wkNama}
+                          </Link>
+                          <Badge className={`shrink-0 ${SUBPOKJA_COLOR[r.subpokja] ?? "bg-line/40 text-ink"}`}>
+                            {r.subpokja}
+                          </Badge>
+                        </div>
+                        <div className="ml-3 shrink-0">
+                          {r.berjalan > 0 ? (
+                            <Badge className="bg-petroleum/10 text-petroleum-dark">Berjalan</Badge>
+                          ) : r.stages.length === 0 ? (
+                            <Badge className="bg-line/40 text-muted">Belum Ada Tahap</Badge>
+                          ) : (
+                            <Badge className="bg-line/40 text-muted">Belum Mulai</Badge>
+                          )}
+                        </div>
+                      </div>
+                      {r.stages.length === 0 ? (
+                        <p className="text-xs text-muted">Belum ada tahap terdaftar.</p>
+                      ) : (
+                        <MilestoneTimeline stages={r.stages} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // ── Pokja: render dashboard standar ─────────────────────────
   return (
     <div className="relative space-y-6">
-      {/* Watermark full-page — hanya untuk akun induk (Admin) */}
-      {isAdmin(user.role) && (
-        <div
-          className="pointer-events-none fixed inset-0 z-[1]"
-          aria-hidden="true"
-          style={{ mixBlendMode: "multiply" }}
-        >
-          <img
-            src="/banner-dme.png"
-            alt=""
-            className="h-full w-full object-cover opacity-[0.08]"
-          />
-        </div>
-      )}
-
       <header>
         <h1 className="font-display text-2xl font-bold text-ink">
-          {pokja ? `Selamat Datang, Pokja ${pokja}!` : "Dashboard"}
+          {`Selamat Datang, Pokja ${pokja}!`}
         </h1>
         <p className="mt-1 text-sm text-muted">
-          {isAdmin(user.role)
-            ? "Ringkasan seluruh Wilayah Kerja Migas."
-            : `Ringkasan WK yang menjadi kewenangan Pokja ${pokja}.`}
+          {`Ringkasan WK yang menjadi kewenangan Pokja ${pokja}.`}
         </p>
       </header>
 
-      {/* Kartu ringkasan status WK */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Total WK" value={total} highlight />
         {statusData.map((s) => (
@@ -219,7 +284,6 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* Progress Milestone Tahapan — ditampilkan tepat di bawah stat cards */}
       {progressSubpokjas.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -241,7 +305,6 @@ export default async function DashboardPage() {
               </span>
             </div>
           </div>
-
           <Card className="overflow-hidden p-0">
             {milestoneData.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted">
@@ -249,47 +312,43 @@ export default async function DashboardPage() {
               </p>
             ) : (
               <div className="divide-y divide-line/60">
-                {milestoneData.map((r, i) => {
-                  const hasRunning = r.berjalan > 0;
-                  return (
-                    <div key={`${r.wkId}-${r.subpokja}-${i}`} className="px-4 py-4 hover:bg-sand/30">
-                      <div className="mb-3 flex items-center justify-between">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <Link
-                            href={`/wk/${r.wkId}`}
-                            className="truncate font-semibold text-petroleum hover:underline"
-                          >
-                            {r.wkNama}
-                          </Link>
-                          <Badge className={`shrink-0 ${SUBPOKJA_COLOR[r.subpokja] ?? "bg-line/40 text-ink"}`}>
-                            {r.subpokja}
-                          </Badge>
-                        </div>
-                        <div className="ml-3 shrink-0">
-                          {hasRunning ? (
-                            <Badge className="bg-petroleum/10 text-petroleum-dark">Berjalan</Badge>
-                          ) : r.stages.length === 0 ? (
-                            <Badge className="bg-line/40 text-muted">Belum Ada Tahap</Badge>
-                          ) : (
-                            <Badge className="bg-line/40 text-muted">Belum Mulai</Badge>
-                          )}
-                        </div>
+                {milestoneData.map((r, i) => (
+                  <div key={`${r.wkId}-${r.subpokja}-${i}`} className="px-4 py-4 hover:bg-sand/30">
+                    <div className="mb-3 flex items-center justify-between">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Link
+                          href={`/wk/${r.wkId}`}
+                          className="truncate font-semibold text-petroleum hover:underline"
+                        >
+                          {r.wkNama}
+                        </Link>
+                        <Badge className={`shrink-0 ${SUBPOKJA_COLOR[r.subpokja] ?? "bg-line/40 text-ink"}`}>
+                          {r.subpokja}
+                        </Badge>
                       </div>
-                      {r.stages.length === 0 ? (
-                        <p className="text-xs text-muted">Belum ada tahap terdaftar.</p>
-                      ) : (
-                        <MilestoneTimeline stages={r.stages} />
-                      )}
+                      <div className="ml-3 shrink-0">
+                        {r.berjalan > 0 ? (
+                          <Badge className="bg-petroleum/10 text-petroleum-dark">Berjalan</Badge>
+                        ) : r.stages.length === 0 ? (
+                          <Badge className="bg-line/40 text-muted">Belum Ada Tahap</Badge>
+                        ) : (
+                          <Badge className="bg-line/40 text-muted">Belum Mulai</Badge>
+                        )}
+                      </div>
                     </div>
-                  );
-                })}
+                    {r.stages.length === 0 ? (
+                      <p className="text-xs text-muted">Belum ada tahap terdaftar.</p>
+                    ) : (
+                      <MilestoneTimeline stages={r.stages} />
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </Card>
         </section>
       )}
 
-      {/* Grafik */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <h2 className="mb-2 font-display text-base font-semibold text-ink">Distribusi per Status</h2>
@@ -301,7 +360,6 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Tabel ringkas */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <h2 className="mb-3 font-display text-base font-semibold text-ink">WK per Provinsi (Top 8)</h2>
