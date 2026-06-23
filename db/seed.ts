@@ -342,11 +342,77 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     nama: "DMED-T POD I",
     subpokja: "DMED-T",
     stages: [
-      { urutan: 1, nama: "Rekomendasi dari SKK Migas/BPMA", slaUnit: "TANPA_SLA" },
-      { urutan: 2, nama: "Tindak lanjut oleh DME/DMED", slaUnit: "TANPA_SLA" },
-      { urutan: 3, nama: "Tindak lanjut oleh SDMH", slaUnit: "TANPA_SLA" },
-      { urutan: 4, nama: "Tindak lanjut oleh SJH", slaUnit: "TANPA_SLA" },
-      { urutan: 5, nama: "Persetujuan MESDM", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 1,
+        nama: "Rekomendasi SKK Migas",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "surat_rekomendasi", label: "Surat Rekomendasi", type: "checkbox" }],
+      },
+      {
+        urutan: 2,
+        nama: "Menteri Menugaskan Dirjen Migas",
+        slaUnit: "TANPA_SLA",
+        extraFields: [{ key: "disposisi", label: "Disposisi", type: "checkbox" }],
+      },
+      {
+        urutan: 3,
+        nama: "Dirjen Migas Menugaskan DME",
+        slaValue: 1,
+        slaUnit: "HARI_KERJA",
+        extraFields: [{ key: "disposisi", label: "Disposisi", type: "checkbox" }],
+      },
+      {
+        urutan: 4,
+        nama: "Dir DME Menugaskan Koord DMED",
+        slaUnit: "TANPA_SLA",
+      },
+      {
+        urutan: 5,
+        nama: "Koordinator pengecekan POD I Rekom SKK Migas",
+        slaValue: 3,
+        slaUnit: "HARI_KERJA",
+        extraFields: [
+          { key: "lengkap", label: "a. Lengkap — lanjut ke tahap berikutnya", type: "checkbox" },
+          { key: "tidak_lengkap", label: "b. Tidak Lengkap — konsepkan surat dari Dir DME ke SKK Migas", type: "checkbox" },
+        ],
+      },
+      {
+        urutan: 6,
+        nama: "Koord DME melakukan penilaian",
+        slaValue: 5,
+        slaUnit: "HARI_KERJA",
+        extraFields: [
+          { key: "sesuai", label: "a. Sesuai — lanjut ke tahap berikutnya", type: "checkbox" },
+          { key: "tidak_sesuai", label: "b. Tidak Sesuai — konsep surat pengembalian ke SKK/BPMA", type: "checkbox" },
+        ],
+      },
+      {
+        urutan: 7,
+        nama: "Penentuan Kawasan",
+        slaValue: 1,
+        slaUnit: "HARI_KERJA",
+        extraFields: [
+          { key: "dalam_12_mil", label: "a. 0–12 Mil Laut — konsepkan surat dari DJMigas ke Gubernur", type: "checkbox" },
+          { key: "atas_12_mil", label: "b. Di atas 12 Mil Laut", type: "checkbox" },
+        ],
+      },
+      {
+        urutan: 8,
+        nama: "Konsultasi dengan Pemda terkait (Konsulda)",
+        slaUnit: "TANPA_SLA",
+      },
+      {
+        urutan: 9,
+        nama: "Membuat konsep surat dari DJMigas ke Sekjen KESDM",
+        slaValue: 2,
+        slaUnit: "HARI_KERJA",
+      },
+      {
+        urutan: 10,
+        nama: "DJMigas menyampaikan kepada Sekjen evaluasi permohonan persetujuan POD I",
+        slaValue: 1,
+        slaUnit: "HARI_KERJA",
+      },
     ],
   },
   {
@@ -354,20 +420,86 @@ const TEMPLATES: { id: string; nama: string; subpokja: string; stages: StageDef[
     nama: "DMED-T PI 10%",
     subpokja: "DMED-T",
     stages: [
-      { urutan: 1, nama: "Persetujuan POD I / Tgl Efektif KKS Perpanjangan / Alih Kelola", slaUnit: "TANPA_SLA" },
-      { urutan: 2, nama: "Surat Ka. SKK Migas ke Gubernur untuk menunjuk BUMD", slaValue: 10, slaUnit: "HARI_KERJA" },
-      { urutan: 3, nama: "Gubernur sampaikan Surat Penunjukan BUMD", slaValue: 365, slaUnit: "HARI_KERJA" },
-      { urutan: 4, nama: "Surat Ka. SKK Migas ke Kontraktor untuk memulai penawaran", slaValue: 10, slaUnit: "HARI_KERJA" },
-      { urutan: 5, nama: "Kontraktor sampaikan penawaran tertulis ke BUMD", slaValue: 60, slaUnit: "HARI_KERJA" },
-      { urutan: 6, nama: "BUMD sampaikan Pernyataan Minat & Kesanggupan", slaValue: 60, slaUnit: "HARI_KERJA" },
-      { urutan: 7, nama: "BUMD lakukan Uji Tuntas (Due Diligence) & Akses Data", slaValue: 60, slaUnit: "HARI_KERJA" },
-      { urutan: 8, nama: "BUMD sampaikan surat meneruskan / tidak atas PI 10%", slaValue: 180, slaUnit: "HARI_KERJA" },
-      { urutan: 9, nama: "Tindak lanjut proses Pengalihan PI 10%", slaValue: 180, slaUnit: "HARI_KERJA" },
-      { urutan: 10, nama: "Kontraktor ajukan Permohonan Pengalihan ke MESDM via SKK", slaUnit: "TANPA_SLA" },
-      { urutan: 11, nama: "SKK sampaikan rekomendasi pengalihan ke MESDM cq DJM", slaValue: 30, slaUnit: "HARI_KERJA" },
-      { urutan: 12, nama: "DJM lakukan pemeriksaan & klarifikasi", slaValue: 15, slaUnit: "HARI_KERJA" },
-      { urutan: 13, nama: "MESDM terbitkan persetujuan pengalihan PI 10%", slaUnit: "TANPA_SLA" },
-      { urutan: 14, nama: "PI 10% sudah disetujui", slaUnit: "TANPA_SLA" },
+      {
+        urutan: 1,
+        nama: "Persetujuan POD I atau Tgl Efektif KKS Perpanjangan/Alih Kelola",
+        slaUnit: "TANPA_SLA",
+      },
+      {
+        urutan: 2,
+        nama: "Kepala SKK Migas menyampaikan surat kepada Gubernur untuk menunjuk BUMD",
+        slaValue: 10,
+        slaUnit: "HARI_KERJA",
+      },
+      {
+        urutan: 3,
+        nama: "Gubernur menyampaikan Surat Penunjukan BUMD kepada SKK Migas",
+        slaValue: 12,
+        slaUnit: "BULAN",
+      },
+      {
+        urutan: 4,
+        nama: "Kepala SKK Migas menyampaikan surat kepada Kontraktor untuk memulai penawaran PI 10%",
+        slaValue: 10,
+        slaUnit: "HARI_KERJA",
+      },
+      {
+        urutan: 5,
+        nama: "Kontraktor menyampaikan penawaran tertulis kepada BUMD yang ditunjuk",
+        slaValue: 60,
+        slaUnit: "HARI_KALENDER",
+      },
+      {
+        urutan: 6,
+        nama: "BUMD menyampaikan Pernyataan Minat & Kesanggupan kepada Kontraktor",
+        slaValue: 60,
+        slaUnit: "HARI_KALENDER",
+      },
+      {
+        urutan: 7,
+        nama: "BUMD melakukan Uji Tuntas (Due Diligence) dan Akses Data",
+        slaValue: 60,
+        slaUnit: "HARI_KALENDER",
+      },
+      {
+        urutan: 8,
+        nama: "BUMD menyampaikan surat meneruskan / tidak meneruskan minat atas PI 10%",
+        slaValue: 180,
+        slaUnit: "HARI_KALENDER",
+      },
+      {
+        urutan: 9,
+        nama: "Kontraktor & BUMD menindaklanjuti proses Pengalihan PI 10%",
+        slaValue: 180,
+        slaUnit: "HARI_KALENDER",
+      },
+      {
+        urutan: 10,
+        nama: "Kontraktor mengajukan Permohonan Pengalihan PI 10% kepada Menteri ESDM melalui SKK Migas",
+        slaUnit: "TANPA_SLA",
+      },
+      {
+        urutan: 11,
+        nama: "SKK Migas menyampaikan rekomendasi pengalihan PI 10% kepada MESDM cq DJM",
+        slaValue: 30,
+        slaUnit: "HARI_KALENDER",
+      },
+      {
+        urutan: 12,
+        nama: "DJM melakukan pemeriksaan dan klarifikasi",
+        slaValue: 15,
+        slaUnit: "HARI_KALENDER",
+      },
+      {
+        urutan: 13,
+        nama: "MESDM menerbitkan persetujuan pengalihan PI 10%",
+        slaUnit: "TANPA_SLA",
+      },
+      {
+        urutan: 14,
+        nama: "PI 10% Selesai",
+        slaUnit: "TANPA_SLA",
+      },
     ],
   },
   {
@@ -527,6 +659,17 @@ async function seedTemplates() {
               extraFields: s.extraFields ? { fields: s.extraFields } : null,
             })
             .where(eq(stageTemplate.id, existingStage[0].id));
+        } else {
+          // Tahap baru untuk template yang sudah ada — insert
+          await db.insert(stageTemplate).values({
+            templateId: t.id,
+            urutan: s.urutan,
+            nama: s.nama,
+            slaValue: s.slaValue ?? null,
+            slaUnit: s.slaUnit ?? "TANPA_SLA",
+            extraFields: s.extraFields ? { fields: s.extraFields } : null,
+          });
+          console.log(`    + tahap baru urutan ${s.urutan} untuk template ${t.id}`);
         }
       }
       console.log("  = template di-update:", t.id);

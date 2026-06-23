@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import {
   wilayahKerja,
@@ -8,6 +8,8 @@ import {
   kabupaten,
   wkProcess,
   processTemplate,
+  stageTemplate,
+  wkStageProgress,
   dmedPodiDetail,
   dmedPi10Detail,
 } from "@/db/schema";
@@ -30,81 +32,137 @@ export default async function DmedTPage() {
   if (!user) redirect("/login");
   if (!isAdmin(user.role) && !isDmed(user.role)) redirect("/wk");
 
-  const podiRows = await db
-    .select({
-      id: wilayahKerja.id,
-      namaWk: wilayahKerja.namaWk,
-      lapangan: wilayahKerja.lapangan,
-      operatorK3s: wilayahKerja.operatorK3s,
-      pemegangSaham: wilayahKerja.pemegangSaham,
-      provinsiNama: provinsi.nama,
-      kabupatenNama: kabupaten.nama,
-      typeContract: wilayahKerja.typeContract,
-      statusWk: wilayahKerja.statusWk,
-      startPsc: wilayahKerja.startPsc,
-      endPsc: wilayahKerja.endPsc,
-      luasWilayahSisa: dmedPodiDetail.luasWilayahSisa,
-      jenisPod: dmedPodiDetail.jenisPod,
-      persetujuanPodI: dmedPodiDetail.persetujuanPodI,
-      revisiPodI1: dmedPodiDetail.revisiPodI1,
-      revisiPodI2: dmedPodiDetail.revisiPodI2,
-      perkiraanOnstream: dmedPodiDetail.perkiraanOnstream,
-      fluidaProduksi: dmedPodiDetail.fluidaProduksi,
-      cadanganGas: dmedPodiDetail.cadanganGas,
-      cadanganMinyak: dmedPodiDetail.cadanganMinyak,
-      asumsiHargaGas: dmedPodiDetail.asumsiHargaGas,
-      asumsiHargaMinyak: dmedPodiDetail.asumsiHargaMinyak,
-      grossRevenue: dmedPodiDetail.grossRevenue,
-      costRecovery: dmedPodiDetail.costRecovery,
-      goiTake: dmedPodiDetail.goiTake,
-      contTake: dmedPodiDetail.contTake,
-      irr: dmedPodiDetail.irr,
-      npvGov: dmedPodiDetail.npvGov,
-      npvKkks: dmedPodiDetail.npvKkks,
-      capex: dmedPodiDetail.capex,
-      opex: dmedPodiDetail.opex,
-      asr: dmedPodiDetail.asr,
-      sunkCost: dmedPodiDetail.sunkCost,
-      statusKesdmDjm: dmedPodiDetail.statusKesdmDjm,
-      statusSkkMigas: dmedPodiDetail.statusSkkMigas,
-      statusKkks: dmedPodiDetail.statusKkks,
-      keterangan: dmedPodiDetail.keterangan,
-    })
-    .from(wkProcess)
-    .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
-    .innerJoin(wilayahKerja, eq(wkProcess.wkId, wilayahKerja.id))
-    .innerJoin(dmedPodiDetail, eq(dmedPodiDetail.wkId, wilayahKerja.id))
-    .leftJoin(provinsi, eq(wilayahKerja.provinsiId, provinsi.id))
-    .leftJoin(kabupaten, eq(wilayahKerja.kabupatenId, kabupaten.id))
-    .where(eq(wkProcess.templateId, "DMED_PODI"))
-    .orderBy(asc(wilayahKerja.namaWk));
+  const [podiRows, pi10Rows, milestoneProcs] = await Promise.all([
+    db
+      .select({
+        id: wilayahKerja.id,
+        namaWk: wilayahKerja.namaWk,
+        lapangan: wilayahKerja.lapangan,
+        operatorK3s: wilayahKerja.operatorK3s,
+        pemegangSaham: wilayahKerja.pemegangSaham,
+        provinsiNama: provinsi.nama,
+        kabupatenNama: kabupaten.nama,
+        typeContract: wilayahKerja.typeContract,
+        statusWk: wilayahKerja.statusWk,
+        startPsc: wilayahKerja.startPsc,
+        endPsc: wilayahKerja.endPsc,
+        luasWilayahSisa: dmedPodiDetail.luasWilayahSisa,
+        jenisPod: dmedPodiDetail.jenisPod,
+        persetujuanPodI: dmedPodiDetail.persetujuanPodI,
+        revisiPodI1: dmedPodiDetail.revisiPodI1,
+        revisiPodI2: dmedPodiDetail.revisiPodI2,
+        perkiraanOnstream: dmedPodiDetail.perkiraanOnstream,
+        fluidaProduksi: dmedPodiDetail.fluidaProduksi,
+        cadanganGas: dmedPodiDetail.cadanganGas,
+        cadanganMinyak: dmedPodiDetail.cadanganMinyak,
+        asumsiHargaGas: dmedPodiDetail.asumsiHargaGas,
+        asumsiHargaMinyak: dmedPodiDetail.asumsiHargaMinyak,
+        grossRevenue: dmedPodiDetail.grossRevenue,
+        costRecovery: dmedPodiDetail.costRecovery,
+        goiTake: dmedPodiDetail.goiTake,
+        contTake: dmedPodiDetail.contTake,
+        irr: dmedPodiDetail.irr,
+        npvGov: dmedPodiDetail.npvGov,
+        npvKkks: dmedPodiDetail.npvKkks,
+        capex: dmedPodiDetail.capex,
+        opex: dmedPodiDetail.opex,
+        asr: dmedPodiDetail.asr,
+        sunkCost: dmedPodiDetail.sunkCost,
+        statusKesdmDjm: dmedPodiDetail.statusKesdmDjm,
+        statusSkkMigas: dmedPodiDetail.statusSkkMigas,
+        statusKkks: dmedPodiDetail.statusKkks,
+        keterangan: dmedPodiDetail.keterangan,
+      })
+      .from(wkProcess)
+      .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+      .innerJoin(wilayahKerja, eq(wkProcess.wkId, wilayahKerja.id))
+      .innerJoin(dmedPodiDetail, eq(dmedPodiDetail.wkId, wilayahKerja.id))
+      .leftJoin(provinsi, eq(wilayahKerja.provinsiId, provinsi.id))
+      .leftJoin(kabupaten, eq(wilayahKerja.kabupatenId, kabupaten.id))
+      .where(eq(wkProcess.templateId, "DMED_PODI"))
+      .orderBy(asc(wilayahKerja.namaWk)),
+    db
+      .select({
+        id: wilayahKerja.id,
+        namaWk: wilayahKerja.namaWk,
+        lapangan: wilayahKerja.lapangan,
+        operatorK3s: wilayahKerja.operatorK3s,
+        provinsiNama: provinsi.nama,
+        kabupatenNama: kabupaten.nama,
+        statusWk: wilayahKerja.statusWk,
+        bumdPenerima: dmedPi10Detail.bumdPenerima,
+        bumdPengelola: dmedPi10Detail.bumdPengelola,
+        statusKesdmDjm: dmedPi10Detail.statusKesdmDjm,
+        statusSkkMigas: dmedPi10Detail.statusSkkMigas,
+        statusProvBumd: dmedPi10Detail.statusProvBumd,
+        statusKkks: dmedPi10Detail.statusKkks,
+        tglEfekPi10: dmedPi10Detail.tglEfekPi10,
+        tglPerstMesdm: dmedPi10Detail.tglPerstMesdm,
+      })
+      .from(wkProcess)
+      .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+      .innerJoin(wilayahKerja, eq(wkProcess.wkId, wilayahKerja.id))
+      .innerJoin(dmedPi10Detail, eq(dmedPi10Detail.wkId, wilayahKerja.id))
+      .leftJoin(provinsi, eq(wilayahKerja.provinsiId, provinsi.id))
+      .leftJoin(kabupaten, eq(wilayahKerja.kabupatenId, kabupaten.id))
+      .where(eq(wkProcess.templateId, "DMED_PI10"))
+      .orderBy(asc(wilayahKerja.namaWk)),
+    db
+      .select({
+        processId: wkProcess.id,
+        wkId: wilayahKerja.id,
+        wkNama: wilayahKerja.namaWk,
+        templateNama: processTemplate.nama,
+        templateId: wkProcess.templateId,
+      })
+      .from(wkProcess)
+      .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+      .innerJoin(wilayahKerja, eq(wkProcess.wkId, wilayahKerja.id))
+      .where(inArray(wkProcess.templateId, ["DMED_PODI", "DMED_PI10"]))
+      .orderBy(asc(wilayahKerja.namaWk)),
+  ]);
 
-  const pi10Rows = await db
-    .select({
-      id: wilayahKerja.id,
-      namaWk: wilayahKerja.namaWk,
-      lapangan: wilayahKerja.lapangan,
-      operatorK3s: wilayahKerja.operatorK3s,
-      provinsiNama: provinsi.nama,
-      kabupatenNama: kabupaten.nama,
-      statusWk: wilayahKerja.statusWk,
-      bumdPenerima: dmedPi10Detail.bumdPenerima,
-      bumdPengelola: dmedPi10Detail.bumdPengelola,
-      statusKesdmDjm: dmedPi10Detail.statusKesdmDjm,
-      statusSkkMigas: dmedPi10Detail.statusSkkMigas,
-      statusProvBumd: dmedPi10Detail.statusProvBumd,
-      statusKkks: dmedPi10Detail.statusKkks,
-      tglEfekPi10: dmedPi10Detail.tglEfekPi10,
-      tglPerstMesdm: dmedPi10Detail.tglPerstMesdm,
-    })
-    .from(wkProcess)
-    .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
-    .innerJoin(wilayahKerja, eq(wkProcess.wkId, wilayahKerja.id))
-    .innerJoin(dmedPi10Detail, eq(dmedPi10Detail.wkId, wilayahKerja.id))
-    .leftJoin(provinsi, eq(wilayahKerja.provinsiId, provinsi.id))
-    .leftJoin(kabupaten, eq(wilayahKerja.kabupatenId, kabupaten.id))
-    .where(eq(wkProcess.templateId, "DMED_PI10"))
-    .orderBy(asc(wilayahKerja.namaWk));
+  // Ambil progress tahapan untuk semua proses DMED-T
+  type StageInfo = { nama: string; status: string; urutan: number };
+  let milestoneRows: { wkId: string; wkNama: string; label: string; stages: StageInfo[]; selesai: number; berjalan: number }[] = [];
+
+  if (milestoneProcs.length > 0) {
+    const processIds = milestoneProcs.map((p) => p.processId);
+    const stageDetails = await db
+      .select({
+        processId: wkStageProgress.wkProcessId,
+        nama: stageTemplate.nama,
+        namaOverride: wkStageProgress.namaOverride,
+        status: wkStageProgress.status,
+        urutan: stageTemplate.urutan,
+      })
+      .from(wkStageProgress)
+      .innerJoin(stageTemplate, eq(wkStageProgress.stageTemplateId, stageTemplate.id))
+      .where(inArray(wkStageProgress.wkProcessId, processIds))
+      .orderBy(asc(stageTemplate.urutan));
+
+    const stagesByProcess = new Map<string, StageInfo[]>();
+    for (const s of stageDetails) {
+      if (!stagesByProcess.has(s.processId)) stagesByProcess.set(s.processId, []);
+      stagesByProcess.get(s.processId)!.push({ nama: s.namaOverride ?? s.nama, status: s.status, urutan: s.urutan });
+    }
+
+    milestoneRows = milestoneProcs
+      .map((p) => {
+        const stages = stagesByProcess.get(p.processId) ?? [];
+        const selesai = stages.filter((s) => s.status === "SELESAI").length;
+        const berjalan = stages.filter((s) => s.status === "BERJALAN").length;
+        return { wkId: p.wkId, wkNama: p.wkNama, label: p.templateNama, stages, selesai, berjalan };
+      })
+      .filter((r) => {
+        if (r.stages.length === 0) return true;
+        return r.stages[r.stages.length - 1].status !== "SELESAI";
+      });
+  }
+
+  const totalSelesai = milestoneRows.reduce((a, r) => a + r.selesai, 0);
+  const totalBerjalan = milestoneRows.reduce((a, r) => a + r.berjalan, 0);
+  const totalBelumMulai = milestoneRows.reduce((a, r) => a + (r.stages.length - r.selesai - r.berjalan), 0);
 
   const userCanCreate = canCreateWk(user.role);
 
@@ -298,6 +356,107 @@ export default async function DmedTPage() {
           </table>
         </Card>
       </section>
+
+      {/* ── Milestone Progress ── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold text-ink">Progress Milestone Tahapan</h2>
+          <div className="flex gap-4 text-sm">
+            <span className="flex items-center gap-1.5 text-ok">
+              <span className="inline-block h-2 w-2 rounded-full bg-ok" />
+              Selesai: <strong>{totalSelesai}</strong>
+            </span>
+            <span className="flex items-center gap-1.5 text-warn">
+              <span className="inline-block h-2 w-2 rounded-full bg-warn" />
+              Berjalan: <strong>{totalBerjalan}</strong>
+            </span>
+            <span className="flex items-center gap-1.5 text-muted">
+              <span className="inline-block h-2 w-2 rounded-full bg-line" />
+              Belum Mulai: <strong>{totalBelumMulai}</strong>
+            </span>
+          </div>
+        </div>
+        <Card className="overflow-hidden p-0">
+          {milestoneRows.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-muted">
+              Semua tahapan WK telah selesai atau belum ada data.
+            </p>
+          ) : (
+            <div className="divide-y divide-line/60">
+              {milestoneRows.map((r, i) => (
+                <div key={`${r.wkId}-${i}`} className="px-4 py-4 hover:bg-sand/30">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Link href={`/wk/${r.wkId}`} className="truncate font-semibold text-petroleum hover:underline">
+                        {r.wkNama}
+                      </Link>
+                      <span className="shrink-0 rounded-full bg-danger/10 px-2 py-0.5 text-xs font-medium text-danger">
+                        {r.label}
+                      </span>
+                    </div>
+                    <div className="ml-3 shrink-0">
+                      {r.berjalan > 0 ? (
+                        <span className="rounded-full bg-petroleum/10 px-2 py-0.5 text-xs font-medium text-petroleum-dark">Berjalan</span>
+                      ) : r.stages.length === 0 ? (
+                        <span className="rounded-full bg-line/40 px-2 py-0.5 text-xs text-muted">Belum Ada Tahap</span>
+                      ) : (
+                        <span className="rounded-full bg-line/40 px-2 py-0.5 text-xs text-muted">Belum Mulai</span>
+                      )}
+                    </div>
+                  </div>
+                  {r.stages.length === 0 ? (
+                    <p className="text-xs text-muted">Belum ada tahap terdaftar.</p>
+                  ) : (
+                    <MilestoneTimeline stages={r.stages} />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </section>
+    </div>
+  );
+}
+
+function MilestoneTimeline({ stages }: { stages: { nama: string; status: string; urutan: number }[] }) {
+  return (
+    <div className="overflow-x-auto pb-1">
+      <div className="flex min-w-max items-start py-1">
+        {stages.map((s, i) => {
+          const isDone = s.status === "SELESAI";
+          const isRunning = s.status === "BERJALAN";
+          const prevDone = i > 0 && stages[i - 1].status === "SELESAI";
+          return (
+            <div key={i} className="flex items-start">
+              {i > 0 && (
+                <div className={`mt-[9px] h-0.5 w-10 shrink-0 ${prevDone ? "bg-ok" : "bg-line/40"}`} />
+              )}
+              <div className="flex w-[72px] flex-col items-center gap-1.5">
+                <div
+                  className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 ${
+                    isDone
+                      ? "border-ok bg-ok"
+                      : isRunning
+                      ? "border-petroleum bg-petroleum"
+                      : "border-line bg-surface"
+                  }`}
+                >
+                  {isDone && (
+                    <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  {isRunning && <div className="h-2 w-2 rounded-full bg-white" />}
+                </div>
+                <span className="line-clamp-2 w-full px-1 text-center text-[10px] leading-tight text-muted">
+                  {s.nama}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
