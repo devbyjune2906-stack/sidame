@@ -99,6 +99,7 @@ export type PokjaDashboardProps = {
   totalBerjalan: number;
   totalBelumMulai: number;
   provinsiPi10?: string[];
+  provinsiDilelang?: string[];
 };
 
 // ── Indonesia Map constants ─────────────────────────────────────────
@@ -138,6 +139,7 @@ export function PokjaDashboard({
   totalBerjalan,
   totalBelumMulai,
   provinsiPi10 = [],
+  provinsiDilelang = [],
 }: PokjaDashboardProps) {
   const activeStatuses = statusItems.filter(
     (s) => s.key !== "TIDAK_DILANJUTKAN" && s.value > 0,
@@ -273,7 +275,7 @@ export function PokjaDashboard({
           </div>
         </div>
 
-        {/* Center: Indonesia Map (DMED) or Province Grid */}
+        {/* Center: Indonesia Map (DMED / DMEW) or Province Grid */}
         <div className="flex flex-1 flex-col p-5" style={{ background: BG_MAIN }}>
           {pokja === "DMED" ? (
             <>
@@ -281,9 +283,24 @@ export function PokjaDashboard({
                 Peta Sebaran WK DMED — POD I &amp; PI 10%
               </p>
               <IndonesiaMap
-                podIProvinces={perProvinsi.map(r => r.nama)}
-                pi10Provinces={provinsiPi10}
+                primaryProvinces={perProvinsi.map(r => r.nama)}
+                highlightProvinces={provinsiPi10}
                 perProvinsi={perProvinsi}
+                primaryLabel="POD I"
+                highlightLabel="PI 10% aktif"
+              />
+            </>
+          ) : pokja === "DMEW" ? (
+            <>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/40">
+                Peta Sebaran WK DMEW — Usulan Baru &amp; Sedang Dilelang
+              </p>
+              <IndonesiaMap
+                primaryProvinces={perProvinsi.map(r => r.nama)}
+                highlightProvinces={provinsiDilelang}
+                perProvinsi={perProvinsi}
+                primaryLabel="WK Usulan Baru"
+                highlightLabel="Sedang Dilelang"
               />
             </>
           ) : (
@@ -647,17 +664,21 @@ function ProvinceGrid({ rows, total }: { rows: RankItem[]; total: number }) {
 }
 
 function IndonesiaMap({
-  podIProvinces,
-  pi10Provinces,
+  primaryProvinces,
+  highlightProvinces,
   perProvinsi,
+  primaryLabel,
+  highlightLabel,
 }: {
-  podIProvinces: string[];
-  pi10Provinces: string[];
+  primaryProvinces: string[];
+  highlightProvinces: string[];
   perProvinsi: RankItem[];
+  primaryLabel: string;
+  highlightLabel: string;
 }) {
-  const podISet  = new Set(podIProvinces);
-  const pi10Set  = new Set(pi10Provinces);
-  const countMap = new Map(perProvinsi.map(r => [r.nama, r.c]));
+  const primarySet   = new Set(primaryProvinces);
+  const highlightSet = new Set(highlightProvinces);
+  const countMap     = new Map(perProvinsi.map(r => [r.nama, r.c]));
 
   function getDBNames(neName: string): string[] {
     return NE_TO_DB[neName] ?? [neName];
@@ -665,14 +686,14 @@ function IndonesiaMap({
 
   function getProvinceColor(neName: string): string {
     const dbs = getDBNames(neName);
-    if (dbs.some(n => pi10Set.has(n))) return "#1EB8A8";
-    if (dbs.some(n => podISet.has(n))) return "#C9821B";
+    if (dbs.some(n => highlightSet.has(n))) return "#1EB8A8";
+    if (dbs.some(n => primarySet.has(n)))   return "#C9821B";
     return "rgba(30,184,168,0.1)";
   }
 
   function getProvinceStroke(neName: string): string {
     const dbs = getDBNames(neName);
-    return dbs.some(n => podISet.has(n) || pi10Set.has(n))
+    return dbs.some(n => primarySet.has(n) || highlightSet.has(n))
       ? "rgba(255,255,255,0.35)"
       : "rgba(30,184,168,0.22)";
   }
@@ -684,13 +705,13 @@ function IndonesiaMap({
         <div className="flex items-center gap-1.5">
           <div className="h-3 w-5 rounded-sm" style={{ background: "#C9821B" }} />
           <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
-            POD I ({podIProvinces.length} prov)
+            {primaryLabel} ({primaryProvinces.length} prov)
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="h-3 w-5 rounded-sm" style={{ background: "#1EB8A8" }} />
           <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
-            PI 10% aktif ({pi10Provinces.length} prov)
+            {highlightLabel} ({highlightProvinces.length} prov)
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -739,10 +760,10 @@ function IndonesiaMap({
 
           {/* Marker untuk provinsi baru yang belum ada poligon di dataset NE */}
           {EXTRA_PROVINCE_MARKERS.map(([name, lon, lat]) => {
-            const isPi10 = pi10Set.has(name);
-            const isPodI = podISet.has(name);
-            if (!isPi10 && !isPodI) return null;
-            const color = isPi10 ? "#1EB8A8" : "#C9821B";
+            const isHighlight = highlightSet.has(name);
+            const isPrimary   = primarySet.has(name);
+            if (!isHighlight && !isPrimary) return null;
+            const color = isHighlight ? "#1EB8A8" : "#C9821B";
             return (
               <Marker key={name} coordinates={[lon, lat]}>
                 <circle r={5} fill={color} stroke="rgba(255,255,255,0.5)" strokeWidth={1} />

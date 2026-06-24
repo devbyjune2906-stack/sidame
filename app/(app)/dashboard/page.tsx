@@ -129,6 +129,18 @@ export default async function DashboardPage() {
     provinsiPi10 = pi10Rows.map(r => r.nama).filter((n): n is string => n !== null);
   }
 
+  // ── Provinsi Sedang Dilelang (hanya untuk DMEW) ──────────────
+  let provinsiDilelang: string[] = [];
+  if (pokja === "DMEW") {
+    const dilelangRows = await db
+      .select({ nama: provinsi.nama })
+      .from(wilayahKerja)
+      .leftJoin(provinsi, eq(wilayahKerja.provinsiId, provinsi.id))
+      .where(withWhere(eq(wilayahKerja.statusWk, "SEDANG_DILELANG")))
+      .groupBy(provinsi.nama);
+    provinsiDilelang = dilelangRows.map(r => r.nama).filter((n): n is string => n !== null);
+  }
+
   // ── Milestone progress ──────────────────────────────────────
   const visible = visibleSubpokjas(user.role);
   const progressSubpokjas: string[] =
@@ -292,6 +304,7 @@ export default async function DashboardPage() {
       totalBerjalan={totalBerjalan}
       totalBelumMulai={totalBelumMulai}
       provinsiPi10={provinsiPi10}
+      provinsiDilelang={provinsiDilelang}
     />
   );
 }
