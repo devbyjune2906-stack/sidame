@@ -59,17 +59,24 @@ export default function LoginPage() {
       >
         <div className="w-full max-w-[340px]">
 
-          {/* KESDM logo — replaces "Selamat Datang / Sign In" text */}
-          <div className="mb-7 flex justify-center">
+          {/* KESDM logo + nama */}
+          <div className="mb-8 flex items-center justify-center gap-4">
             <img
               src="/logo-kesdm.png"
-              alt="Kementerian ESDM"
-              className="h-24 object-contain drop-shadow-lg"
+              alt="KESDM"
+              className="h-16 w-16 shrink-0 object-contain drop-shadow-lg"
               onError={(e) => {
-                // fallback jika file belum ada
                 (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
             />
+            <div className="border-l border-white/30 pl-4 text-left leading-tight">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
+                Kementerian
+              </p>
+              <p className="text-2xl font-extrabold tracking-widest text-white drop-shadow">
+                ESDM
+              </p>
+            </div>
           </div>
 
           {/* Form — sharp corners, glassmorphism */}
