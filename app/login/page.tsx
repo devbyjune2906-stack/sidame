@@ -69,11 +69,17 @@ export default function LoginPage() {
                 (e.currentTarget as HTMLImageElement).style.display = "none";
               }}
             />
-            <div className="border-l border-white/30 pl-4 text-left leading-snug">
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-white/80">
+            <div className="border-l border-white/30 pl-4 leading-snug" style={{ width: "9.5rem" }}>
+              <p
+                className="text-sm font-bold uppercase text-white/80 block"
+                style={{ textAlign: "justify", textAlignLast: "justify" }}
+              >
                 Kementerian
               </p>
-              <p className="text-[2rem] font-extrabold tracking-[0.12em] text-white drop-shadow leading-none">
+              <p
+                className="text-[2rem] font-extrabold text-white drop-shadow leading-none block"
+                style={{ textAlign: "justify", textAlignLast: "justify" }}
+              >
                 ESDM
               </p>
             </div>
