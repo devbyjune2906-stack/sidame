@@ -277,42 +277,41 @@ export function PokjaDashboard({
           </div>
         </div>
 
-        {/* Center: Indonesia Map (DMED / DMEW) or Province Grid */}
+        {/* Center: Indonesia Map — semua pokja */}
         <div className="flex flex-1 flex-col p-5" style={{ background: BG_MAIN }}>
-          {pokja === "DMED" ? (
-            <>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
-                Peta Sebaran WK DMED — POD I &amp; PI 10%
-              </p>
-              <IndonesiaMap
-                primaryProvinces={perProvinsi.map(r => r.nama)}
-                highlightProvinces={provinsiPi10}
-                perProvinsi={perProvinsi}
-                primaryLabel="POD I"
-                highlightLabel="PI 10% aktif"
-              />
-            </>
-          ) : pokja === "DMEW" ? (
-            <>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
-                Peta Sebaran WK DMEW — Usulan Baru &amp; Sedang Dilelang
-              </p>
-              <IndonesiaMap
-                primaryProvinces={perProvinsi.map(r => r.nama)}
-                highlightProvinces={provinsiDilelang}
-                perProvinsi={perProvinsi}
-                primaryLabel="WK Usulan Baru"
-                highlightLabel="Sedang Dilelang"
-              />
-            </>
-          ) : (
-            <>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
-                Sebaran WK per Provinsi — Pokja {pokja}
-              </p>
-              <ProvinceGrid rows={perProvinsi} total={total} />
-            </>
-          )}
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
+            {pokja === "DMED"
+              ? "Peta Sebaran WK DMED — POD I & PI 10%"
+              : pokja === "DMEW"
+              ? "Peta Sebaran WK DMEW — Usulan Baru & Sedang Dilelang"
+              : pokja === "DMEN"
+              ? "Peta Sebaran WK DMEN — Non Konvensional"
+              : pokja === "DMEE"
+              ? "Peta Sebaran WK DMEE — Eksplorasi"
+              : pokja === "DMEP"
+              ? "Peta Sebaran WK DMEP — Perpanjangan"
+              : `Peta Sebaran WK ${pokja}`}
+          </p>
+          <IndonesiaMap
+            primaryProvinces={perProvinsi.map(r => r.nama)}
+            highlightProvinces={
+              pokja === "DMED" ? provinsiPi10 :
+              pokja === "DMEW" ? provinsiDilelang : []
+            }
+            perProvinsi={perProvinsi}
+            primaryLabel={
+              pokja === "DMED" ? "POD I" :
+              pokja === "DMEW" ? "WK Usulan Baru" :
+              pokja === "DMEN" ? "WK Non Konvensional" :
+              pokja === "DMEE" ? "WK Eksplorasi" :
+              pokja === "DMEP" ? "WK Perpanjangan" :
+              `WK ${pokja}`
+            }
+            highlightLabel={
+              pokja === "DMED" ? "PI 10% aktif" :
+              pokja === "DMEW" ? "Sedang Dilelang" : ""
+            }
+          />
         </div>
 
         {/* Right: Pie chart */}
@@ -691,12 +690,14 @@ function IndonesiaMap({
             {primaryLabel} ({primaryProvinces.length} prov)
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="h-3 w-5 rounded-sm" style={{ background: "#0B5E54" }} />
-          <span className="text-[10px]" style={{ color: TEXT_MUTED }}>
-            {highlightLabel} ({highlightProvinces.length} prov)
-          </span>
-        </div>
+        {highlightLabel && (
+          <div className="flex items-center gap-1.5">
+            <div className="h-3 w-5 rounded-sm" style={{ background: "#0B5E54" }} />
+            <span className="text-[10px]" style={{ color: TEXT_MUTED }}>
+              {highlightLabel} ({highlightProvinces.length} prov)
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-1.5">
           <div
             className="h-3 w-5 rounded-sm"
