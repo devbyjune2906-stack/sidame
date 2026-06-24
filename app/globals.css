@@ -12,6 +12,15 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Override browser autofill background on login glassmorphism inputs */
+input.login-input:-webkit-autofill,
+input.login-input:-webkit-autofill:hover,
+input.login-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;

@@ -114,7 +114,7 @@ export default function LoginPage() {
                   color: "#ffffff",
                   outline: "none",
                 }}
-                className="placeholder:text-white/40 focus:border-white/60 transition-colors"
+                className="login-input placeholder:text-white/40 focus:border-white/60 transition-colors"
               />
             </div>
 
@@ -144,7 +144,7 @@ export default function LoginPage() {
                     color: "#ffffff",
                     outline: "none",
                   }}
-                  className="placeholder:text-white/40 focus:border-white/60 transition-colors"
+                  className="login-input placeholder:text-white/40 focus:border-white/60 transition-colors"
                 />
                 <button
                   type="button"
