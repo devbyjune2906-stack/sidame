@@ -46,14 +46,15 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Right: glassmorphism panel — no border-radius */}
+      {/* Right: glassmorphism panel */}
       <div
-        className="relative z-10 flex w-full flex-col items-center justify-center px-6 py-12 lg:w-[440px] lg:shrink-0"
+        className="relative z-10 flex w-full flex-col items-center justify-center px-6 py-12 m-4 lg:w-[440px] lg:shrink-0 lg:m-0 lg:my-8 lg:mr-8"
         style={{
           background: "rgba(255,255,255,0.10)",
           backdropFilter: "blur(30px)",
           WebkitBackdropFilter: "blur(30px)",
-          borderLeft: "1px solid rgba(255,255,255,0.15)",
+          border: "1px solid rgba(255,255,255,0.15)",
+          borderRadius: 20,
         }}
       >
         <div className="w-full max-w-[340px]">
@@ -77,7 +78,7 @@ export default function LoginPage() {
             style={{
               background: "rgba(255,255,255,0.13)",
               border: "1px solid rgba(255,255,255,0.22)",
-              borderRadius: 0,
+              borderRadius: 12,
               padding: "1.75rem",
             }}
           >
@@ -100,7 +101,7 @@ export default function LoginPage() {
                   width: "100%",
                   background: "rgba(255,255,255,0.18)",
                   border: "1px solid rgba(255,255,255,0.30)",
-                  borderRadius: 0,
+                  borderRadius: 8,
                   padding: "0.625rem 0.75rem",
                   fontSize: "0.875rem",
                   color: "#ffffff",
@@ -162,7 +163,7 @@ export default function LoginPage() {
             {state?.error && (
               <div
                 className="mb-4 px-3 py-2 text-sm text-white"
-                style={{ background: "rgba(180,50,43,0.45)", border: "1px solid rgba(255,100,100,0.3)", borderRadius: 0 }}
+                style={{ background: "rgba(180,50,43,0.45)", border: "1px solid rgba(255,100,100,0.3)", borderRadius: 8 }}
               >
                 {state.error}
               </div>
@@ -175,7 +176,7 @@ export default function LoginPage() {
               className="w-full py-2.5 text-sm font-bold uppercase tracking-widest text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{
                 background: "#0B5E54",
-                borderRadius: 0,
+                borderRadius: 8,
                 border: "1px solid rgba(255,255,255,0.15)",
               }}
             >
