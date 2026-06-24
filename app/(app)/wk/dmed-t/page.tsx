@@ -17,8 +17,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { isAdmin, isDmed, canCreateWk } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, TYPE_CONTRACT_LABEL, JENIS_POD_LABEL, type StatusWk, type TypeContract, type JenisPod } from "@/lib/constants";
 import { Badge, Card } from "@/components/ui";
-import { TambahKegiatanButton } from "./tambah-kegiatan-button";
-import { KegiatanSection } from "./kegiatan-section";
+import { TambahKegiatanButton } from "@/components/tambah-kegiatan-button";
+import { KegiatanSection } from "@/components/kegiatan-section";
 
 function fmtDate(d: Date | null) {
   if (!d) return "—";
@@ -147,7 +147,7 @@ export default async function DmedTPage() {
               + Tambah WK
             </Link>
           )}
-          <TambahKegiatanButton />
+          <TambahKegiatanButton subpokja="DMED-T" />
         </div>
       </header>
 
@@ -335,6 +335,7 @@ export default async function DmedTPage() {
             data: b.data as Record<string, string>,
             urutan: b.urutan,
           }))}
+          subpokja="DMED-T"
           canEdit={userCanCreate}
         />
       ))}

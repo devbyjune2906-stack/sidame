@@ -10,7 +10,11 @@ import {
   processTemplate,
   dmeeDetail,
   dmeeFieldDef,
+  kegiatan,
+  kegiatanBaris,
 } from "@/db/schema";
+import { TambahKegiatanButton } from "@/components/tambah-kegiatan-button";
+import { KegiatanSection } from "@/components/kegiatan-section";
 import { getCurrentUser } from "@/lib/auth";
 import { canWrite, isAdmin, isDmee } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
@@ -50,6 +54,23 @@ export default async function DmeeLPage() {
 
   const userCanEdit = canWrite(user.role);
 
+  const kegiatanRows = await db
+    .select()
+    .from(kegiatan)
+    .where(eq(kegiatan.subpokja, "DMEE-L"))
+    .orderBy(asc(kegiatan.createdAt));
+
+  const kegiatanWithBaris = await Promise.all(
+    kegiatanRows.map(async (kg) => {
+      const baris = await db
+        .select()
+        .from(kegiatanBaris)
+        .where(eq(kegiatanBaris.kegiatanId, kg.id))
+        .orderBy(asc(kegiatanBaris.urutan));
+      return { ...kg, baris };
+    }),
+  );
+
   return (
     <div className="space-y-5">
       <header className="flex items-start justify-between gap-3">
@@ -57,14 +78,17 @@ export default async function DmeeLPage() {
           <h1 className="font-display text-2xl font-bold text-ink">Sub Pokja DMEE-L</h1>
           <p className="mt-1 text-sm text-muted">{rows.length} data ditemukan</p>
         </div>
-        {isAdmin(user.role) && (
-          <Link
-            href="/wk/dmee/pengaturan"
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm text-petroleum hover:bg-sand"
-          >
-            Kelola Kolom
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {isAdmin(user.role) && (
+            <Link
+              href="/wk/dmee/pengaturan"
+              className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm text-petroleum hover:bg-sand"
+            >
+              Kelola Kolom
+            </Link>
+          )}
+          <TambahKegiatanButton subpokja="DMEE-L" />
+        </div>
       </header>
 
       <div className="overflow-x-auto rounded-xl border border-line bg-surface shadow-card">
@@ -138,6 +162,22 @@ export default async function DmeeLPage() {
           </tbody>
         </table>
       </div>
+
+      {kegiatanWithBaris.map((kg) => (
+        <KegiatanSection
+          key={kg.id}
+          id={kg.id}
+          judul={kg.judul}
+          kolom={kg.kolom as string[]}
+          baris={kg.baris.map((b) => ({
+            id: b.id,
+            data: b.data as Record<string, string>,
+            urutan: b.urutan,
+          }))}
+          subpokja="DMEE-L"
+          canEdit={userCanEdit}
+        />
+      ))}
     </div>
   );
 }

@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { wilayahKerja, provinsi, kabupaten, dmewLelangDetail } from "@/db/schema";
+import { wilayahKerja, provinsi, kabupaten, dmewLelangDetail, kegiatan, kegiatanBaris } from "@/db/schema";
+import { TambahKegiatanButton } from "@/components/tambah-kegiatan-button";
+import { KegiatanSection } from "@/components/kegiatan-section";
 import { getCurrentUser } from "@/lib/auth";
 import { canWrite, isAdmin, isDmew } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
@@ -35,11 +37,31 @@ export default async function DmewSPage() {
     .where(eq(dmewLelangDetail.subpokja, "DMEW-S"))
     .orderBy(asc(wilayahKerja.namaWk));
 
+  const kegiatanRows = await db
+    .select()
+    .from(kegiatan)
+    .where(eq(kegiatan.subpokja, "DMEW-S"))
+    .orderBy(asc(kegiatan.createdAt));
+
+  const kegiatanWithBaris = await Promise.all(
+    kegiatanRows.map(async (kg) => {
+      const baris = await db
+        .select()
+        .from(kegiatanBaris)
+        .where(eq(kegiatanBaris.kegiatanId, kg.id))
+        .orderBy(asc(kegiatanBaris.urutan));
+      return { ...kg, baris };
+    }),
+  );
+
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="font-display text-2xl font-bold text-ink">Sub Pokja DMEW-S</h1>
-        <p className="mt-1 text-sm text-muted">{rows.length} data ditemukan</p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-ink">Sub Pokja DMEW-S</h1>
+          <p className="mt-1 text-sm text-muted">{rows.length} data ditemukan</p>
+        </div>
+        <TambahKegiatanButton subpokja="DMEW-S" />
       </header>
 
       <div className="overflow-x-auto rounded-xl border border-line bg-surface shadow-card">
@@ -102,6 +124,22 @@ export default async function DmewSPage() {
           </tbody>
         </table>
       </div>
+
+      {kegiatanWithBaris.map((kg) => (
+        <KegiatanSection
+          key={kg.id}
+          id={kg.id}
+          judul={kg.judul}
+          kolom={kg.kolom as string[]}
+          baris={kg.baris.map((b) => ({
+            id: b.id,
+            data: b.data as Record<string, string>,
+            urutan: b.urutan,
+          }))}
+          subpokja="DMEW-S"
+          canEdit={userCanWrite}
+        />
+      ))}
     </div>
   );
 }

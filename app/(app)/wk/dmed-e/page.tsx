@@ -10,7 +10,11 @@ import {
   processTemplate,
   dmedEDetail,
   dmedEFieldDef,
+  kegiatan,
+  kegiatanBaris,
 } from "@/db/schema";
+import { TambahKegiatanButton } from "@/components/tambah-kegiatan-button";
+import { KegiatanSection } from "@/components/kegiatan-section";
 import { getCurrentUser } from "@/lib/auth";
 import { canWrite, isAdmin, isDmed, canCreateWk } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
@@ -62,6 +66,23 @@ export default async function DmedEPage() {
   const userCanEdit = canWrite(user.role);
   const userCanCreate = canCreateWk(user.role);
 
+  const kegiatanRows = await db
+    .select()
+    .from(kegiatan)
+    .where(eq(kegiatan.subpokja, "DMED-E"))
+    .orderBy(asc(kegiatan.createdAt));
+
+  const kegiatanWithBaris = await Promise.all(
+    kegiatanRows.map(async (kg) => {
+      const baris = await db
+        .select()
+        .from(kegiatanBaris)
+        .where(eq(kegiatanBaris.kegiatanId, kg.id))
+        .orderBy(asc(kegiatanBaris.urutan));
+      return { ...kg, baris };
+    }),
+  );
+
   const warnCount = rows.filter((r) => {
     const sisa = sisaKontrakTahun(r.endPsc);
     return sisa !== null && sisa <= 10;
@@ -98,6 +119,7 @@ export default async function DmedEPage() {
               Kelola Kolom
             </Link>
           )}
+          <TambahKegiatanButton subpokja="DMED-E" />
         </div>
       </header>
 
@@ -204,6 +226,22 @@ export default async function DmedEPage() {
           </tbody>
         </table>
       </div>
+
+      {kegiatanWithBaris.map((kg) => (
+        <KegiatanSection
+          key={kg.id}
+          id={kg.id}
+          judul={kg.judul}
+          kolom={kg.kolom as string[]}
+          baris={kg.baris.map((b) => ({
+            id: b.id,
+            data: b.data as Record<string, string>,
+            urutan: b.urutan,
+          }))}
+          subpokja="DMED-E"
+          canEdit={userCanEdit}
+        />
+      ))}
     </div>
   );
 }
