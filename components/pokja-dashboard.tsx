@@ -97,7 +97,80 @@ export type PokjaDashboardProps = {
   totalSelesai: number;
   totalBerjalan: number;
   totalBelumMulai: number;
+  provinsiPi10?: string[];
 };
+
+// ── Indonesia Map constants ─────────────────────────────────────────
+const SHORT_NAME: Record<string, string> = {
+  "Kepulauan Riau":            "Kep.Riau",
+  "Kepulauan Bangka Belitung": "Bangka Blt",
+  "DKI Jakarta":               "Jakarta",
+  "DI Yogyakarta":             "Yogyakarta",
+  "Nusa Tenggara Barat":       "NTB",
+  "Nusa Tenggara Timur":       "NTT",
+  "Kalimantan Barat":          "Kal-Bar",
+  "Kalimantan Tengah":         "Kal-Teng",
+  "Kalimantan Selatan":        "Kal-Sel",
+  "Kalimantan Timur":          "Kal-Tim",
+  "Kalimantan Utara":          "Kal-Ut",
+  "Sulawesi Utara":            "Sul-Ut",
+  "Sulawesi Tengah":           "Sul-Teng",
+  "Sulawesi Barat":            "Sul-Bar",
+  "Sulawesi Selatan":          "Sul-Sel",
+  "Sulawesi Tenggara":         "Sul-Tgr",
+  "Maluku Utara":              "Mal-Ut",
+  "Sumatera Utara":            "Sum-Ut",
+  "Sumatera Barat":            "Sum-Bar",
+  "Sumatera Selatan":          "Sum-Sel",
+  "Papua Barat Daya":          "P.Bar-Daya",
+  "Papua Barat":               "P.Barat",
+  "Papua Tengah":              "P.Tengah",
+  "Papua Pegunungan":          "P.Peg",
+  "Papua Selatan":             "P.Selatan",
+};
+
+// [name, cx, cy] — koordinat titik tengah provinsi dalam viewBox 810×285
+// Dipetakan dari koordinat geografis: x=(lon-95)/46*810, y=(6-lat)/17*285
+const PROVINCE_COORDS: [string, number, number][] = [
+  ["Aceh",                         30,  22],
+  ["Sumatera Utara",               71,  58],
+  ["Sumatera Barat",               99, 115],
+  ["Riau",                        123,  92],
+  ["Kepulauan Riau",              167,  85],
+  ["Jambi",                       132, 131],
+  ["Bengkulu",                    128, 163],
+  ["Sumatera Selatan",            158, 154],
+  ["Kepulauan Bangka Belitung",   202, 144],
+  ["Lampung",                     176, 177],
+  ["Banten",                      197, 208],
+  ["DKI Jakarta",                 208, 208],
+  ["Jawa Barat",                  224, 218],
+  ["Jawa Tengah",                 267, 224],
+  ["DI Yogyakarta",               272, 232],
+  ["Jawa Timur",                  308, 228],
+  ["Bali",                        350, 242],
+  ["Nusa Tenggara Barat",         376, 248],
+  ["Nusa Tenggara Timur",         445, 253],
+  ["Kalimantan Barat",            263,  92],
+  ["Kalimantan Tengah",           331, 131],
+  ["Kalimantan Selatan",          358, 145],
+  ["Kalimantan Timur",            375,  92],
+  ["Kalimantan Utara",            382,  42],
+  ["Sulawesi Utara",              523,  76],
+  ["Gorontalo",                   482,  91],
+  ["Sulawesi Tengah",             464, 128],
+  ["Sulawesi Barat",              426, 145],
+  ["Sulawesi Selatan",            442, 170],
+  ["Sulawesi Tenggara",           474, 175],
+  ["Maluku",                      590, 155],
+  ["Maluku Utara",                578,  76],
+  ["Papua Barat Daya",            641, 117],
+  ["Papua Barat",                 687, 121],
+  ["Papua Tengah",                714, 170],
+  ["Papua Pegunungan",            775, 168],
+  ["Papua Selatan",               748, 220],
+  ["Papua",                       756, 178],
+];
 
 // ── Main Component ─────────────────────────────────────────────────
 export function PokjaDashboard({
@@ -112,6 +185,7 @@ export function PokjaDashboard({
   totalSelesai,
   totalBerjalan,
   totalBelumMulai,
+  provinsiPi10 = [],
 }: PokjaDashboardProps) {
   const activeStatuses = statusItems.filter(
     (s) => s.key !== "TIDAK_DILANJUTKAN" && s.value > 0,
@@ -247,12 +321,27 @@ export function PokjaDashboard({
           </div>
         </div>
 
-        {/* Center: Province visualization */}
-        <div className="flex-1 p-5" style={{ background: BG_MAIN }}>
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-white/40">
-            Sebaran WK per Provinsi — Pokja {pokja}
-          </p>
-          <ProvinceGrid rows={perProvinsi} total={total} />
+        {/* Center: Indonesia Map (DMED) or Province Grid */}
+        <div className="flex flex-1 flex-col p-5" style={{ background: BG_MAIN }}>
+          {pokja === "DMED" ? (
+            <>
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/40">
+                Peta Sebaran WK DMED — POD I &amp; PI 10%
+              </p>
+              <IndonesiaMap
+                podIProvinces={perProvinsi.map(r => r.nama)}
+                pi10Provinces={provinsiPi10}
+                perProvinsi={perProvinsi}
+              />
+            </>
+          ) : (
+            <>
+              <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-white/40">
+                Sebaran WK per Provinsi — Pokja {pokja}
+              </p>
+              <ProvinceGrid rows={perProvinsi} total={total} />
+            </>
+          )}
         </div>
 
         {/* Right: Pie chart */}
@@ -601,6 +690,144 @@ function ProvinceGrid({ rows, total }: { rows: RankItem[]; total: number }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function IndonesiaMap({
+  podIProvinces,
+  pi10Provinces,
+  perProvinsi,
+}: {
+  podIProvinces: string[];
+  pi10Provinces: string[];
+  perProvinsi: RankItem[];
+}) {
+  const podISet  = new Set(podIProvinces);
+  const pi10Set  = new Set(pi10Provinces);
+  const countMap = new Map(perProvinsi.map(r => [r.nama, r.c]));
+
+  return (
+    <div className="flex flex-1 flex-col gap-2" style={{ minHeight: 220 }}>
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        <div className="flex items-center gap-1.5">
+          <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#C9821B" }} />
+          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+            POD I ({podIProvinces.length} prov)
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#1EB8A8" }} />
+          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+            PI 10% aktif ({pi10Provinces.length} prov)
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.13)" }} />
+          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+            Tidak ada WK
+          </span>
+        </div>
+      </div>
+
+      {/* SVG Map */}
+      <div className="flex-1">
+        <svg
+          viewBox="0 0 810 285"
+          className="h-full w-full"
+          preserveAspectRatio="xMidYMid meet"
+          style={{ overflow: "visible" }}
+        >
+          {/* ── Island silhouettes ── */}
+          <g fill="rgba(30,184,168,0.07)" stroke="rgba(30,184,168,0.2)" strokeWidth="0.6">
+            {/* Sumatra */}
+            <path d="M 14,14 L 42,8 L 70,22 L 95,58 L 110,90 L 128,128 L 148,162 L 170,198 L 192,218 L 180,228 L 155,212 L 132,178 L 110,148 L 88,110 L 70,72 L 46,32 Z" />
+            {/* Kalimantan */}
+            <path d="M 232,84 L 286,76 L 345,76 L 390,92 L 400,124 L 395,165 L 380,200 L 353,220 L 316,222 L 280,218 L 250,198 L 234,170 L 228,138 L 230,108 Z" />
+            {/* Java */}
+            <path d="M 192,222 L 250,228 L 308,236 L 358,252 L 365,266 L 350,274 L 295,260 L 238,248 L 192,236 Z" />
+            {/* Sulawesi */}
+            <path d="M 408,164 L 416,142 L 425,120 L 440,104 L 456,90 L 474,82 L 492,78 L 510,80 L 527,78 L 530,92 L 510,102 L 491,112 L 480,126 L 473,144 L 470,164 L 478,184 L 475,204 L 460,216 L 446,220 L 435,208 L 428,192 L 418,178 Z" />
+            {/* Papua */}
+            <path d="M 590,130 L 640,116 L 672,118 L 703,128 L 733,138 L 765,148 L 793,163 L 810,180 L 810,244 L 790,258 L 758,260 L 728,254 L 698,242 L 668,224 L 640,207 L 614,188 L 596,164 Z" />
+            {/* Kepulauan Riau */}
+            <ellipse cx="170" cy="88"  rx="12" ry="7"  />
+            {/* Bangka Belitung */}
+            <ellipse cx="202" cy="148" rx="14" ry="8"  />
+            {/* Bali */}
+            <ellipse cx="350" cy="262" rx="12" ry="7"  />
+            {/* NTB */}
+            <ellipse cx="376" cy="267" rx="14" ry="7"  />
+            {/* NTT Flores */}
+            <ellipse cx="416" cy="271" rx="18" ry="7"  />
+            {/* NTT Timor */}
+            <ellipse cx="455" cy="273" rx="13" ry="6"  />
+            {/* Maluku Utara */}
+            <ellipse cx="548" cy="110" rx="12" ry="18" />
+            <ellipse cx="572" cy="128" rx="8"  ry="14" />
+            {/* Maluku */}
+            <ellipse cx="562" cy="168" rx="10" ry="18" />
+            <ellipse cx="580" cy="188" rx="10" ry="14" />
+          </g>
+
+          {/* ── Province markers ── */}
+          {PROVINCE_COORDS.map(([name, cx, cy]) => {
+            const isPodI  = podISet.has(name);
+            const isPi10  = pi10Set.has(name);
+            const wkCount = countMap.get(name) ?? 0;
+            const active  = isPodI || isPi10;
+            const color   = isPi10
+              ? "#1EB8A8"
+              : isPodI
+              ? "#C9821B"
+              : "rgba(255,255,255,0.12)";
+            const r = active ? 5 : 2.5;
+
+            return (
+              <g key={name}>
+                <title>
+                  {name}
+                  {wkCount > 0 ? ` — ${wkCount} WK POD I` : ""}
+                  {isPi10 ? " · PI 10% aktif" : ""}
+                </title>
+
+                {/* Pulse animation for PI 10% */}
+                {isPi10 && (
+                  <circle cx={cx} cy={cy} r={r} fill="#1EB8A8" opacity="0">
+                    <animate attributeName="r"       values={`${r};${r + 9};${r}`}   dur="2.5s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.3;0;0.3"               dur="2.5s" repeatCount="indefinite" />
+                  </circle>
+                )}
+                {/* Soft glow for POD I (non PI10) */}
+                {isPodI && !isPi10 && (
+                  <circle cx={cx} cy={cy} r={r + 4} fill="#C9821B" opacity="0.14" />
+                )}
+                {/* Orange outer ring when province has both */}
+                {isPodI && isPi10 && (
+                  <circle cx={cx} cy={cy} r={r + 3} fill="none" stroke="#C9821B" strokeWidth="1.2" opacity="0.55" />
+                )}
+                {/* Main dot */}
+                <circle cx={cx} cy={cy} r={r} fill={color} />
+
+                {/* Label only for PI 10% provinces */}
+                {isPi10 && (
+                  <text
+                    x={cx}
+                    y={cy - r - 2}
+                    fontSize="6.5"
+                    fill="#1EB8A8"
+                    textAnchor="middle"
+                    fontWeight="600"
+                  >
+                    {SHORT_NAME[name] ?? name}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
     </div>
   );
 }

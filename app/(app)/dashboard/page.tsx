@@ -116,6 +116,19 @@ export default async function DashboardPage() {
     .orderBy(desc(count()))
     .limit(8);
 
+  // ── Provinsi PI 10% (hanya untuk DMED) ─────────────────────
+  let provinsiPi10: string[] = [];
+  if (pokja === "DMED") {
+    const pi10Rows = await db
+      .select({ nama: provinsi.nama })
+      .from(wilayahKerja)
+      .leftJoin(provinsi, eq(wilayahKerja.provinsiId, provinsi.id))
+      .innerJoin(wkProcess, eq(wkProcess.wkId, wilayahKerja.id))
+      .where(withWhere(eq(wkProcess.templateId, "DMED_PI10")))
+      .groupBy(provinsi.nama);
+    provinsiPi10 = pi10Rows.map(r => r.nama).filter((n): n is string => n !== null);
+  }
+
   // ── Milestone progress ──────────────────────────────────────
   const visible = visibleSubpokjas(user.role);
   const progressSubpokjas: string[] =
@@ -278,6 +291,7 @@ export default async function DashboardPage() {
       totalSelesai={totalSelesai}
       totalBerjalan={totalBerjalan}
       totalBelumMulai={totalBelumMulai}
+      provinsiPi10={provinsiPi10}
     />
   );
 }
