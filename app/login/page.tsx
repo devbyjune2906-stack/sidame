@@ -106,7 +106,7 @@ export default function LoginPage() {
                 placeholder="Enter Your Email"
                 style={{
                   width: "100%",
-                  background: "rgba(255,255,255,0.18)",
+                  background: "transparent",
                   border: "1px solid rgba(255,255,255,0.30)",
                   borderRadius: 8,
                   padding: "0.625rem 0.75rem",
@@ -114,7 +114,7 @@ export default function LoginPage() {
                   color: "#ffffff",
                   outline: "none",
                 }}
-                className="placeholder:text-white/40 focus:border-white/60 focus:bg-white/25 transition-colors"
+                className="placeholder:text-white/40 focus:border-white/60 transition-colors"
               />
             </div>
 
@@ -136,7 +136,7 @@ export default function LoginPage() {
                   placeholder="Enter Your Password"
                   style={{
                     width: "100%",
-                    background: "rgba(255,255,255,0.18)",
+                    background: "transparent",
                     border: "1px solid rgba(255,255,255,0.30)",
                     borderRadius: 0,
                     padding: "0.625rem 2.5rem 0.625rem 0.75rem",
@@ -144,7 +144,7 @@ export default function LoginPage() {
                     color: "#ffffff",
                     outline: "none",
                   }}
-                  className="placeholder:text-white/40 focus:border-white/60 focus:bg-white/25 transition-colors"
+                  className="placeholder:text-white/40 focus:border-white/60 transition-colors"
                 />
                 <button
                   type="button"
