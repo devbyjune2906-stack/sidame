@@ -301,6 +301,24 @@ export const dmepProduksiBulanan = pgTable(
   })
 );
 
+/* ===================== KEGIATAN TAMBAHAN ===================== */
+export const kegiatan = pgTable("kegiatan", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  subpokja: text("subpokja").notNull(),
+  judul: text("judul").notNull(),
+  kolom: jsonb("kolom").$type<string[]>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const kegiatanBaris = pgTable("kegiatan_baris", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  kegiatanId: text("kegiatan_id")
+    .notNull()
+    .references(() => kegiatan.id, { onDelete: "cascade" }),
+  data: jsonb("data").$type<Record<string, string>>().notNull(),
+  urutan: integer("urutan").notNull().default(0),
+});
+
 /* ===================== RELATIONS ===================== */
 export const usersRelations = relations(users, ({ one }) => ({
   role: one(roles, { fields: [users.roleId], references: [roles.id] }),

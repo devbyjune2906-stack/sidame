@@ -10,11 +10,15 @@ import {
   processTemplate,
   dmedPodiDetail,
   dmedPi10Detail,
+  kegiatan,
+  kegiatanBaris,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { isAdmin, isDmed, canCreateWk } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, TYPE_CONTRACT_LABEL, JENIS_POD_LABEL, type StatusWk, type TypeContract, type JenisPod } from "@/lib/constants";
 import { Badge, Card } from "@/components/ui";
+import { TambahKegiatanButton } from "./tambah-kegiatan-button";
+import { KegiatanSection } from "./kegiatan-section";
 
 function fmtDate(d: Date | null) {
   if (!d) return "—";
@@ -30,7 +34,7 @@ export default async function DmedTPage() {
   if (!user) redirect("/login");
   if (!isAdmin(user.role) && !isDmed(user.role)) redirect("/wk");
 
-  const [podiRows, pi10Rows] = await Promise.all([
+  const [podiRows, pi10Rows, kegiatanRows] = await Promise.all([
     db
       .select({
         id: wilayahKerja.id,
@@ -105,7 +109,23 @@ export default async function DmedTPage() {
       .leftJoin(kabupaten, eq(wilayahKerja.kabupatenId, kabupaten.id))
       .where(eq(wkProcess.templateId, "DMED_PI10"))
       .orderBy(asc(wilayahKerja.namaWk)),
+    db
+      .select()
+      .from(kegiatan)
+      .where(eq(kegiatan.subpokja, "DMED-T"))
+      .orderBy(asc(kegiatan.createdAt)),
   ]);
+
+  const kegiatanWithBaris = await Promise.all(
+    kegiatanRows.map(async (kg) => {
+      const baris = await db
+        .select()
+        .from(kegiatanBaris)
+        .where(eq(kegiatanBaris.kegiatanId, kg.id))
+        .orderBy(asc(kegiatanBaris.urutan));
+      return { ...kg, baris };
+    }),
+  );
 
   const userCanCreate = canCreateWk(user.role);
 
@@ -118,14 +138,17 @@ export default async function DmedTPage() {
             {podiRows.length} data POD I &middot; {pi10Rows.length} data PI 10%
           </p>
         </div>
-        {userCanCreate && (
-          <Link
-            href="/wk/new"
-            className="rounded-lg bg-petroleum px-3 py-1.5 text-sm font-medium text-white hover:bg-petroleum/90"
-          >
-            + Tambah WK
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {userCanCreate && (
+            <Link
+              href="/wk/new"
+              className="rounded-lg bg-petroleum px-3 py-1.5 text-sm font-medium text-white hover:bg-petroleum/90"
+            >
+              + Tambah WK
+            </Link>
+          )}
+          <TambahKegiatanButton />
+        </div>
       </header>
 
       <section className="space-y-3">
@@ -299,6 +322,22 @@ export default async function DmedTPage() {
           </table>
         </Card>
       </section>
+
+      {/* Kegiatan tambahan — muncul di bawah PI 10% */}
+      {kegiatanWithBaris.map((kg) => (
+        <KegiatanSection
+          key={kg.id}
+          id={kg.id}
+          judul={kg.judul}
+          kolom={kg.kolom as string[]}
+          baris={kg.baris.map((b) => ({
+            id: b.id,
+            data: b.data as Record<string, string>,
+            urutan: b.urutan,
+          }))}
+          canEdit={userCanCreate}
+        />
+      ))}
     </div>
   );
 }
