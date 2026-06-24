@@ -5,6 +5,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
+import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 
 // ── Color palette for dark dashboard ──────────────────────────────
 const BG_MAIN    = "#091520";
@@ -101,75 +102,26 @@ export type PokjaDashboardProps = {
 };
 
 // ── Indonesia Map constants ─────────────────────────────────────────
-const SHORT_NAME: Record<string, string> = {
-  "Kepulauan Riau":            "Kep.Riau",
-  "Kepulauan Bangka Belitung": "Bangka Blt",
-  "DKI Jakarta":               "Jakarta",
-  "DI Yogyakarta":             "Yogyakarta",
-  "Nusa Tenggara Barat":       "NTB",
-  "Nusa Tenggara Timur":       "NTT",
-  "Kalimantan Barat":          "Kal-Bar",
-  "Kalimantan Tengah":         "Kal-Teng",
-  "Kalimantan Selatan":        "Kal-Sel",
-  "Kalimantan Timur":          "Kal-Tim",
-  "Kalimantan Utara":          "Kal-Ut",
-  "Sulawesi Utara":            "Sul-Ut",
-  "Sulawesi Tengah":           "Sul-Teng",
-  "Sulawesi Barat":            "Sul-Bar",
-  "Sulawesi Selatan":          "Sul-Sel",
-  "Sulawesi Tenggara":         "Sul-Tgr",
-  "Maluku Utara":              "Mal-Ut",
-  "Sumatera Utara":            "Sum-Ut",
-  "Sumatera Barat":            "Sum-Bar",
-  "Sumatera Selatan":          "Sum-Sel",
-  "Papua Barat Daya":          "P.Bar-Daya",
-  "Papua Barat":               "P.Barat",
-  "Papua Tengah":              "P.Tengah",
-  "Papua Pegunungan":          "P.Peg",
-  "Papua Selatan":             "P.Selatan",
+// Natural Earth GeoJSON (2012 dataset) nama provinsi → nama DB kami
+// Dibutuhkan karena NE menggunakan nama lama / berbeda, dan 5 provinsi
+// baru (Kalimantan Utara 2012, Papua split 2022) tidak ada dalam dataset.
+const NE_TO_DB: Record<string, string[]> = {
+  "Jakarta Raya":     ["DKI Jakarta"],
+  "Yogyakarta":       ["DI Yogyakarta"],
+  "Bangka-Belitung":  ["Kepulauan Bangka Belitung"],
+  "Kalimantan Timur": ["Kalimantan Timur", "Kalimantan Utara"],
+  "Papua":            ["Papua", "Papua Tengah", "Papua Pegunungan", "Papua Selatan"],
+  "Papua Barat":      ["Papua Barat", "Papua Barat Daya"],
 };
 
-// [name, cx, cy] — koordinat titik tengah provinsi dalam viewBox 810×285
-// Dipetakan dari koordinat geografis: x=(lon-95)/46*810, y=(6-lat)/17*285
-const PROVINCE_COORDS: [string, number, number][] = [
-  ["Aceh",                         30,  22],
-  ["Sumatera Utara",               71,  58],
-  ["Sumatera Barat",               99, 115],
-  ["Riau",                        123,  92],
-  ["Kepulauan Riau",              167,  85],
-  ["Jambi",                       132, 131],
-  ["Bengkulu",                    128, 163],
-  ["Sumatera Selatan",            158, 154],
-  ["Kepulauan Bangka Belitung",   202, 144],
-  ["Lampung",                     176, 177],
-  ["Banten",                      197, 208],
-  ["DKI Jakarta",                 208, 208],
-  ["Jawa Barat",                  224, 218],
-  ["Jawa Tengah",                 267, 224],
-  ["DI Yogyakarta",               272, 232],
-  ["Jawa Timur",                  308, 228],
-  ["Bali",                        350, 242],
-  ["Nusa Tenggara Barat",         376, 248],
-  ["Nusa Tenggara Timur",         445, 253],
-  ["Kalimantan Barat",            263,  92],
-  ["Kalimantan Tengah",           331, 131],
-  ["Kalimantan Selatan",          358, 145],
-  ["Kalimantan Timur",            375,  92],
-  ["Kalimantan Utara",            382,  42],
-  ["Sulawesi Utara",              523,  76],
-  ["Gorontalo",                   482,  91],
-  ["Sulawesi Tengah",             464, 128],
-  ["Sulawesi Barat",              426, 145],
-  ["Sulawesi Selatan",            442, 170],
-  ["Sulawesi Tenggara",           474, 175],
-  ["Maluku",                      590, 155],
-  ["Maluku Utara",                578,  76],
-  ["Papua Barat Daya",            641, 117],
-  ["Papua Barat",                 687, 121],
-  ["Papua Tengah",                714, 170],
-  ["Papua Pegunungan",            775, 168],
-  ["Papua Selatan",               748, 220],
-  ["Papua",                       756, 178],
+// 5 provinsi baru yang tidak ada poligonnya di dataset NE → tampil sebagai marker titik
+// [nama DB, longitude, latitude]
+const EXTRA_PROVINCE_MARKERS: [string, number, number][] = [
+  ["Kalimantan Utara", 116.8,  3.5],
+  ["Papua Barat Daya", 131.3, -0.9],
+  ["Papua Tengah",     135.5, -4.0],
+  ["Papua Pegunungan", 139.0, -4.0],
+  ["Papua Selatan",    137.5, -7.0],
 ];
 
 // ── Main Component ─────────────────────────────────────────────────
@@ -707,126 +659,107 @@ function IndonesiaMap({
   const pi10Set  = new Set(pi10Provinces);
   const countMap = new Map(perProvinsi.map(r => [r.nama, r.c]));
 
+  function getDBNames(neName: string): string[] {
+    return NE_TO_DB[neName] ?? [neName];
+  }
+
+  function getProvinceColor(neName: string): string {
+    const dbs = getDBNames(neName);
+    if (dbs.some(n => pi10Set.has(n))) return "#1EB8A8";
+    if (dbs.some(n => podISet.has(n))) return "#C9821B";
+    return "rgba(30,184,168,0.1)";
+  }
+
+  function getProvinceStroke(neName: string): string {
+    const dbs = getDBNames(neName);
+    return dbs.some(n => podISet.has(n) || pi10Set.has(n))
+      ? "rgba(255,255,255,0.35)"
+      : "rgba(30,184,168,0.22)";
+  }
+
   return (
     <div className="flex flex-1 flex-col gap-2" style={{ minHeight: 220 }}>
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
         <div className="flex items-center gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#C9821B" }} />
+          <div className="h-3 w-5 rounded-sm" style={{ background: "#C9821B" }} />
           <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
             POD I ({podIProvinces.length} prov)
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full" style={{ background: "#1EB8A8" }} />
+          <div className="h-3 w-5 rounded-sm" style={{ background: "#1EB8A8" }} />
           <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
             PI 10% aktif ({pi10Provinces.length} prov)
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full" style={{ background: "rgba(255,255,255,0.13)" }} />
+          <div
+            className="h-3 w-5 rounded-sm"
+            style={{ background: "rgba(30,184,168,0.15)", border: "1px solid rgba(30,184,168,0.3)" }}
+          />
           <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
             Tidak ada WK
           </span>
         </div>
       </div>
 
-      {/* SVG Map */}
-      <div className="flex-1">
-        <svg
-          viewBox="0 0 810 285"
-          className="h-full w-full"
-          preserveAspectRatio="xMidYMid meet"
-          style={{ overflow: "visible" }}
+      {/* Map */}
+      <div className="flex-1 rounded-lg overflow-hidden" style={{ minHeight: 200 }}>
+        <ComposableMap
+          projection="geoMercator"
+          projectionConfig={{ center: [118, -2], scale: 1050 }}
+          style={{ width: "100%", height: "100%", background: "transparent" }}
         >
-          {/* ── Island silhouettes ── */}
-          <g fill="rgba(30,184,168,0.07)" stroke="rgba(30,184,168,0.2)" strokeWidth="0.6">
-            {/* Sumatra */}
-            <path d="M 14,14 L 42,8 L 70,22 L 95,58 L 110,90 L 128,128 L 148,162 L 170,198 L 192,218 L 180,228 L 155,212 L 132,178 L 110,148 L 88,110 L 70,72 L 46,32 Z" />
-            {/* Kalimantan */}
-            <path d="M 232,84 L 286,76 L 345,76 L 390,92 L 400,124 L 395,165 L 380,200 L 353,220 L 316,222 L 280,218 L 250,198 L 234,170 L 228,138 L 230,108 Z" />
-            {/* Java */}
-            <path d="M 192,222 L 250,228 L 308,236 L 358,252 L 365,266 L 350,274 L 295,260 L 238,248 L 192,236 Z" />
-            {/* Sulawesi */}
-            <path d="M 408,164 L 416,142 L 425,120 L 440,104 L 456,90 L 474,82 L 492,78 L 510,80 L 527,78 L 530,92 L 510,102 L 491,112 L 480,126 L 473,144 L 470,164 L 478,184 L 475,204 L 460,216 L 446,220 L 435,208 L 428,192 L 418,178 Z" />
-            {/* Papua */}
-            <path d="M 590,130 L 640,116 L 672,118 L 703,128 L 733,138 L 765,148 L 793,163 L 810,180 L 810,244 L 790,258 L 758,260 L 728,254 L 698,242 L 668,224 L 640,207 L 614,188 L 596,164 Z" />
-            {/* Kepulauan Riau */}
-            <ellipse cx="170" cy="88"  rx="12" ry="7"  />
-            {/* Bangka Belitung */}
-            <ellipse cx="202" cy="148" rx="14" ry="8"  />
-            {/* Bali */}
-            <ellipse cx="350" cy="262" rx="12" ry="7"  />
-            {/* NTB */}
-            <ellipse cx="376" cy="267" rx="14" ry="7"  />
-            {/* NTT Flores */}
-            <ellipse cx="416" cy="271" rx="18" ry="7"  />
-            {/* NTT Timor */}
-            <ellipse cx="455" cy="273" rx="13" ry="6"  />
-            {/* Maluku Utara */}
-            <ellipse cx="548" cy="110" rx="12" ry="18" />
-            <ellipse cx="572" cy="128" rx="8"  ry="14" />
-            {/* Maluku */}
-            <ellipse cx="562" cy="168" rx="10" ry="18" />
-            <ellipse cx="580" cy="188" rx="10" ry="14" />
-          </g>
+          <Geographies geography="/indonesia-provinces.geojson">
+            {({ geographies }) =>
+              geographies.map(geo => {
+                const neName  = geo.properties.name as string;
+                const dbs     = getDBNames(neName);
+                const wkCount = dbs.reduce((s, n) => s + (countMap.get(n) ?? 0), 0);
+                return (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    fill={getProvinceColor(neName)}
+                    stroke={getProvinceStroke(neName)}
+                    strokeWidth={0.5}
+                    tabIndex={-1}
+                    aria-label={`${dbs.join(" / ")}${wkCount > 0 ? ` — ${wkCount} WK` : ""}`}
+                    style={{
+                      default: { outline: "none" },
+                      hover:   { outline: "none", opacity: 0.78, cursor: "pointer" },
+                      pressed: { outline: "none" },
+                    }}
+                  />
+                );
+              })
+            }
+          </Geographies>
 
-          {/* ── Province markers ── */}
-          {PROVINCE_COORDS.map(([name, cx, cy]) => {
-            const isPodI  = podISet.has(name);
-            const isPi10  = pi10Set.has(name);
-            const wkCount = countMap.get(name) ?? 0;
-            const active  = isPodI || isPi10;
-            const color   = isPi10
-              ? "#1EB8A8"
-              : isPodI
-              ? "#C9821B"
-              : "rgba(255,255,255,0.12)";
-            const r = active ? 5 : 2.5;
-
+          {/* Marker untuk provinsi baru yang belum ada poligon di dataset NE */}
+          {EXTRA_PROVINCE_MARKERS.map(([name, lon, lat]) => {
+            const isPi10 = pi10Set.has(name);
+            const isPodI = podISet.has(name);
+            if (!isPi10 && !isPodI) return null;
+            const color = isPi10 ? "#1EB8A8" : "#C9821B";
             return (
-              <g key={name}>
-                <title>
+              <Marker key={name} coordinates={[lon, lat]}>
+                <circle r={5} fill={color} stroke="rgba(255,255,255,0.5)" strokeWidth={1} />
+                <text
+                  y={-8}
+                  fontSize={7}
+                  textAnchor="middle"
+                  fill={color}
+                  fontWeight="bold"
+                  style={{ pointerEvents: "none" }}
+                >
                   {name}
-                  {wkCount > 0 ? ` — ${wkCount} WK POD I` : ""}
-                  {isPi10 ? " · PI 10% aktif" : ""}
-                </title>
-
-                {/* Pulse animation for PI 10% */}
-                {isPi10 && (
-                  <circle cx={cx} cy={cy} r={r} fill="#1EB8A8" opacity="0">
-                    <animate attributeName="r"       values={`${r};${r + 9};${r}`}   dur="2.5s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.3;0;0.3"               dur="2.5s" repeatCount="indefinite" />
-                  </circle>
-                )}
-                {/* Soft glow for POD I (non PI10) */}
-                {isPodI && !isPi10 && (
-                  <circle cx={cx} cy={cy} r={r + 4} fill="#C9821B" opacity="0.14" />
-                )}
-                {/* Orange outer ring when province has both */}
-                {isPodI && isPi10 && (
-                  <circle cx={cx} cy={cy} r={r + 3} fill="none" stroke="#C9821B" strokeWidth="1.2" opacity="0.55" />
-                )}
-                {/* Main dot */}
-                <circle cx={cx} cy={cy} r={r} fill={color} />
-
-                {/* Label only for PI 10% provinces */}
-                {isPi10 && (
-                  <text
-                    x={cx}
-                    y={cy - r - 2}
-                    fontSize="6.5"
-                    fill="#1EB8A8"
-                    textAnchor="middle"
-                    fontWeight="600"
-                  >
-                    {SHORT_NAME[name] ?? name}
-                  </text>
-                )}
-              </g>
+                </text>
+              </Marker>
             );
           })}
-        </svg>
+        </ComposableMap>
       </div>
     </div>
   );
