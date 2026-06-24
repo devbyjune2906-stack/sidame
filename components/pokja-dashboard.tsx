@@ -7,14 +7,16 @@ import {
 } from "recharts";
 import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 
-// ── Color palette for dark dashboard ──────────────────────────────
-const BG_MAIN    = "#091520";
-const BG_HEADER  = "#0d2240";
-const BG_TITLE   = "#0a1e38";
-const BG_CARD    = "#0d1e30";
-const BG_CARD2   = "#081420";
-const BORDER     = "#1a3352";
-const PIE_COLORS = ["#1EB8A8", "#0B9E8E", "#C9821B", "#2E7D5B", "#6B8E86", "#B4322B"];
+// ── Color palette — matches DME admin dashboard ────────────────────
+const BG_MAIN    = "#F0F4F3";
+const BG_HEADER  = "#0B5E54";
+const BG_TITLE   = "#08443D";
+const BG_CARD    = "#FFFFFF";
+const BG_CARD2   = "#F6F8F7";
+const BORDER     = "#E2E7E5";
+const TEXT_MAIN  = "#16211F";
+const TEXT_MUTED = "#64726F";
+const PIE_COLORS = ["#0B5E54", "#0F7A6E", "#C9821B", "#2E7D5B", "#6B8E86", "#B4322B"];
 
 const STATUS_ICON: Record<string, string> = {
   WK_USULAN_BARU:    "🗂",
@@ -221,14 +223,14 @@ export function PokjaDashboard({
           className="flex w-52 shrink-0 flex-col gap-3 p-4"
           style={{ background: BG_CARD2, borderRight: `1px solid ${BORDER}` }}
         >
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
             Quick Access
           </p>
 
           {/* Filter placeholder */}
           <div
-            className="rounded px-2 py-1.5 text-xs text-white/30"
-            style={{ background: BG_HEADER, border: `1px solid ${BORDER}` }}
+            className="rounded px-2 py-1.5 text-xs"
+            style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: TEXT_MUTED }}
           >
             Select Filter...
           </div>
@@ -257,7 +259,7 @@ export function PokjaDashboard({
 
           {/* Contract areas legend */}
           <div className="mt-2">
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/40">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
               Contract Areas
             </p>
             <div className="space-y-1.5">
@@ -267,8 +269,8 @@ export function PokjaDashboard({
                     className="h-2.5 w-2.5 shrink-0 rounded-sm"
                     style={{ background: PIE_COLORS[i % PIE_COLORS.length] }}
                   />
-                  <span className="flex-1 truncate text-white/60">{p.nama}</span>
-                  <span className="font-semibold text-white/80">{p.c}</span>
+                  <span className="flex-1 truncate" style={{ color: TEXT_MUTED }}>{p.nama}</span>
+                  <span className="font-semibold" style={{ color: TEXT_MAIN }}>{p.c}</span>
                 </div>
               ))}
             </div>
@@ -279,7 +281,7 @@ export function PokjaDashboard({
         <div className="flex flex-1 flex-col p-5" style={{ background: BG_MAIN }}>
           {pokja === "DMED" ? (
             <>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/40">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
                 Peta Sebaran WK DMED — POD I &amp; PI 10%
               </p>
               <IndonesiaMap
@@ -292,7 +294,7 @@ export function PokjaDashboard({
             </>
           ) : pokja === "DMEW" ? (
             <>
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/40">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
                 Peta Sebaran WK DMEW — Usulan Baru &amp; Sedang Dilelang
               </p>
               <IndonesiaMap
@@ -305,7 +307,7 @@ export function PokjaDashboard({
             </>
           ) : (
             <>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-white/40">
+              <p className="mb-4 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
                 Sebaran WK per Provinsi — Pokja {pokja}
               </p>
               <ProvinceGrid rows={perProvinsi} total={total} />
@@ -318,10 +320,10 @@ export function PokjaDashboard({
           className="w-64 shrink-0 p-4"
           style={{ background: BG_CARD2, borderLeft: `1px solid ${BORDER}` }}
         >
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
             Distribusi Status
           </p>
-          <p className="mb-2 text-[11px] text-white/40">Pipeline Pokja {pokja}</p>
+          <p className="mb-2 text-[11px]" style={{ color: TEXT_MUTED }}>Pipeline Pokja {pokja}</p>
           <ResponsiveContainer width="100%" height={190}>
             <PieChart>
               <Pie
@@ -338,16 +340,16 @@ export function PokjaDashboard({
               </Pie>
               <Tooltip
                 contentStyle={{
-                  background: BG_HEADER,
+                  background: BG_CARD,
                   border: `1px solid ${BORDER}`,
                   borderRadius: "8px",
-                  color: "white",
+                  color: TEXT_MAIN,
                   fontSize: 11,
                 }}
               />
               <Legend
                 iconSize={8}
-                wrapperStyle={{ fontSize: 10, color: "rgba(255,255,255,0.55)" }}
+                wrapperStyle={{ fontSize: 10, color: TEXT_MUTED }}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -362,10 +364,10 @@ export function PokjaDashboard({
 
         {/* Panel 1: Contract type */}
         <div className="p-4" style={{ background: BG_CARD }}>
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
             Tipe Kontrak
           </p>
-          <p className="mb-3 text-[11px] text-white/30">Cost Recovery vs Gross Split</p>
+          <p className="mb-3 text-[11px]" style={{ color: TEXT_MUTED }}>Cost Recovery vs Gross Split</p>
           <ResponsiveContainer width="100%" height={140}>
             <BarChart
               data={contractData.filter((d) => d.value > 0)}
@@ -377,14 +379,14 @@ export function PokjaDashboard({
                 type="category"
                 dataKey="name"
                 width={85}
-                tick={{ fontSize: 10, fill: "rgba(255,255,255,0.55)" }}
+                tick={{ fontSize: 10, fill: TEXT_MUTED }}
               />
               <Tooltip
                 contentStyle={{
-                  background: BG_HEADER,
+                  background: BG_CARD,
                   border: `1px solid ${BORDER}`,
                   borderRadius: "6px",
-                  color: "white",
+                  color: TEXT_MAIN,
                   fontSize: 10,
                 }}
               />
@@ -399,10 +401,10 @@ export function PokjaDashboard({
 
         {/* Panel 2: Top operator */}
         <div className="p-4" style={{ background: BG_CARD }}>
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
             Top Operator / K3S
           </p>
-          <p className="mb-3 text-[11px] text-white/30">Berdasarkan jumlah WK</p>
+          <p className="mb-3 text-[11px]" style={{ color: TEXT_MUTED }}>Berdasarkan jumlah WK</p>
           <ul className="space-y-1.5">
             {perOperator.slice(0, 8).map((r, i) => (
               <li key={i} className="flex items-center gap-2">
@@ -414,13 +416,10 @@ export function PokjaDashboard({
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="truncate text-[11px] text-white/70">{r.nama}</span>
-                    <span className="ml-2 shrink-0 text-[11px] font-bold text-white">{r.c}</span>
+                    <span className="truncate text-[11px]" style={{ color: TEXT_MUTED }}>{r.nama}</span>
+                    <span className="ml-2 shrink-0 text-[11px] font-bold" style={{ color: TEXT_MAIN }}>{r.c}</span>
                   </div>
-                  <div
-                    className="mt-0.5 h-0.5 rounded-full"
-                    style={{ background: "rgba(255,255,255,0.08)" }}
-                  >
+                  <div className="mt-0.5 h-0.5 rounded-full" style={{ background: BORDER }}>
                     <div
                       className="h-0.5 rounded-full"
                       style={{
@@ -437,31 +436,28 @@ export function PokjaDashboard({
 
         {/* Panel 3: Milestone summary */}
         <div className="p-4" style={{ background: BG_CARD }}>
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
             Progress Milestone
           </p>
-          <p className="mb-3 text-[11px] text-white/30">Tahapan WK dalam proses</p>
+          <p className="mb-3 text-[11px]" style={{ color: TEXT_MUTED }}>Tahapan WK dalam proses</p>
           {milestoneData.length === 0 ? (
-            <p className="text-[11px] text-white/30">Belum ada data milestone.</p>
+            <p className="text-[11px]" style={{ color: TEXT_MUTED }}>Belum ada data milestone.</p>
           ) : (
             <div className="space-y-4">
               {[
-                { label: "Selesai",     value: totalSelesai,   color: "#4ade80" },
-                { label: "Berjalan",    value: totalBerjalan,  color: "#C9821B" },
-                { label: "Belum Mulai", value: totalBelumMulai,color: "#6B8E86" },
+                { label: "Selesai",     value: totalSelesai,    color: "#2E7D5B" },
+                { label: "Berjalan",    value: totalBerjalan,   color: "#C9821B" },
+                { label: "Belum Mulai", value: totalBelumMulai, color: "#6B8E86" },
               ].map((item) => {
                 const tot = totalSelesai + totalBerjalan + totalBelumMulai;
                 const pct = tot > 0 ? (item.value / tot) * 100 : 0;
                 return (
                   <div key={item.label}>
                     <div className="mb-1 flex items-center justify-between text-[11px]">
-                      <span className="text-white/60">{item.label}</span>
-                      <span className="font-bold text-white">{item.value}</span>
+                      <span style={{ color: TEXT_MUTED }}>{item.label}</span>
+                      <span className="font-bold" style={{ color: TEXT_MAIN }}>{item.value}</span>
                     </div>
-                    <div
-                      className="h-1.5 rounded-full"
-                      style={{ background: "rgba(255,255,255,0.08)" }}
-                    >
+                    <div className="h-1.5 rounded-full" style={{ background: BORDER }}>
                       <div
                         className="h-1.5 rounded-full transition-all"
                         style={{ width: `${pct}%`, background: item.color }}
@@ -473,47 +469,47 @@ export function PokjaDashboard({
                   </div>
                 );
               })}
-              <p className="text-[10px] text-white/30">{milestoneData.length} WK terpantau</p>
+              <p className="text-[10px]" style={{ color: TEXT_MUTED }}>{milestoneData.length} WK terpantau</p>
             </div>
           )}
         </div>
 
         {/* Panel 4: Status recap table */}
         <div className="p-4" style={{ background: BG_CARD }}>
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
             Rekap Status WK
           </p>
-          <p className="mb-3 text-[11px] text-white/30">Seluruh WK Pokja {pokja}</p>
+          <p className="mb-3 text-[11px]" style={{ color: TEXT_MUTED }}>Seluruh WK Pokja {pokja}</p>
           <table className="w-full">
             <thead>
               <tr style={{ borderBottom: `1px solid ${BORDER}` }}>
-                <th className="pb-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-white/40">
+                <th className="pb-1.5 text-left text-[10px] font-semibold uppercase tracking-wide" style={{ color: TEXT_MUTED }}>
                   Status
                 </th>
-                <th className="pb-1.5 text-right text-[10px] font-semibold uppercase tracking-wide text-white/40">
+                <th className="pb-1.5 text-right text-[10px] font-semibold uppercase tracking-wide" style={{ color: TEXT_MUTED }}>
                   Jml
                 </th>
-                <th className="pb-1.5 text-right text-[10px] font-semibold uppercase tracking-wide text-white/40">
+                <th className="pb-1.5 text-right text-[10px] font-semibold uppercase tracking-wide" style={{ color: TEXT_MUTED }}>
                   %
                 </th>
               </tr>
             </thead>
             <tbody>
               {statusItems.filter((s) => s.value > 0).map((s) => (
-                <tr key={s.key} style={{ borderBottom: `1px solid ${BORDER}30` }}>
+                <tr key={s.key} style={{ borderBottom: `1px solid ${BORDER}` }}>
                   <td className="py-1.5">
                     <div className="flex items-center gap-1.5">
                       <div
                         className="h-1.5 w-1.5 shrink-0 rounded-full"
                         style={{ background: STATUS_COLOR[s.key] ?? "#6B8E86" }}
                       />
-                      <span className="text-[11px] text-white/60">{s.name}</span>
+                      <span className="text-[11px]" style={{ color: TEXT_MUTED }}>{s.name}</span>
                     </div>
                   </td>
-                  <td className="py-1.5 text-right text-[11px] font-bold text-white">
+                  <td className="py-1.5 text-right text-[11px] font-bold" style={{ color: TEXT_MAIN }}>
                     {s.value}
                   </td>
-                  <td className="py-1.5 text-right text-[10px] text-white/40">
+                  <td className="py-1.5 text-right text-[10px]" style={{ color: TEXT_MUTED }}>
                     {total > 0 ? ((s.value / total) * 100).toFixed(1) : "0"}%
                   </td>
                 </tr>
@@ -526,29 +522,29 @@ export function PokjaDashboard({
       {/* ── Milestone detail rows ────────────────────────────────── */}
       {milestoneData.length > 0 && (
         <div className="p-6" style={{ background: BG_MAIN }}>
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
             Detail Milestone Tahapan
           </p>
-          <p className="mb-4 text-[11px] text-white/30">WK dalam proses — Pokja {pokja}</p>
+          <p className="mb-4 text-[11px]" style={{ color: TEXT_MUTED }}>WK dalam proses — Pokja {pokja}</p>
           <div
             className="overflow-hidden rounded-lg"
-            style={{ border: `1px solid ${BORDER}` }}
+            style={{ border: `1px solid ${BORDER}`, background: BG_CARD }}
           >
             {milestoneData.map((r, i) => (
               <div
                 key={`${r.wkId}-${r.subpokja}-${i}`}
-                className="px-4 py-4 transition-colors"
+                className="px-4 py-4 transition-colors hover:bg-[#F6F8F7]"
                 style={{
                   borderBottom: i < milestoneData.length - 1 ? `1px solid ${BORDER}` : "none",
-                  background: i % 2 === 0 ? BG_CARD2 : BG_CARD,
+                  background: i % 2 === 0 ? BG_CARD : BG_CARD2,
                 }}
               >
                 <div className="mb-3 flex items-center justify-between">
                   <div className="flex min-w-0 items-center gap-2">
                     <Link
                       href={`/wk/${r.wkId}`}
-                      className="truncate text-sm font-semibold text-white hover:underline"
-                      style={{ textDecorationColor: "#1EB8A8" }}
+                      className="truncate text-sm font-semibold hover:underline"
+                      style={{ color: "#0B5E54", textDecorationColor: "#0B5E54" }}
                     >
                       {r.wkNama}
                     </Link>
@@ -570,14 +566,14 @@ export function PokjaDashboard({
                     ) : r.stages.length === 0 ? (
                       <span
                         className="rounded px-2 py-0.5 text-[10px] font-bold"
-                        style={{ background: BORDER, color: "rgba(255,255,255,0.4)" }}
+                        style={{ background: BORDER, color: TEXT_MUTED }}
                       >
                         Belum Ada Tahap
                       </span>
                     ) : (
                       <span
                         className="rounded px-2 py-0.5 text-[10px] font-bold"
-                        style={{ background: BORDER, color: "rgba(255,255,255,0.4)" }}
+                        style={{ background: BORDER, color: TEXT_MUTED }}
                       >
                         Belum Mulai
                       </span>
@@ -585,7 +581,7 @@ export function PokjaDashboard({
                   </div>
                 </div>
                 {r.stages.length === 0 ? (
-                  <p className="text-xs text-white/30">Belum ada tahap terdaftar.</p>
+                  <p className="text-xs" style={{ color: TEXT_MUTED }}>Belum ada tahap terdaftar.</p>
                 ) : (
                   <MilestoneTimeline stages={r.stages} />
                 )}
@@ -602,19 +598,15 @@ export function PokjaDashboard({
 
 function StatCard({ stat, total }: { stat: StatusItem; total: number }) {
   const pct = total > 0 ? (stat.value / total) * 100 : 0;
-  const color = STATUS_COLOR[stat.key] ?? "#1EB8A8";
+  const color = STATUS_COLOR[stat.key] ?? "#0B5E54";
   return (
-    <div className="flex flex-col gap-2 p-3" style={{ background: BG_CARD2 }}>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+    <div className="flex flex-col gap-2 p-3" style={{ background: BG_CARD }}>
+      <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: TEXT_MUTED }}>
         {stat.name}
       </p>
-      <p className="font-display text-2xl font-black text-white">{stat.value}</p>
-      {/* Mini progress bar */}
-      <div className="h-1 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
-        <div
-          className="h-1 rounded-full"
-          style={{ width: `${pct}%`, background: color }}
-        />
+      <p className="font-display text-2xl font-black" style={{ color: TEXT_MAIN }}>{stat.value}</p>
+      <div className="h-1 rounded-full" style={{ background: BORDER }}>
+        <div className="h-1 rounded-full" style={{ width: `${pct}%`, background: color }} />
       </div>
       <p className="text-[10px]" style={{ color }}>
         {pct.toFixed(1)}% dari total
@@ -625,33 +617,24 @@ function StatCard({ stat, total }: { stat: StatusItem; total: number }) {
 
 function ProvinceGrid({ rows, total }: { rows: RankItem[]; total: number }) {
   if (rows.length === 0)
-    return <p className="text-sm text-white/30">Belum ada data provinsi.</p>;
+    return <p className="text-sm" style={{ color: TEXT_MUTED }}>Belum ada data provinsi.</p>;
   const max = Math.max(...rows.map((r) => r.c), 1);
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {rows.map((r, i) => {
-        const color   = PIE_COLORS[i % PIE_COLORS.length];
-        const barPct  = (r.c / max) * 100;
-        const totPct  = total > 0 ? ((r.c / total) * 100).toFixed(1) : "0";
+        const color  = PIE_COLORS[i % PIE_COLORS.length];
+        const barPct = (r.c / max) * 100;
+        const totPct = total > 0 ? ((r.c / total) * 100).toFixed(1) : "0";
         return (
           <div
             key={i}
             className="rounded-lg p-3"
-            style={{
-              background: `${color}18`,
-              border: `1px solid ${color}35`,
-            }}
+            style={{ background: BG_CARD, border: `1px solid ${BORDER}`, boxShadow: "0 1px 2px rgba(16,33,31,0.04)" }}
           >
-            <p className="truncate text-[11px] font-medium text-white/60">{r.nama}</p>
-            <p className="mt-1 font-display text-2xl font-bold text-white">{r.c}</p>
-            <div
-              className="mt-2 h-1 rounded-full"
-              style={{ background: "rgba(255,255,255,0.08)" }}
-            >
-              <div
-                className="h-1 rounded-full"
-                style={{ width: `${barPct}%`, background: color }}
-              />
+            <p className="truncate text-[11px] font-medium" style={{ color: TEXT_MUTED }}>{r.nama}</p>
+            <p className="mt-1 font-display text-2xl font-bold" style={{ color: TEXT_MAIN }}>{r.c}</p>
+            <div className="mt-2 h-1 rounded-full" style={{ background: BORDER }}>
+              <div className="h-1 rounded-full" style={{ width: `${barPct}%`, background: color }} />
             </div>
             <p className="mt-1 text-[10px]" style={{ color }}>
               {totPct}% total WK
@@ -686,16 +669,16 @@ function IndonesiaMap({
 
   function getProvinceColor(neName: string): string {
     const dbs = getDBNames(neName);
-    if (dbs.some(n => highlightSet.has(n))) return "#1EB8A8";
+    if (dbs.some(n => highlightSet.has(n))) return "#0B5E54";
     if (dbs.some(n => primarySet.has(n)))   return "#C9821B";
-    return "rgba(30,184,168,0.1)";
+    return "#D8E4E2";
   }
 
   function getProvinceStroke(neName: string): string {
     const dbs = getDBNames(neName);
     return dbs.some(n => primarySet.has(n) || highlightSet.has(n))
-      ? "rgba(255,255,255,0.35)"
-      : "rgba(30,184,168,0.22)";
+      ? "rgba(255,255,255,0.5)"
+      : "#FFFFFF";
   }
 
   return (
@@ -704,22 +687,22 @@ function IndonesiaMap({
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
         <div className="flex items-center gap-1.5">
           <div className="h-3 w-5 rounded-sm" style={{ background: "#C9821B" }} />
-          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+          <span className="text-[10px]" style={{ color: TEXT_MUTED }}>
             {primaryLabel} ({primaryProvinces.length} prov)
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-3 w-5 rounded-sm" style={{ background: "#1EB8A8" }} />
-          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+          <div className="h-3 w-5 rounded-sm" style={{ background: "#0B5E54" }} />
+          <span className="text-[10px]" style={{ color: TEXT_MUTED }}>
             {highlightLabel} ({highlightProvinces.length} prov)
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <div
             className="h-3 w-5 rounded-sm"
-            style={{ background: "rgba(30,184,168,0.15)", border: "1px solid rgba(30,184,168,0.3)" }}
+            style={{ background: BORDER, border: `1px solid ${BORDER}` }}
           />
-          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <span className="text-[10px]" style={{ color: TEXT_MUTED }}>
             Tidak ada WK
           </span>
         </div>
@@ -794,20 +777,17 @@ function MilestoneTimeline({ stages }: { stages: StageInfo[] }) {
           const isDone    = s.status === "SELESAI";
           const isRunning = s.status === "BERJALAN";
           const prevDone  = i > 0 && stages[i - 1].status === "SELESAI";
-          const dotColor  = isDone ? "#4ade80" : isRunning ? "#1EB8A8" : "#1a3352";
-          const lineColor = prevDone ? "#4ade80" : "#1a3352";
+          const dotColor  = isDone ? "#2E7D5B" : isRunning ? "#0B5E54" : BORDER;
+          const lineColor = prevDone ? "#2E7D5B" : BORDER;
           return (
             <div key={i} className="flex items-start">
               {i > 0 && (
-                <div
-                  className="mt-[9px] h-0.5 w-10 shrink-0"
-                  style={{ background: lineColor }}
-                />
+                <div className="mt-[9px] h-0.5 w-10 shrink-0" style={{ background: lineColor }} />
               )}
               <div className="flex w-[72px] flex-col items-center gap-1.5">
                 <div
                   className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2"
-                  style={{ borderColor: dotColor, background: isDone || isRunning ? dotColor : BG_CARD2 }}
+                  style={{ borderColor: dotColor, background: isDone || isRunning ? dotColor : BG_CARD }}
                 >
                   {isDone && (
                     <svg className="h-2.5 w-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -818,11 +798,9 @@ function MilestoneTimeline({ stages }: { stages: StageInfo[] }) {
                       />
                     </svg>
                   )}
-                  {isRunning && (
-                    <div className="h-2 w-2 rounded-full bg-white" />
-                  )}
+                  {isRunning && <div className="h-2 w-2 rounded-full bg-white" />}
                 </div>
-                <span className="line-clamp-2 w-full px-1 text-center text-[10px] leading-tight text-white/40">
+                <span className="line-clamp-2 w-full px-1 text-center text-[10px] leading-tight" style={{ color: TEXT_MUTED }}>
                   {s.nama}
                 </span>
               </div>
