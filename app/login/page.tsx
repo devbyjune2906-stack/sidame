@@ -8,22 +8,19 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <main className="relative flex min-h-screen">
-      {/* Fixed full-screen background */}
+    <main
+      className="relative flex min-h-screen"
+      style={{
+        backgroundImage: "url('/banner-dme.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Full-screen overlay */}
       <div
-        className="fixed inset-0 -z-10"
+        className="absolute inset-0"
         style={{
-          backgroundImage: "url('/banner-dme.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
-      {/* Fixed full-screen overlay */}
-      <div
-        className="fixed inset-0"
-        style={{
-          zIndex: -9,
           background:
             "linear-gradient(135deg, rgba(8,68,61,0.85) 0%, rgba(11,94,84,0.70) 55%, rgba(8,68,61,0.80) 100%)",
         }}
