@@ -2,12 +2,14 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+RUN apk add --no-cache libc6-compat
+
 # Install semua dependency (termasuk devDependencies untuk build, drizzle-kit, tsx)
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
 COPY . .
-RUN npm run build
+RUN NODE_OPTIONS="--max-old-space-size=3072" npm run build
 
 # ---------- Runner ----------
 FROM node:20-alpine AS runner
