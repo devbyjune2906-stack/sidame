@@ -26,7 +26,7 @@ export default function LoginPage() {
       />
 
       {/* Left: branding (desktop only) */}
-      <div className="relative z-10 hidden flex-1 flex-col items-center justify-center px-14 text-center text-white lg:flex">
+      <div className="relative z-10 hidden flex-1 flex-col items-center justify-center px-4 text-center text-white lg:flex">
         <img
           src="/logo-dme.png"
           alt="DME"
@@ -50,10 +50,7 @@ export default function LoginPage() {
       <div
         className="relative z-10 flex w-full flex-col items-center justify-center px-6 py-12 m-4 lg:w-[440px] lg:shrink-0 lg:m-0 lg:my-8 lg:mr-8"
         style={{
-          background: "rgba(255,255,255,0.10)",
-          backdropFilter: "blur(30px)",
-          WebkitBackdropFilter: "blur(30px)",
-          border: "1px solid rgba(255,255,255,0.15)",
+          background: "transparent",
           borderRadius: 20,
         }}
       >
