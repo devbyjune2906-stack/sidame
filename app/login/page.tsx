@@ -50,10 +50,10 @@ export default function LoginPage() {
       <div
         className="relative z-10 flex w-full flex-col items-center justify-center px-6 py-12 m-4 lg:w-[440px] lg:shrink-0 lg:m-0 lg:my-8 lg:mr-8"
         style={{
-          background: "rgba(8,68,61,0.45)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.12)",
+          background: "rgba(255,255,255,0.10)",
+          backdropFilter: "blur(35px)",
+          WebkitBackdropFilter: "blur(35px)",
+          border: "1px solid rgba(255,255,255,0.15)",
           borderRadius: 20,
         }}
       >
