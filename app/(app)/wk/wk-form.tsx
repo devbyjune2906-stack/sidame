@@ -105,14 +105,6 @@ export function WkForm({
     });
   }
 
-  const kabupatenOptions = useMemo(
-    () =>
-      kabupatenList.filter(
-        (k) => k.provinsiId === null || (k.provinsiId !== null && selectedProvinsiIds.has(k.provinsiId))
-      ),
-    [kabupatenList, selectedProvinsiIds]
-  );
-
   return (
     <form action={formAction}>
       <Card className="space-y-5">
@@ -137,64 +129,153 @@ export function WkForm({
           <Input id="pemegangSaham" name="pemegangSaham" defaultValue={initial.pemegangSaham ?? ""} />
         </div>
 
+        {/* ── Provinsi picker ── */}
         <div>
-          <Label>Provinsi</Label>
-          <div className="mt-1 max-h-44 overflow-y-auto rounded-xl border border-line p-2">
+          <div className="mb-1 flex items-center justify-between">
+            <Label>Provinsi</Label>
+            {selectedProvinsiIds.size > 0 && (
+              <span className="text-xs text-muted">{selectedProvinsiIds.size} dipilih</span>
+            )}
+          </div>
+          <div className="max-h-44 overflow-y-auto rounded-xl border border-line p-2">
             <div className="flex flex-wrap gap-1.5">
-              {provinsiList.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => toggleProvinsi(p.id)}
-                  className={
-                    selectedProvinsiIds.has(p.id)
-                      ? "rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
-                      : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
-                  }
-                >
-                  {p.nama}
-                </button>
-              ))}
+              {provinsiList.map((p) => {
+                const isSelected = selectedProvinsiIds.has(p.id);
+                const kabCount = isSelected
+                  ? kabupatenList.filter((k) => k.provinsiId === p.id && selectedKabupatenIds.has(k.id)).length
+                  : 0;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => toggleProvinsi(p.id)}
+                    className={
+                      isSelected
+                        ? "inline-flex items-center gap-1 rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
+                        : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
+                    }
+                  >
+                    {p.nama}
+                    {isSelected && kabCount > 0 && (
+                      <span className="flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-white/25 px-1 text-[10px] font-bold">
+                        {kabCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
-          {selectedProvinsiIds.size > 0 && (
-            <p className="mt-1 text-xs text-muted">
-              {selectedProvinsiIds.size} provinsi dipilih
-            </p>
-          )}
           <input type="hidden" name="provinsiId" value={firstProvinsiId?.toString() ?? ""} />
           <input type="hidden" name="provinsiIds" value={[...selectedProvinsiIds].join(",")} />
         </div>
 
+        {/* ── Hierarki Kabupaten/Kota per-provinsi ── */}
         <div>
-          <Label>Kabupaten/Kota</Label>
+          <div className="mb-1 flex items-center justify-between">
+            <Label>Kabupaten/Kota</Label>
+            {selectedKabupatenIds.size > 0 && (
+              <span className="text-xs text-muted">{selectedKabupatenIds.size} dipilih</span>
+            )}
+          </div>
+
           {selectedProvinsiIds.size === 0 ? (
-            <p className="mt-1 rounded-xl border border-line px-3 py-2 text-xs text-muted">
-              Pilih provinsi terlebih dahulu.
+            <p className="rounded-xl border border-dashed border-line px-4 py-3 text-xs text-muted">
+              Pilih provinsi terlebih dahulu untuk menampilkan kabupaten/kota.
             </p>
           ) : (
-            <div className="mt-1 max-h-44 overflow-y-auto rounded-xl border border-line p-2">
-              <div className="flex flex-wrap gap-1.5">
-                {kabupatenOptions.map((k) => (
-                  <button
-                    key={k.id}
-                    type="button"
-                    onClick={() => toggleKabupaten(k.id)}
-                    className={
-                      selectedKabupatenIds.has(k.id)
-                        ? "rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
-                        : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
-                    }
-                  >
-                    {k.nama}
-                  </button>
-                ))}
-              </div>
+            <div className="space-y-2">
+              {/* Kabupaten non-administratif (Di Atas 12 Mil Laut) */}
+              {kabupatenList.filter((k) => k.provinsiId === null).length > 0 && (
+                <div className="overflow-hidden rounded-xl border border-line">
+                  <div className="border-b border-line bg-sand/60 px-3 py-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
+                      Non-Administratif
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 p-2">
+                    {kabupatenList
+                      .filter((k) => k.provinsiId === null)
+                      .map((k) => (
+                        <button
+                          key={k.id}
+                          type="button"
+                          onClick={() => toggleKabupaten(k.id)}
+                          className={
+                            selectedKabupatenIds.has(k.id)
+                              ? "rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
+                              : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
+                          }
+                        >
+                          {k.nama}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Satu card per provinsi yang dipilih */}
+              {provinsiList
+                .filter((p) => selectedProvinsiIds.has(p.id))
+                .map((prov) => {
+                  const kabList = kabupatenList.filter((k) => k.provinsiId === prov.id);
+                  const selectedInProv = kabList.filter((k) => selectedKabupatenIds.has(k.id)).length;
+                  return (
+                    <div key={prov.id} className="overflow-hidden rounded-xl border border-line">
+                      {/* Header provinsi */}
+                      <div className="flex items-center justify-between border-b border-line bg-petroleum/5 px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-petroleum" />
+                          <span className="text-sm font-semibold text-petroleum">{prov.nama}</span>
+                          {selectedInProv > 0 && (
+                            <span className="rounded-full bg-petroleum/10 px-2 py-0.5 text-[10px] font-bold text-petroleum">
+                              {selectedInProv} dipilih
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          title={`Hapus ${prov.nama}`}
+                          onClick={() => toggleProvinsi(prov.id)}
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                        >
+                          <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Kabupaten chips dalam provinsi ini */}
+                      <div className="max-h-36 overflow-y-auto p-2">
+                        {kabList.length === 0 ? (
+                          <p className="px-2 py-1 text-xs italic text-muted">
+                            Tidak ada kabupaten/kota tersedia.
+                          </p>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {kabList.map((k) => (
+                              <button
+                                key={k.id}
+                                type="button"
+                                onClick={() => toggleKabupaten(k.id)}
+                                className={
+                                  selectedKabupatenIds.has(k.id)
+                                    ? "rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
+                                    : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
+                                }
+                              >
+                                {k.nama}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           )}
-          {selectedKabupatenIds.size > 0 && (
-            <p className="mt-1 text-xs text-muted">{selectedKabupatenIds.size} kabupaten/kota dipilih</p>
-          )}
+
           <input type="hidden" name="kabupatenId" value={firstKabupatenId?.toString() ?? ""} />
           <input type="hidden" name="kabupatenIds" value={[...selectedKabupatenIds].join(",")} />
         </div>
