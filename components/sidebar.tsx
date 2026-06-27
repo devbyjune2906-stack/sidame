@@ -44,6 +44,7 @@ const POKJA_SECTIONS: {
     items: [
       { href: "/wk/dmed-t", label: "DMED-T" },
       { href: "/wk/dmed-e", label: "DMED-E" },
+      { href: "/wk/dmed/psc-economics", label: "PSC Economics" },
     ],
     show: (r) => isAdmin(r) || isDmed(r),
   },
