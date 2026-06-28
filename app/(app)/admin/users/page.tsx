@@ -4,9 +4,8 @@ import { db } from "@/db";
 import { users, roles } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { isAdmin, isPokjaAdmin, manageableRoleNames } from "@/lib/rbac";
-import { Card } from "@/components/ui";
 import { UserForm } from "./user-form";
-import { deleteUser } from "./actions";
+import { UserTable } from "./user-table";
 
 export default async function UsersPage() {
   const current = await getCurrentUser();
@@ -38,39 +37,11 @@ export default async function UsersPage() {
 
       <UserForm roleList={roleList} />
 
-      <Card className="p-0">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-muted">
-              <th className="px-4 py-3 font-semibold">Nama</th>
-              <th className="px-4 py-3 font-semibold">Email</th>
-              <th className="px-4 py-3 font-semibold">Role</th>
-              <th className="px-4 py-3 text-right font-semibold">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {userList.map((u) => (
-              <tr key={u.id} className="border-b border-line/60 last:border-0">
-                <td className="px-4 py-3 font-medium text-ink">{u.nama}</td>
-                <td className="px-4 py-3 text-ink">{u.email}</td>
-                <td className="px-4 py-3 text-ink">{u.role}</td>
-                <td className="px-4 py-3 text-right">
-                  {u.id === current.id ? (
-                    <span className="text-xs text-muted">Akun Anda</span>
-                  ) : (
-                    <form action={deleteUser} className="inline">
-                      <input type="hidden" name="id" value={u.id} />
-                      <button type="submit" className="text-sm font-medium text-danger hover:underline">
-                        Hapus
-                      </button>
-                    </form>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+      <UserTable
+        userList={userList}
+        currentUserId={current.id}
+        roleList={roleList}
+      />
     </div>
   );
 }

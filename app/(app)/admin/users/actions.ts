@@ -61,7 +61,7 @@ export async function deleteUser(formData: FormData) {
   if (!current || !(isAdmin(current.role) || isPokjaAdmin(current.role))) return;
 
   const id = String(formData.get("id") ?? "");
-  if (!id || id === current.id) return; // jangan hapus diri sendiri
+  if (!id || id === current.id) return;
 
   const scoped = manageableRoleNames(current.role);
   if (scoped !== "ALL") {
@@ -76,4 +76,48 @@ export async function deleteUser(formData: FormData) {
 
   await db.delete(users).where(eq(users.id, id));
   revalidatePath("/admin/users");
+}
+
+export async function editUser(_prev: State, formData: FormData): Promise<State> {
+  const current = await getCurrentUser();
+  if (!current || !(isAdmin(current.role) || isPokjaAdmin(current.role))) {
+    return { error: "Tidak berwenang." };
+  }
+
+  const id = String(formData.get("id") ?? "").trim();
+  const nama = String(formData.get("nama") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "").trim();
+  const roleId = Number(formData.get("roleId"));
+
+  if (!id || !nama || !email || !roleId) {
+    return { error: "Nama, email, dan role wajib diisi." };
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "Format email tidak valid." };
+  }
+  if (password && password.length < 8) {
+    return { error: "Password minimal 8 karakter." };
+  }
+
+  const scoped = manageableRoleNames(current.role);
+  if (scoped !== "ALL") {
+    const [targetRole] = await db.select({ nama: roles.nama }).from(roles).where(eq(roles.id, roleId)).limit(1);
+    if (!targetRole || !scoped.includes(targetRole.nama)) {
+      return { error: "Role di luar kewenangan Anda." };
+    }
+  }
+
+  const dup = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+  if (dup.length > 0 && dup[0].id !== id) {
+    return { error: "Email sudah digunakan user lain." };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateData: Record<string, any> = { nama, email, roleId };
+  if (password) updateData.password = await hashPassword(password);
+
+  await db.update(users).set(updateData).where(eq(users.id, id));
+  revalidatePath("/admin/users");
+  return { ok: true };
 }
