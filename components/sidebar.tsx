@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 import { isAdmin, isPokjaAdmin, isDmew, isDmee, isDmed, isDmep, isDmen, pokjaLabel } from "@/lib/rbac";
 import { logout } from "@/app/(app)/actions";
 
-type NavItem = { href: string; label: string };
+type NavItem = { href: string; label: string; show?: (role: string) => boolean };
 
 const NAV: NavItem[] = [
   { href: "/dashboard", label: "Dashboard" },
@@ -44,7 +44,7 @@ const POKJA_SECTIONS: {
     items: [
       { href: "/wk/dmed-t", label: "DMED-T" },
       { href: "/wk/dmed-e", label: "DMED-E" },
-      { href: "/wk/dmed/psc-economics", label: "PSC Economics" },
+      { href: "/wk/dmed/psc-economics", label: "PSC Economics", show: (r) => isAdmin(r) || isPokjaAdmin(r) },
     ],
     show: (r) => isAdmin(r) || isDmed(r),
   },
@@ -186,9 +186,14 @@ export function Sidebar({
 
           <div className="pt-2">
             <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">Pokja</p>
-            {POKJA_SECTIONS.filter((s) => s.show(user.role)).map((section) => (
-              <PokjaSection key={section.key} label={section.label} items={section.items} pathname={pathname} />
-            ))}
+            {POKJA_SECTIONS.filter((s) => s.show(user.role)).map((section) => {
+              const visibleItems = section.items.filter(
+                (item) => !item.show || item.show(user.role)
+              );
+              return (
+                <PokjaSection key={section.key} label={section.label} items={visibleItems} pathname={pathname} />
+              );
+            })}
           </div>
 
           {showAdminMenu && (

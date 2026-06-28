@@ -129,48 +129,39 @@ export function WkForm({
           <Input id="pemegangSaham" name="pemegangSaham" defaultValue={initial.pemegangSaham ?? ""} />
         </div>
 
-        {/* ── Provinsi picker ── */}
+        {/* ── Provinsi — dropdown akumulasi ── */}
         <div>
           <div className="mb-1 flex items-center justify-between">
             <Label>Provinsi</Label>
             {selectedProvinsiIds.size > 0 && (
-              <span className="text-xs text-muted">{selectedProvinsiIds.size} dipilih</span>
+              <span className="text-xs text-muted">{selectedProvinsiIds.size} provinsi dipilih</span>
             )}
           </div>
-          <div className="max-h-44 overflow-y-auto rounded-xl border border-line p-2">
-            <div className="flex flex-wrap gap-1.5">
-              {provinsiList.map((p) => {
-                const isSelected = selectedProvinsiIds.has(p.id);
-                const kabCount = isSelected
-                  ? kabupatenList.filter((k) => k.provinsiId === p.id && selectedKabupatenIds.has(k.id)).length
-                  : 0;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => toggleProvinsi(p.id)}
-                    className={
-                      isSelected
-                        ? "inline-flex items-center gap-1 rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
-                        : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
-                    }
-                  >
-                    {p.nama}
-                    {isSelected && kabCount > 0 && (
-                      <span className="flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-white/25 px-1 text-[10px] font-bold">
-                        {kabCount}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <Select
+            onChange={(e) => {
+              const id = Number(e.target.value);
+              if (id) toggleProvinsi(id);
+              e.target.value = "";
+            }}
+          >
+            <option value="">
+              {provinsiList.every((p) => selectedProvinsiIds.has(p.id))
+                ? "— Semua provinsi sudah dipilih —"
+                : "— Tambah Provinsi —"}
+            </option>
+            {provinsiList
+              .filter((p) => !selectedProvinsiIds.has(p.id))
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nama}
+                </option>
+              ))}
+          </Select>
           <input type="hidden" name="provinsiId" value={firstProvinsiId?.toString() ?? ""} />
           <input type="hidden" name="provinsiIds" value={[...selectedProvinsiIds].join(",")} />
         </div>
 
-        {/* ── Hierarki Kabupaten/Kota per-provinsi ── */}
+        {/* ── Kabupaten/Kota — hierarki per-provinsi ── */}
         <div>
           <div className="mb-1 flex items-center justify-between">
             <Label>Kabupaten/Kota</Label>
@@ -179,57 +170,54 @@ export function WkForm({
             )}
           </div>
 
-          {selectedProvinsiIds.size === 0 ? (
+          {selectedProvinsiIds.size === 0 && kabupatenList.filter((k) => k.provinsiId === null).length === 0 ? (
             <p className="rounded-xl border border-dashed border-line px-4 py-3 text-xs text-muted">
               Pilih provinsi terlebih dahulu untuk menampilkan kabupaten/kota.
             </p>
           ) : (
             <div className="space-y-2">
-              {/* Kabupaten non-administratif (Di Atas 12 Mil Laut) */}
-              {kabupatenList.filter((k) => k.provinsiId === null).length > 0 && (
-                <div className="overflow-hidden rounded-xl border border-line">
-                  <div className="border-b border-line bg-sand/60 px-3 py-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
-                      Non-Administratif
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 p-2">
-                    {kabupatenList
-                      .filter((k) => k.provinsiId === null)
-                      .map((k) => (
-                        <button
-                          key={k.id}
-                          type="button"
-                          onClick={() => toggleKabupaten(k.id)}
-                          className={
-                            selectedKabupatenIds.has(k.id)
-                              ? "rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
-                              : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
-                          }
-                        >
-                          {k.nama}
-                        </button>
-                      ))}
-                  </div>
+              {/* Non-Administratif (Di Atas 12 Mil Laut) — selalu tampil */}
+              {kabupatenList.filter((k) => k.provinsiId === null).map((k) => (
+                <div key={k.id} className="flex items-center justify-between rounded-xl border border-line px-3 py-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
+                    Non-Administratif
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleKabupaten(k.id)}
+                    className={
+                      selectedKabupatenIds.has(k.id)
+                        ? "inline-flex items-center gap-1 rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
+                        : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
+                    }
+                  >
+                    {k.nama}
+                    {selectedKabupatenIds.has(k.id) && (
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3 opacity-70">
+                        <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
-              )}
+              ))}
 
               {/* Satu card per provinsi yang dipilih */}
               {provinsiList
                 .filter((p) => selectedProvinsiIds.has(p.id))
                 .map((prov) => {
-                  const kabList = kabupatenList.filter((k) => k.provinsiId === prov.id);
-                  const selectedInProv = kabList.filter((k) => selectedKabupatenIds.has(k.id)).length;
+                  const allKab = kabupatenList.filter((k) => k.provinsiId === prov.id);
+                  const selectedKab = allKab.filter((k) => selectedKabupatenIds.has(k.id));
+                  const availableKab = allKab.filter((k) => !selectedKabupatenIds.has(k.id));
                   return (
                     <div key={prov.id} className="overflow-hidden rounded-xl border border-line">
-                      {/* Header provinsi */}
+                      {/* Header */}
                       <div className="flex items-center justify-between border-b border-line bg-petroleum/5 px-3 py-2">
                         <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full bg-petroleum" />
+                          <div className="h-2 w-2 shrink-0 rounded-full bg-petroleum" />
                           <span className="text-sm font-semibold text-petroleum">{prov.nama}</span>
-                          {selectedInProv > 0 && (
+                          {selectedKab.length > 0 && (
                             <span className="rounded-full bg-petroleum/10 px-2 py-0.5 text-[10px] font-bold text-petroleum">
-                              {selectedInProv} dipilih
+                              {selectedKab.length} dipilih
                             </span>
                           )}
                         </div>
@@ -245,29 +233,45 @@ export function WkForm({
                         </button>
                       </div>
 
-                      {/* Kabupaten chips dalam provinsi ini */}
-                      <div className="max-h-36 overflow-y-auto p-2">
-                        {kabList.length === 0 ? (
-                          <p className="px-2 py-1 text-xs italic text-muted">
-                            Tidak ada kabupaten/kota tersedia.
-                          </p>
-                        ) : (
+                      {/* Body: dropdown tambah + chips terpilih */}
+                      <div className="space-y-2 p-3">
+                        {availableKab.length > 0 && (
+                          <Select
+                            onChange={(e) => {
+                              const id = Number(e.target.value);
+                              if (id) toggleKabupaten(id);
+                              e.target.value = "";
+                            }}
+                          >
+                            <option value="">— Tambah Kabupaten/Kota —</option>
+                            {availableKab.map((k) => (
+                              <option key={k.id} value={k.id}>
+                                {k.nama}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
+
+                        {selectedKab.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
-                            {kabList.map((k) => (
+                            {selectedKab.map((k) => (
                               <button
                                 key={k.id}
                                 type="button"
                                 onClick={() => toggleKabupaten(k.id)}
-                                className={
-                                  selectedKabupatenIds.has(k.id)
-                                    ? "rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
-                                    : "rounded-full border border-line px-3 py-1 text-xs text-ink hover:bg-sand"
-                                }
+                                className="inline-flex items-center gap-1 rounded-full bg-petroleum px-3 py-1 text-xs font-medium text-white"
                               >
                                 {k.nama}
+                                <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3 opacity-70">
+                                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                </svg>
                               </button>
                             ))}
                           </div>
+                        )}
+
+                        {availableKab.length === 0 && selectedKab.length === 0 && (
+                          <p className="text-xs italic text-muted">Tidak ada kabupaten/kota tersedia.</p>
                         )}
                       </div>
                     </div>
