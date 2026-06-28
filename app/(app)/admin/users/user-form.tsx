@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { Button, Input, Label, Select, Card } from "@/components/ui";
+import { addToast } from "@/lib/toast";
 import { createUser } from "./actions";
 
 type Role = { id: number; nama: string };
@@ -11,7 +12,11 @@ export function UserForm({ roleList }: { roleList: Role[] }) {
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (state?.ok) formRef.current?.reset();
+    if (state?.ok) {
+      formRef.current?.reset();
+      addToast("User berhasil ditambahkan.");
+    }
+    if (state?.error) addToast(state.error, "error");
   }, [state]);
 
   return (
@@ -47,13 +52,6 @@ export function UserForm({ roleList }: { roleList: Role[] }) {
             </Select>
           </div>
         </div>
-
-        {state?.error && (
-          <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{state.error}</p>
-        )}
-        {state?.ok && (
-          <p className="rounded-lg bg-ok/10 px-3 py-2 text-sm text-ok">User berhasil ditambahkan.</p>
-        )}
 
         <Button type="submit" disabled={pending}>
           {pending ? "Menyimpan..." : "Tambah User"}

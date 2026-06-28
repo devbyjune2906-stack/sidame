@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { Button, Input, Label, Select, Card } from "@/components/ui";
+import { addToast } from "@/lib/toast";
 import { deleteUser, editUser } from "./actions";
 
 type User = { id: string; nama: string; email: string; role: string };
@@ -20,7 +21,11 @@ function EditModal({
   const [state, formAction, pending] = useActionState(editUser, null);
 
   useEffect(() => {
-    if (state?.ok) onClose();
+    if (state?.ok) {
+      addToast("Data user berhasil diperbarui.");
+      onClose();
+    }
+    if (state?.error) addToast(state.error, "error");
   }, [state, onClose]);
 
   return (
@@ -107,12 +112,6 @@ function EditModal({
               </Select>
             </div>
           </div>
-
-          {state?.error && (
-            <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
-              {state.error}
-            </p>
-          )}
 
           <div className="flex justify-end gap-3 pt-1">
             <Button type="button" variant="outline" onClick={onClose}>
@@ -233,11 +232,13 @@ export function UserTable({
 
   function handleConfirmDelete() {
     if (!deleteTarget) return;
+    const name = deleteTarget.nama;
     const fd = new FormData();
     fd.set("id", deleteTarget.id);
     startTransition(async () => {
       await deleteUser(fd);
       setDeleteTarget(null);
+      addToast(`User "${name}" berhasil dihapus.`);
     });
   }
 
