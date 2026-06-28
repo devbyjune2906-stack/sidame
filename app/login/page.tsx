@@ -96,21 +96,21 @@ export default function LoginPage() {
               padding: "1.75rem",
             }}
           >
-            {/* Email */}
+            {/* Username */}
             <div className="mb-4">
               <label
-                htmlFor="email"
+                htmlFor="username"
                 className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/80"
               >
-                Email
+                User
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
+                id="username"
+                name="username"
+                type="text"
                 autoComplete="username"
                 required
-                placeholder="Enter Your Email"
+                placeholder="Masukkan Nama Pengguna"
                 style={{
                   width: "100%",
                   background: "transparent",

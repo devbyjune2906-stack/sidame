@@ -1,18 +1,18 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { users, roles } from "@/db/schema";
 import { verifyPassword } from "@/lib/password";
 import { createSession } from "@/lib/auth";
 
 export async function login(_prev: unknown, formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
-  if (!email || !password) {
-    return { error: "Email dan password wajib diisi." };
+  if (!username || !password) {
+    return { error: "Username dan password wajib diisi." };
   }
 
   const rows = await db
@@ -25,12 +25,12 @@ export async function login(_prev: unknown, formData: FormData) {
     })
     .from(users)
     .innerJoin(roles, eq(users.roleId, roles.id))
-    .where(eq(users.email, email))
+    .where(sql`lower(${users.nama}) = lower(${username})`)
     .limit(1);
 
   const user = rows[0];
   if (!user || !(await verifyPassword(password, user.password))) {
-    return { error: "Email atau password salah." };
+    return { error: "Username atau password salah." };
   }
 
   await createSession({ id: user.id, nama: user.nama, email: user.email, role: user.role });
