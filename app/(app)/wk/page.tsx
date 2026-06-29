@@ -15,6 +15,7 @@ import {
 } from "@/lib/constants";
 import { Badge, Button } from "@/components/ui";
 import { WkFilters } from "@/components/wk-filters";
+import { WkActionButtons } from "@/components/wk-action-buttons";
 import { deleteWk } from "./actions";
 
 const PAGE_SIZE = 15;
@@ -133,27 +134,7 @@ export default async function WkListPage({
                   {fmtDate(r.startPsc)} {"–"} {fmtDate(r.endPsc)}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-2">
-                    <Link href={`/wk/${r.id}`} className="text-sm font-medium text-ink hover:underline">
-                      Lihat
-                    </Link>
-                    {userCanWrite && (
-                      <Link href={`/wk/${r.id}/edit`} className="text-sm font-medium text-petroleum hover:underline">
-                        Edit
-                      </Link>
-                    )}
-                    {userCanWrite && (
-                      <form action={deleteWk}>
-                        <input type="hidden" name="id" value={r.id} />
-                        <button
-                          type="submit"
-                          className="text-sm font-medium text-danger hover:underline"
-                        >
-                          Hapus
-                        </button>
-                      </form>
-                    )}
-                  </div>
+                  <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit`} canWrite={userCanWrite} />
                 </td>
               </tr>
             ))}

@@ -14,7 +14,8 @@ import {
   kegiatanBaris,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { isAdmin, isDmed, canCreateWk } from "@/lib/rbac";
+import { isAdmin, isDmed, canCreateWk, canWrite } from "@/lib/rbac";
+import { WkActionButtons } from "@/components/wk-action-buttons";
 import { STATUS_WK_LABEL, STATUS_BADGE, TYPE_CONTRACT_LABEL, JENIS_POD_LABEL, type StatusWk, type TypeContract, type JenisPod } from "@/lib/constants";
 import { Badge, Card } from "@/components/ui";
 import { TambahKegiatanButton } from "@/components/tambah-kegiatan-button";
@@ -128,6 +129,7 @@ export default async function DmedTPage() {
   );
 
   const userCanCreate = canCreateWk(user.role);
+  const userCanWrite = canWrite(user.role);
 
   return (
     <div className="space-y-8">
@@ -248,10 +250,8 @@ export default async function DmedTPage() {
                   <td className="px-3 py-3 text-ink">{r.statusSkkMigas ?? "—"}</td>
                   <td className="px-3 py-3 text-ink">{r.statusKkks ?? "—"}</td>
                   <td className="px-3 py-3 text-ink">{r.keterangan ?? "—"}</td>
-                  <td className="px-3 py-3 text-right">
-                    <Link href={`/wk/${r.id}`} className="text-sm font-medium text-petroleum hover:underline">
-                      Lihat
-                    </Link>
+                  <td className="px-3 py-3">
+                    <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit`} canWrite={userCanWrite} />
                   </td>
                 </tr>
               ))}
@@ -311,10 +311,8 @@ export default async function DmedTPage() {
                       {STATUS_WK_LABEL[r.statusWk as StatusWk]}
                     </Badge>
                   </td>
-                  <td className="px-3 py-3 text-right">
-                    <Link href={`/wk/${r.id}`} className="text-sm font-medium text-petroleum hover:underline">
-                      Lihat
-                    </Link>
+                  <td className="px-3 py-3">
+                    <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit`} canWrite={userCanWrite} />
                   </td>
                 </tr>
               ))}

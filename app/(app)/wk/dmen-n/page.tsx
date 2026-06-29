@@ -6,6 +6,7 @@ import { wilayahKerja, provinsi, kabupaten, dmewLelangDetail, kegiatan, kegiatan
 import { getCurrentUser } from "@/lib/auth";
 import { canWrite, isAdmin, isDmen } from "@/lib/rbac";
 import { TambahKegiatanButton } from "@/components/tambah-kegiatan-button";
+import { WkActionButtons } from "@/components/wk-action-buttons";
 import { KegiatanSection } from "@/components/kegiatan-section";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { Badge } from "@/components/ui";
@@ -98,10 +99,8 @@ export default async function DmenNPage() {
                     {STATUS_WK_LABEL[r.statusWk as StatusWk]}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/wk/${r.id}`} className="text-sm font-medium text-petroleum hover:underline">
-                    Lihat
-                  </Link>
+                <td className="px-4 py-3">
+                  <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit`} canWrite={userCanWrite} />
                 </td>
               </tr>
             ))}

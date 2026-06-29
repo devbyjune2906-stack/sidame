@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { canWrite, isAdmin, isDmew } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { Badge } from "@/components/ui";
+import { WkActionButtons } from "@/components/wk-action-buttons";
 import { deleteWk } from "../actions";
 
 const JALUR_LABEL: Record<string, string> = { REGULER: "Reguler", JOINT_STUDY: "Joint Study" };
@@ -104,25 +105,8 @@ export default async function DmewTPage() {
                     {STATUS_WK_LABEL[r.statusWk as StatusWk]}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex items-center justify-end gap-3">
-                    <Link href={`/wk/${r.id}`} className="text-sm font-medium text-petroleum hover:underline">
-                      Lihat
-                    </Link>
-                    {userCanWrite && (
-                      <Link href={`/wk/${r.id}/edit`} className="text-sm font-medium text-ink hover:underline">
-                        Edit
-                      </Link>
-                    )}
-                    {userCanWrite && (
-                      <form action={deleteWk}>
-                        <input type="hidden" name="id" value={r.id} />
-                        <button type="submit" className="text-sm font-medium text-danger hover:underline">
-                          Hapus
-                        </button>
-                      </form>
-                    )}
-                  </div>
+                <td className="px-4 py-3">
+                  <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit`} canWrite={userCanWrite} />
                 </td>
               </tr>
             ))}

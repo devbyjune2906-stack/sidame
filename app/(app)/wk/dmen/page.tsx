@@ -11,7 +11,8 @@ import {
   dmewLelangDetail,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { isAdmin, isDmen } from "@/lib/rbac";
+import { isAdmin, isDmen, canWrite } from "@/lib/rbac";
+import { WkActionButtons } from "@/components/wk-action-buttons";
 import { STATUS_WK_LABEL, STATUS_BADGE, JENIS_WK_LABEL, type StatusWk, type JenisWk } from "@/lib/constants";
 import { Badge } from "@/components/ui";
 
@@ -19,6 +20,7 @@ export default async function DmenPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (!isAdmin(user.role) && !isDmen(user.role)) redirect("/wk");
+  const userCanWrite = canWrite(user.role);
 
   const rows = await db
     .select({
@@ -93,10 +95,8 @@ export default async function DmenPage() {
                     {STATUS_WK_LABEL[r.statusWk as StatusWk]}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <Link href={`/wk/${r.id}`} className="text-sm font-medium text-petroleum hover:underline">
-                    Lihat
-                  </Link>
+                <td className="px-4 py-3">
+                  <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit`} canWrite={userCanWrite} />
                 </td>
               </tr>
             ))}

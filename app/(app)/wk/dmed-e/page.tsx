@@ -19,6 +19,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { canWrite, isAdmin, isDmed, canCreateWk } from "@/lib/rbac";
 import { STATUS_WK_LABEL, STATUS_BADGE, type StatusWk } from "@/lib/constants";
 import { Badge, Card } from "@/components/ui";
+import { WkActionButtons } from "@/components/wk-action-buttons";
 
 function fmtDate(d: Date | null | undefined) {
   if (!d) return "—";
@@ -202,23 +203,8 @@ export default async function DmedEPage() {
                       {STATUS_WK_LABEL[r.statusWk as StatusWk]}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-3">
-                      {userCanEdit && (
-                        <Link
-                          href={`/wk/dmed-e/${r.id}/edit`}
-                          className="text-sm font-medium text-petroleum hover:underline"
-                        >
-                          Edit
-                        </Link>
-                      )}
-                      <Link
-                        href={`/wk/${r.id}`}
-                        className="text-sm font-medium text-petroleum hover:underline"
-                      >
-                        Lihat
-                      </Link>
-                    </div>
+                  <td className="px-4 py-3">
+                    <WkActionButtons id={r.id} editHref={`/wk/dmed-e/${r.id}/edit`} canWrite={userCanEdit} />
                   </td>
                 </tr>
               );
