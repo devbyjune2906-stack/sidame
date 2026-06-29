@@ -22,5 +22,5 @@ export function removeToast(id: string) {
 
 export function subscribeToasts(listener: Listener) {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => { listeners.delete(listener); };
 }
