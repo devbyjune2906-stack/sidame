@@ -88,6 +88,8 @@ export type MilestoneRow = {
   berjalan: number;
 };
 
+export type PokjaStats = Record<string, number | null>;
+
 export type PokjaDashboardProps = {
   pokja: string;
   userName: string;
@@ -102,6 +104,7 @@ export type PokjaDashboardProps = {
   totalBelumMulai: number;
   provinsiPi10?: string[];
   provinsiDilelang?: string[];
+  pokjaStats?: PokjaStats;
 };
 
 // ── Indonesia Map constants ─────────────────────────────────────────
@@ -142,6 +145,7 @@ export function PokjaDashboard({
   totalBelumMulai,
   provinsiPi10 = [],
   provinsiDilelang = [],
+  pokjaStats = {},
 }: PokjaDashboardProps) {
   const activeStatuses = statusItems.filter(
     (s) => s.key !== "TIDAK_DILANJUTKAN" && s.value > 0,
@@ -214,6 +218,9 @@ export function PokjaDashboard({
             <StatCard key={s.key} stat={s} total={total} />
           ))}
       </div>
+
+      {/* ── Pokja-specific KPI strip ───────────────────────────── */}
+      <PokjaKpiStrip pokja={pokja} stats={pokjaStats} />
 
       {/* ── Main body ──────────────────────────────────────────── */}
       <div className="flex min-h-[360px]" style={{ borderBottom: `1px solid ${BORDER}` }}>
@@ -594,6 +601,217 @@ export function PokjaDashboard({
 }
 
 // ── Sub-components ─────────────────────────────────────────────────
+
+function KpiTile({
+  label,
+  value,
+  sub,
+  accent,
+  icon,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  accent: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div
+      className="flex flex-col gap-2 p-3"
+      style={{ background: BG_CARD, borderLeft: `3px solid ${accent}` }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded" style={{ background: `${accent}18` }}>
+          {icon}
+        </span>
+        <p className="text-[10px] font-semibold uppercase tracking-wide leading-tight" style={{ color: TEXT_MUTED }}>
+          {label}
+        </p>
+      </div>
+      <p className="font-display text-2xl font-black leading-none" style={{ color: TEXT_MAIN }}>{value}</p>
+      {sub && <p className="text-[10px]" style={{ color: accent }}>{sub}</p>}
+    </div>
+  );
+}
+
+function PokjaKpiStrip({ pokja, stats }: { pokja: string; stats: PokjaStats }) {
+  const n = (key: string) => stats[key] ?? 0;
+  const fmt = (v: number | null) =>
+    v == null ? "—" : v >= 1_000_000
+      ? `${(v / 1_000_000).toFixed(2)} jt`
+      : v >= 1_000
+      ? `${(v / 1_000).toFixed(1)} rb`
+      : v.toLocaleString("id-ID", { maximumFractionDigits: 2 });
+
+  let tiles: { label: string; value: string | number; sub?: string; accent: string; icon: React.ReactNode }[] = [];
+
+  if (pokja === "DMEW") {
+    tiles = [
+      {
+        label: "Sub Pokja DMEW-S",
+        value: n("DMEW-S"),
+        sub: "WK Sedang Dilelang",
+        accent: "#0B5E54",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#0B5E54" }}><path d="M2 2h12v1H2zm0 4h12v1H2zm0 4h8v1H2z"/></svg>,
+      },
+      {
+        label: "Sub Pokja DMEW-T",
+        value: n("DMEW-T"),
+        sub: "WK Usulan Baru",
+        accent: "#0F7A6E",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#0F7A6E" }}><path d="M2 2h12v1H2zm0 4h12v1H2zm0 4h8v1H2z"/></svg>,
+      },
+      {
+        label: "Jalur Reguler",
+        value: n("jalur_REGULER"),
+        sub: "WK via jalur reguler",
+        accent: "#2E7D5B",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#2E7D5B" }}><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 12.5A5.5 5.5 0 118 2.5 5.5 5.5 0 018 13.5z"/></svg>,
+      },
+      {
+        label: "Joint Study",
+        value: n("jalur_JOINT_STUDY"),
+        sub: "WK via joint study",
+        accent: "#C9821B",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#C9821B" }}><path d="M5 4a3 3 0 106 0A3 3 0 005 4zm-3 9a6 6 0 0112 0H2z"/></svg>,
+      },
+      {
+        label: "Diusulkan WK Baru",
+        value: n("diusulkanWkBaru"),
+        sub: "WK baru diusulkan",
+        accent: "#6B8E86",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#6B8E86" }}><path d="M8 1v7H1a7 7 0 007-7zm1 0a7 7 0 017 7H9V1z"/></svg>,
+      },
+    ];
+  } else if (pokja === "DMEN") {
+    tiles = [
+      {
+        label: "Sub Pokja DMEN-N",
+        value: n("DMEN-N"),
+        sub: "WK Non-Konvensional Baru",
+        accent: "#2E7D5B",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#2E7D5B" }}><path d="M2 2h12v1H2zm0 4h12v1H2zm0 4h8v1H2z"/></svg>,
+      },
+      {
+        label: "Sub Pokja DMEN-K",
+        value: n("DMEN-K"),
+        sub: "WK Non-Konvensional Khusus",
+        accent: "#0B5E54",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#0B5E54" }}><path d="M2 2h12v1H2zm0 4h12v1H2zm0 4h8v1H2z"/></svg>,
+      },
+      {
+        label: "Jalur Reguler",
+        value: n("jalur_REGULER"),
+        sub: "via jalur reguler",
+        accent: "#C9821B",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#C9821B" }}><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 12.5A5.5 5.5 0 118 2.5 5.5 5.5 0 018 13.5z"/></svg>,
+      },
+      {
+        label: "Joint Study",
+        value: n("jalur_JOINT_STUDY"),
+        sub: "via joint study",
+        accent: "#6B8E86",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#6B8E86" }}><path d="M5 4a3 3 0 106 0A3 3 0 005 4zm-3 9a6 6 0 0112 0H2z"/></svg>,
+      },
+    ];
+  } else if (pokja === "DMEE") {
+    tiles = [
+      {
+        label: "Sub Pokja DMEE-L",
+        value: n("DMEE-L"),
+        sub: "WK Eksplorasi (Lanjutan)",
+        accent: "#C9821B",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#C9821B" }}><path d="M2 2h12v1H2zm0 4h12v1H2zm0 4h8v1H2z"/></svg>,
+      },
+      {
+        label: "Sub Pokja DMEE-M",
+        value: n("DMEE-M"),
+        sub: "WK Eksplorasi (Mandatory)",
+        accent: "#0B5E54",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#0B5E54" }}><path d="M2 2h12v1H2zm0 4h12v1H2zm0 4h8v1H2z"/></svg>,
+      },
+      {
+        label: "Total Luas Wilayah Sisa",
+        value: fmt(stats.totalLuasSisa ?? 0),
+        sub: "km² (akumulasi)",
+        accent: "#2E7D5B",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#2E7D5B" }}><path d="M1 1h14v14H1V1zm1 1v12h12V2H2zm2 2h8v8H4V4zm1 1v6h6V5H5z"/></svg>,
+      },
+    ];
+  } else if (pokja === "DMED") {
+    tiles = [
+      {
+        label: "DMED-T · POD I",
+        value: n("DMED-T_PODI"),
+        sub: "Pengajuan POD I",
+        accent: "#B4322B",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#B4322B" }}><path d="M3 1h10l2 3v10H1V4L3 1zm1 1L2.5 4h11L12 2H4zm-2 3v8h12V5H2z"/></svg>,
+      },
+      {
+        label: "DMED-T · PI 10%",
+        value: n("DMED-T_PI10"),
+        sub: "Participating Interest 10%",
+        accent: "#0F7A6E",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#0F7A6E" }}><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-1 4h2v4H7V5zm0 5h2v2H7v-2z"/></svg>,
+      },
+      {
+        label: "DMED-E · Perpanjangan",
+        value: n("DMED-E"),
+        sub: "Perpanjangan Kontrak",
+        accent: "#0B5E54",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#0B5E54" }}><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.5 3.5h1V8l3 1.5-.5 1-3.5-1.75V4.5z"/></svg>,
+      },
+    ];
+  } else if (pokja === "DMEP") {
+    tiles = [
+      {
+        label: "Sub Pokja DMEP-L",
+        value: n("DMEP-L"),
+        sub: "WK Onstream (Lanjutan)",
+        accent: "#16211F",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#16211F" }}><path d="M2 2h12v1H2zm0 4h12v1H2zm0 4h8v1H2z"/></svg>,
+      },
+      {
+        label: "Sub Pokja DMEP-P",
+        value: n("DMEP-P"),
+        sub: "WK Onstream (Produksi)",
+        accent: "#0B5E54",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#0B5E54" }}><path d="M2 2h12v1H2zm0 4h12v1H2zm0 4h8v1H2z"/></svg>,
+      },
+      {
+        label: "Sisa Cadangan Minyak",
+        value: fmt(stats.totalCadanganMinyak ?? 0),
+        sub: "total akumulasi",
+        accent: "#C9821B",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#C9821B" }}><path d="M8 1C5 1 3 4 3 7c0 3 2 6 5 8 3-2 5-5 5-8 0-3-2-6-5-6z"/></svg>,
+      },
+      {
+        label: "Sisa Cadangan Gas",
+        value: fmt(stats.totalCadanganGas ?? 0),
+        sub: "total akumulasi",
+        accent: "#0F7A6E",
+        icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5" style={{ color: "#0F7A6E" }}><path d="M4 2h8v1l1 2v8H3V5l1-2V2zm1 1v1h6V3H5zm-1 2-1 1.5V12h10V6.5L12 5H4z"/></svg>,
+      },
+    ];
+  }
+
+  if (tiles.length === 0) return null;
+
+  return (
+    <div
+      className="grid gap-px"
+      style={{
+        gridTemplateColumns: `repeat(${tiles.length}, 1fr)`,
+        background: BORDER,
+        borderBottom: `1px solid ${BORDER}`,
+      }}
+    >
+      {tiles.map((t) => (
+        <KpiTile key={t.label} {...t} />
+      ))}
+    </div>
+  );
+}
 
 function StatCard({ stat, total }: { stat: StatusItem; total: number }) {
   const pct = total > 0 ? (stat.value / total) * 100 : 0;

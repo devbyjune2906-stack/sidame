@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { and, asc, count, desc, eq, inArray, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
   wilayahKerja,
@@ -9,6 +9,12 @@ import {
   processTemplate,
   stageTemplate,
   wkStageProgress,
+  dmewLelangDetail,
+  dmeeDetail,
+  dmedPodiDetail,
+  dmedPi10Detail,
+  dmedEDetail,
+  dmepDetail,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { isAdmin, statusWhere, visibleSubpokjas, pokjaLabel } from "@/lib/rbac";
@@ -208,6 +214,97 @@ export default async function DashboardPage() {
     }
   }
 
+  // ── Pokja-specific stats ──────────────────────────────────────
+  type PokjaStats = Record<string, number | null>;
+  let pokjaStats: PokjaStats = {};
+
+  if (pokja === "DMEW") {
+    const [subRows, jalurRows, [diusulkan]] = await Promise.all([
+      db
+        .select({ subpokja: dmewLelangDetail.subpokja, c: count() })
+        .from(dmewLelangDetail)
+        .innerJoin(wilayahKerja, eq(dmewLelangDetail.wkId, wilayahKerja.id))
+        .where(eq(wilayahKerja.jenisWk, "KONVENSIONAL"))
+        .groupBy(dmewLelangDetail.subpokja),
+      db
+        .select({ jalur: dmewLelangDetail.jalur, c: count() })
+        .from(dmewLelangDetail)
+        .innerJoin(wilayahKerja, eq(dmewLelangDetail.wkId, wilayahKerja.id))
+        .where(eq(wilayahKerja.jenisWk, "KONVENSIONAL"))
+        .groupBy(dmewLelangDetail.jalur),
+      db
+        .select({ c: count() })
+        .from(dmewLelangDetail)
+        .innerJoin(wilayahKerja, eq(dmewLelangDetail.wkId, wilayahKerja.id))
+        .where(and(eq(wilayahKerja.jenisWk, "KONVENSIONAL"), eq(dmewLelangDetail.diusulkanWkBaru, true))),
+    ]);
+    for (const r of subRows) if (r.subpokja) pokjaStats[r.subpokja] = r.c;
+    for (const r of jalurRows) if (r.jalur) pokjaStats[`jalur_${r.jalur}`] = r.c;
+    pokjaStats.diusulkanWkBaru = diusulkan?.c ?? 0;
+
+  } else if (pokja === "DMEN") {
+    const [subRows, jalurRows] = await Promise.all([
+      db
+        .select({ subpokja: dmewLelangDetail.subpokja, c: count() })
+        .from(dmewLelangDetail)
+        .innerJoin(wilayahKerja, eq(dmewLelangDetail.wkId, wilayahKerja.id))
+        .where(eq(wilayahKerja.jenisWk, "NON_KONVENSIONAL"))
+        .groupBy(dmewLelangDetail.subpokja),
+      db
+        .select({ jalur: dmewLelangDetail.jalur, c: count() })
+        .from(dmewLelangDetail)
+        .innerJoin(wilayahKerja, eq(dmewLelangDetail.wkId, wilayahKerja.id))
+        .where(eq(wilayahKerja.jenisWk, "NON_KONVENSIONAL"))
+        .groupBy(dmewLelangDetail.jalur),
+    ]);
+    for (const r of subRows) if (r.subpokja) pokjaStats[r.subpokja] = r.c;
+    for (const r of jalurRows) if (r.jalur) pokjaStats[`jalur_${r.jalur}`] = r.c;
+
+  } else if (pokja === "DMEE") {
+    const [subRows, [luasRow]] = await Promise.all([
+      db
+        .select({ subpokja: processTemplate.subpokja, c: count() })
+        .from(wkProcess)
+        .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+        .where(inArray(processTemplate.subpokja, ["DMEE-L", "DMEE-M"]))
+        .groupBy(processTemplate.subpokja),
+      db
+        .select({ total: sql<number>`coalesce(sum(${dmeeDetail.luasWilayahSisa}), 0)` })
+        .from(dmeeDetail),
+    ]);
+    for (const r of subRows) if (r.subpokja) pokjaStats[r.subpokja] = r.c;
+    pokjaStats.totalLuasSisa = luasRow?.total ?? 0;
+
+  } else if (pokja === "DMED") {
+    const [[podiRow], [pi10Row], [dmedERow]] = await Promise.all([
+      db.select({ c: count() }).from(dmedPodiDetail),
+      db.select({ c: count() }).from(dmedPi10Detail),
+      db.select({ c: count() }).from(dmedEDetail),
+    ]);
+    pokjaStats["DMED-T_PODI"] = podiRow?.c ?? 0;
+    pokjaStats["DMED-T_PI10"] = pi10Row?.c ?? 0;
+    pokjaStats["DMED-E"] = dmedERow?.c ?? 0;
+
+  } else if (pokja === "DMEP") {
+    const [subRows, [cadanganRow]] = await Promise.all([
+      db
+        .select({ subpokja: processTemplate.subpokja, c: count() })
+        .from(wkProcess)
+        .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+        .where(inArray(processTemplate.subpokja, ["DMEP-L", "DMEP-P"]))
+        .groupBy(processTemplate.subpokja),
+      db
+        .select({
+          minyak: sql<number>`coalesce(sum(${dmepDetail.sisaCadanganMinyak}), 0)`,
+          gas:    sql<number>`coalesce(sum(${dmepDetail.sisaCadanganGas}), 0)`,
+        })
+        .from(dmepDetail),
+    ]);
+    for (const r of subRows) if (r.subpokja) pokjaStats[r.subpokja] = r.c;
+    pokjaStats.totalCadanganMinyak = cadanganRow?.minyak ?? 0;
+    pokjaStats.totalCadanganGas    = cadanganRow?.gas    ?? 0;
+  }
+
   // ── Admin: render operational dashboard ─────────────────────
   if (isAdmin(user.role)) {
     return (
@@ -305,6 +402,7 @@ export default async function DashboardPage() {
       totalBelumMulai={totalBelumMulai}
       provinsiPi10={provinsiPi10}
       provinsiDilelang={provinsiDilelang}
+      pokjaStats={pokjaStats}
     />
   );
 }
