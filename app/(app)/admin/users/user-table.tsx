@@ -220,10 +220,12 @@ export function UserTable({
   userList,
   currentUserId,
   roleList,
+  canEdit = true,
 }: {
   userList: User[];
   currentUserId: string;
   roleList: Role[];
+  canEdit?: boolean;
 }) {
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [editTarget, setEditTarget] = useState<User | null>(null);
@@ -263,6 +265,8 @@ export function UserTable({
                 <td className="px-4 py-3 text-right">
                   {u.id === currentUserId ? (
                     <span className="text-xs text-muted">Akun Anda</span>
+                  ) : !canEdit ? (
+                    <span className="text-xs text-muted">—</span>
                   ) : (
                     <div className="flex items-center justify-end gap-3">
                       <button

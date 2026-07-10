@@ -52,7 +52,8 @@ export default async function UsersPage() {
       <UserTable
         userList={userList}
         currentUserId={current.id}
-        roleList={readOnly ? [] : roleList}
+        roleList={roleList}
+        canEdit={!readOnly}
       />
     </div>
   );
