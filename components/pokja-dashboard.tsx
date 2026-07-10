@@ -105,6 +105,7 @@ export type PokjaDashboardProps = {
   provinsiPi10?: string[];
   provinsiDilelang?: string[];
   pokjaStats?: PokjaStats;
+  globalStatusItems?: StatusItem[];
 };
 
 // ── Indonesia Map constants ─────────────────────────────────────────
@@ -146,6 +147,7 @@ export function PokjaDashboard({
   provinsiPi10 = [],
   provinsiDilelang = [],
   pokjaStats = {},
+  globalStatusItems = [],
 }: PokjaDashboardProps) {
   const activeStatuses = statusItems.filter(
     (s) => s.key !== "TIDAK_DILANJUTKAN" && s.value > 0,
@@ -218,6 +220,11 @@ export function PokjaDashboard({
             <StatCard key={s.key} stat={s} total={total} />
           ))}
       </div>
+
+      {/* ── Global status strip ────────────────────────────────── */}
+      {globalStatusItems.length > 0 && (
+        <GlobalStatusStrip items={globalStatusItems} />
+      )}
 
       {/* ── Pokja-specific KPI strip ───────────────────────────── */}
       <PokjaKpiStrip pokja={pokja} stats={pokjaStats} />
@@ -601,6 +608,61 @@ export function PokjaDashboard({
 }
 
 // ── Sub-components ─────────────────────────────────────────────────
+
+const GLOBAL_STATUS_META: Record<string, { label: string; accent: string; icon: React.ReactNode }> = {
+  WK_USULAN_BARU:  { label: "WK Usulan Baru",  accent: "#1EB8A8", icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5"><path d="M3 2h10v1H3zm-1 2h12v1H2zm1 2h10l1 8H2L3 6z"/></svg> },
+  SEDANG_DILELANG: { label: "Sedang Dilelang", accent: "#0B9E8E", icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5"><path d="M2 2h12v2H2zm0 3h12v9H2zm2 2v5h8V7H4z"/></svg> },
+  EKSPLORASI:      { label: "Eksplorasi",       accent: "#C9821B", icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.415l-3.868-3.833zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg> },
+  POD_I:           { label: "POD I",            accent: "#2E7D5B", icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5"><path d="M14 1H2a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V2a1 1 0 00-1-1zM4 4h8v1H4zm0 3h8v1H4zm0 3h5v1H4z"/></svg> },
+  ONSTREAM:        { label: "Onstream / Produksi", accent: "#4ade80", icon: <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5"><path d="M8 1C5 1 3 4 3 7c0 3 2 6 5 8 3-2 5-5 5-8 0-3-2-6-5-6z"/></svg> },
+};
+
+function GlobalStatusStrip({ items }: { items: { key: string; name: string; value: number }[] }) {
+  const totalGlobal = items.reduce((acc, i) => acc + i.value, 0);
+  return (
+    <div style={{ background: BG_CARD2, borderBottom: `1px solid ${BORDER}` }}>
+      <div className="flex items-center gap-2 px-4 pt-2 pb-1">
+        <div className="h-px flex-1" style={{ background: BORDER }} />
+        <p className="text-[9px] font-bold uppercase tracking-widest" style={{ color: TEXT_MUTED }}>
+          Ringkasan Status WK Nasional
+        </p>
+        <div className="h-px flex-1" style={{ background: BORDER }} />
+      </div>
+      <div
+        className="grid gap-px"
+        style={{
+          gridTemplateColumns: `repeat(${items.length}, 1fr)`,
+          background: BORDER,
+        }}
+      >
+        {items.map((item) => {
+          const meta = GLOBAL_STATUS_META[item.key];
+          const pct = totalGlobal > 0 ? Math.round((item.value / totalGlobal) * 100) : 0;
+          return (
+            <div
+              key={item.key}
+              className="flex flex-col gap-1 px-3 py-2"
+              style={{ background: BG_CARD, borderTop: `2px solid ${meta?.accent ?? BORDER}` }}
+            >
+              <div className="flex items-center gap-1.5">
+                <span style={{ color: meta?.accent ?? TEXT_MUTED }}>{meta?.icon}</span>
+                <p className="text-[9px] font-semibold uppercase tracking-wide leading-tight" style={{ color: TEXT_MUTED }}>
+                  {meta?.label ?? item.name}
+                </p>
+              </div>
+              <p className="font-display text-xl font-black leading-none" style={{ color: TEXT_MAIN }}>
+                {item.value}
+              </p>
+              <p className="text-[9px]" style={{ color: meta?.accent ?? TEXT_MUTED }}>
+                {pct}% dari total nasional
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function KpiTile({
   label,

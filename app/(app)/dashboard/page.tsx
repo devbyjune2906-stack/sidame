@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { and, asc, count, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, ne, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
   wilayahKerja,
@@ -142,6 +142,22 @@ export default async function DashboardPage() {
     .groupBy(wilayahKerja.operatorK3s)
     .orderBy(desc(count()))
     .limit(8);
+
+  // ── Global status counts (untuk strip info di pokja dashboard) ──
+  let globalStatusItems: { key: string; name: string; value: number }[] = [];
+  if (!isAdmin(user.role)) {
+    const globalRows = await db
+      .select({ status: wilayahKerja.statusWk, c: count() })
+      .from(wilayahKerja)
+      .where(ne(wilayahKerja.statusWk, "TIDAK_DILANJUTKAN"))
+      .groupBy(wilayahKerja.statusWk);
+    const globalMap = new Map(globalRows.map((r) => [r.status, r.c]));
+    globalStatusItems = STATUS_WK_VALUES.filter((s) => s !== "TIDAK_DILANJUTKAN").map((s) => ({
+      key: s,
+      name: STATUS_WK_LABEL[s],
+      value: globalMap.get(s) ?? 0,
+    }));
+  }
 
   // ── Provinsi PI 10% (hanya untuk DMED) ─────────────────────
   let provinsiPi10: string[] = [];
@@ -423,6 +439,7 @@ export default async function DashboardPage() {
       provinsiPi10={provinsiPi10}
       provinsiDilelang={provinsiDilelang}
       pokjaStats={pokjaStats}
+      globalStatusItems={globalStatusItems}
     />
   );
 }
