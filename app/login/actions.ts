@@ -25,7 +25,7 @@ export async function login(_prev: unknown, formData: FormData) {
     })
     .from(users)
     .innerJoin(roles, eq(users.roleId, roles.id))
-    .where(sql`lower(${users.nama}) = lower(${username})`)
+    .where(sql`lower(${users.email}) = lower(${username})`)
     .limit(1);
 
   const user = rows[0];
