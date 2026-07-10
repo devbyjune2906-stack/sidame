@@ -129,7 +129,7 @@ export function Sidebar({
   onToggle?: () => void;
 }) {
   const pathname = usePathname();
-  const showAdminMenu = isAdmin(user.role) || isPokjaAdmin(user.role);
+  const showAdminMenu = isAdmin(user.role) || isPokjaAdmin(user.role) || isDmee(user.role);
   const pokja = pokjaLabel(user.role);
 
   return (
@@ -204,17 +204,19 @@ export function Sidebar({
           {showAdminMenu && (
             <div className="pt-2">
               <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted">Admin</p>
-              <Link
-                href="/admin/users"
-                className={cn(
-                  "block rounded-lg px-3 py-2 text-sm font-medium transition",
-                  pathname.startsWith("/admin/users")
-                    ? "bg-petroleum/10 text-petroleum"
-                    : "text-ink hover:bg-line/50"
-                )}
-              >
-                Manajemen User
-              </Link>
+              {(isAdmin(user.role) || isPokjaAdmin(user.role) || isDmee(user.role)) && (
+                <Link
+                  href="/admin/users"
+                  className={cn(
+                    "block rounded-lg px-3 py-2 text-sm font-medium transition",
+                    pathname.startsWith("/admin/users")
+                      ? "bg-petroleum/10 text-petroleum"
+                      : "text-ink hover:bg-line/50"
+                  )}
+                >
+                  Manajemen User
+                </Link>
+              )}
             </div>
           )}
         </nav>
