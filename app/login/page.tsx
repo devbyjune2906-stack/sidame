@@ -107,10 +107,10 @@ export default function LoginPage() {
               <input
                 id="username"
                 name="username"
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
                 required
-                placeholder="Masukkan Email"
+                placeholder="Masukkan Nama Pengguna"
                 style={{
                   width: "100%",
                   background: "transparent",
