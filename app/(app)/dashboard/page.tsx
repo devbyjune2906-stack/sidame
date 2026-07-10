@@ -66,7 +66,28 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   const pokja = pokjaLabel(user.role);
-  const where = isAdmin(user.role) ? undefined : statusWhere(user.role);
+  const visible = visibleSubpokjas(user.role);
+
+  // Untuk pokja: filter WK yang benar-benar ada di pipeline sub-pokja mereka
+  // Admin tetap pakai statusWhere (lihat semua)
+  let pokjaWkIds: string[] | null = null;
+  if (!isAdmin(user.role) && visible !== "ALL" && visible.length > 0) {
+    const wkInPipeline = await db
+      .selectDistinct({ wkId: wkProcess.wkId })
+      .from(wkProcess)
+      .innerJoin(processTemplate, eq(wkProcess.templateId, processTemplate.id))
+      .where(inArray(processTemplate.subpokja, visible));
+    pokjaWkIds = wkInPipeline.map((r) => r.wkId);
+  }
+
+  const where = isAdmin(user.role)
+    ? undefined
+    : pokjaWkIds !== null
+    ? pokjaWkIds.length > 0
+      ? inArray(wilayahKerja.id, pokjaWkIds)
+      : sql`false`
+    : statusWhere(user.role);
+
   const withWhere = (extra?: SQL) => {
     const parts = [where, extra].filter((p): p is SQL => p !== undefined);
     return parts.length ? and(...parts) : undefined;
@@ -148,7 +169,6 @@ export default async function DashboardPage() {
   }
 
   // ── Milestone progress ──────────────────────────────────────
-  const visible = visibleSubpokjas(user.role);
   const progressSubpokjas: string[] =
     visible === "ALL"
       ? [...ALL_SUBPOKJAS]
