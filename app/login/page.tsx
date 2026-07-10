@@ -102,15 +102,15 @@ export default function LoginPage() {
                 htmlFor="username"
                 className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-white/80"
               >
-                Email
+                User
               </label>
               <input
                 id="username"
                 name="username"
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
                 required
-                placeholder="Masukkan Email"
+                placeholder="Masukkan Nama Pengguna"
                 style={{
                   width: "100%",
                   background: "transparent",
