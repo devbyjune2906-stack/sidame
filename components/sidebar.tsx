@@ -35,6 +35,7 @@ const POKJA_SECTIONS: {
     items: [
       { href: "/wk/dmee-l", label: "DMEE-L" },
       { href: "/wk/dmee-m", label: "DMEE-M" },
+      { href: "/admin/users", label: "Manajemen User", show: (r) => isAdmin(r) || isPokjaAdmin(r) },
     ],
     show: (r) => isAdmin(r) || isDmee(r),
   },
