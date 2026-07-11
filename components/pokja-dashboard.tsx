@@ -241,14 +241,6 @@ export function PokjaDashboard({
             Quick Access
           </p>
 
-          {/* Filter placeholder */}
-          <div
-            className="rounded px-2 py-1.5 text-xs"
-            style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: TEXT_MUTED }}
-          >
-            Select Filter...
-          </div>
-
           <div className="flex flex-col gap-1.5">
             {quickLinks.map((l) => (
               <Link
