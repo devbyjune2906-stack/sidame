@@ -26,7 +26,6 @@ const POKJA_SECTIONS: {
     items: [
       { href: "/wk/dmew-s", label: "DMEW-S" },
       { href: "/wk/dmew-t", label: "DMEW-T" },
-      { href: "/admin/users", label: "Manajemen User", show: (r) => isAdmin(r) || isPokjaAdmin(r) },
     ],
     show: (r) => isAdmin(r) || isDmew(r),
   },
@@ -36,7 +35,6 @@ const POKJA_SECTIONS: {
     items: [
       { href: "/wk/dmee-l", label: "DMEE-L" },
       { href: "/wk/dmee-m", label: "DMEE-M" },
-      { href: "/admin/users", label: "Manajemen User", show: (r) => isAdmin(r) || isPokjaAdmin(r) },
     ],
     show: (r) => isAdmin(r) || isDmee(r),
   },
@@ -47,7 +45,6 @@ const POKJA_SECTIONS: {
       { href: "/wk/dmed-t", label: "DMED-T" },
       { href: "/wk/dmed-e", label: "DMED-E" },
       { href: "/wk/dmed/psc-economics", label: "PSC Economics", show: (r) => isAdmin(r) || isPokjaAdmin(r) },
-      { href: "/admin/users", label: "Manajemen User", show: (r) => isAdmin(r) || isPokjaAdmin(r) },
     ],
     show: (r) => isAdmin(r) || isDmed(r),
   },
@@ -57,7 +54,6 @@ const POKJA_SECTIONS: {
     items: [
       { href: "/wk/dmep-l", label: "DMEP-L" },
       { href: "/wk/dmep-p", label: "DMEP-P" },
-      { href: "/admin/users", label: "Manajemen User", show: (r) => isAdmin(r) || isPokjaAdmin(r) },
     ],
     show: (r) => isAdmin(r) || isDmep(r),
   },
@@ -67,7 +63,6 @@ const POKJA_SECTIONS: {
     items: [
       { href: "/wk/dmen-n", label: "DMEN-N" },
       { href: "/wk/dmen-k", label: "DMEN-K" },
-      { href: "/admin/users", label: "Manajemen User", show: (r) => isAdmin(r) || isPokjaAdmin(r) },
     ],
     show: (r) => isAdmin(r) || isDmen(r),
   },
