@@ -209,18 +209,6 @@ export function PokjaDashboard({
         </div>
       </div>
 
-      {/* ── Stat cards row ─────────────────────────────────────── */}
-      <div
-        className="grid grid-cols-3 gap-px sm:grid-cols-6"
-        style={{ background: BORDER, borderBottom: `1px solid ${BORDER}` }}
-      >
-        {statusItems
-          .filter((s) => s.key !== "TIDAK_DILANJUTKAN")
-          .map((s) => (
-            <StatCard key={s.key} stat={s} total={total} />
-          ))}
-      </div>
-
       {/* ── Global status strip ────────────────────────────────── */}
       {globalStatusItems.length > 0 && (
         <GlobalStatusStrip items={globalStatusItems} />
