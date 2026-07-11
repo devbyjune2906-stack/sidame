@@ -217,22 +217,38 @@ export function Sidebar({
               </Link>
             </div>
           )}
+
+          {/* Keluar — di bawah semua menu */}
+          <div className="pt-2 mt-auto">
+            <div className="border-t border-line pt-3 px-2 mb-1">
+              <p className="truncate text-sm font-medium text-ink">{user.nama}</p>
+              <p className="text-xs text-muted">{user.role}</p>
+            </div>
+            <form action={logout}>
+              <button
+                type="submit"
+                className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-danger transition hover:bg-danger/10"
+              >
+                Keluar
+              </button>
+            </form>
+          </div>
         </nav>
       )}
 
-      {/* Footer */}
-      {!collapsed && (
-        <div className="border-t border-line p-3">
-          <div className="mb-2 px-2">
-            <p className="truncate text-sm font-medium text-ink">{user.nama}</p>
-            <p className="text-xs text-muted">{user.role}</p>
-          </div>
+      {/* Footer — collapsed state only (logo nav) */}
+      {collapsed && (
+        <div className="border-t border-line p-2">
           <form action={logout}>
             <button
               type="submit"
-              className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-danger transition hover:bg-danger/10"
+              title="Keluar"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-danger transition hover:bg-danger/10"
             >
-              Keluar
+              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                <path fillRule="evenodd" d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M19 10a.75.75 0 00-.75-.75H8.704l1.048-1.04a.75.75 0 10-1.06-1.062l-2.25 2.25a.75.75 0 000 1.062l2.25 2.25a.75.75 0 101.06-1.062l-1.047-1.038h9.546A.75.75 0 0019 10z" clipRule="evenodd" />
+              </svg>
             </button>
           </form>
         </div>
