@@ -15,8 +15,11 @@ export function AppShell({
   return (
     <div className="flex min-h-screen">
       <Sidebar user={user} collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
-      <main className="flex-1 overflow-x-hidden transition-all duration-300">
-        <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
+      <main className="flex-1 overflow-x-hidden transition-all duration-300 flex flex-col min-h-screen">
+        <div className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">{children}</div>
+        <footer className="mx-auto w-full max-w-7xl px-6 py-4 text-center text-[11px] text-muted border-t border-line">
+          Copyright&copy;DME, 2026
+        </footer>
       </main>
     </div>
   );

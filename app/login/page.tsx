@@ -199,7 +199,7 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-5 text-center text-[11px] text-white/40">
-            Akses dibatasi sesuai kewenangan Pokja masing-masing.
+            Digital Platform for the Working Areas of the Directorate of Upstream Business Development
           </p>
         </div>
       </div>
