@@ -22,13 +22,22 @@ const QUICK_LINKS = [
   { label: "WK Produksi (DMEP)", href: "/wk/dmep",  color: "bg-danger text-white" },
 ];
 
-const STATUS_ICON: Record<string, string> = {
-  WK_USULAN_BARU:   "🗂",
-  SEDANG_DILELANG:  "📋",
-  EKSPLORASI:       "🔍",
-  POD_I:            "📝",
-  ONSTREAM:         "⛽",
-  TIDAK_DILANJUTKAN:"⛔",
+const STATUS_ACCENT: Record<string, string> = {
+  WK_USULAN_BARU:    "#1EB8A8",
+  SEDANG_DILELANG:   "#0B9E8E",
+  EKSPLORASI:        "#C9821B",
+  POD_I:             "#2E7D5B",
+  ONSTREAM:          "#4ade80",
+  TIDAK_DILANJUTKAN: "#B4322B",
+};
+
+const STATUS_SVG: Record<string, React.ReactNode> = {
+  WK_USULAN_BARU:   <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4"><path d="M3 2h10v1H3zm-1 2h12v1H2zm1 2h10l1 8H2L3 6z"/></svg>,
+  SEDANG_DILELANG:  <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4"><path d="M2 2h12v2H2zm0 3h12v9H2zm2 2v5h8V7H4z"/></svg>,
+  EKSPLORASI:       <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.415l-3.868-3.833zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>,
+  POD_I:            <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4"><path d="M14 1H2a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V2a1 1 0 00-1-1zM4 4h8v1H4zm0 3h8v1H4zm0 3h5v1H4z"/></svg>,
+  ONSTREAM:         <svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4"><path d="M8 1C5 1 3 4 3 7c0 3 2 6 5 8 3-2 5-5 5-8 0-3-2-6-5-6z"/></svg>,
+  TIDAK_DILANJUTKAN:<svg viewBox="0 0 16 16" fill="currentColor" className="h-4 w-4"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zM2 8a6 6 0 0110.33-4.14L3.86 12.33A5.96 5.96 0 012 8zm1.67 4.14L12.14 3.67A6 6 0 013.67 12.14z"/></svg>,
 };
 
 export type AdminDashboardProps = {
@@ -93,29 +102,43 @@ export function AdminDashboard({
       <div className="px-6 py-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {/* Total */}
-          <div className="col-span-2 sm:col-span-1 rounded-xl bg-petroleum px-4 py-3 text-white shadow-card lg:col-span-1">
+          <div
+            className="col-span-2 sm:col-span-1 lg:col-span-1 rounded-xl px-4 py-3 text-white shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default"
+            style={{ background: "#0B5E54", borderTop: "3px solid #1EB8A8" }}
+          >
             <p className="text-[11px] font-semibold uppercase tracking-wide text-white/70">
               Total WK
             </p>
             <p className="mt-1 font-display text-4xl font-black">{total}</p>
             <p className="mt-0.5 text-[11px] text-white/60">Wilayah Kerja</p>
           </div>
+
           {statusItems
             .filter((s) => s.key !== "TIDAK_DILANJUTKAN")
-            .map((s) => (
-              <div
-                key={s.key}
-                className="rounded-xl bg-white px-4 py-3 shadow-card"
-              >
-                <p className="text-lg">{STATUS_ICON[s.key] ?? "📊"}</p>
-                <p className="mt-1 font-display text-3xl font-bold text-ink">
-                  {s.value}
-                </p>
-                <p className="mt-0.5 text-[11px] text-muted leading-tight">
-                  {s.name}
-                </p>
-              </div>
-            ))}
+            .map((s) => {
+              const accent = STATUS_ACCENT[s.key] ?? "#6B8E86";
+              const pct = total > 0 ? Math.round((s.value / total) * 100) : 0;
+              return (
+                <div
+                  key={s.key}
+                  className="rounded-xl bg-white px-4 py-3 shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-lg cursor-default"
+                  style={{ borderTop: `3px solid ${accent}` }}
+                >
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span style={{ color: accent }}>{STATUS_SVG[s.key]}</span>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted leading-tight">
+                      {s.name}
+                    </p>
+                  </div>
+                  <p className="font-display text-3xl font-black text-ink">
+                    {s.value}
+                  </p>
+                  <p className="mt-0.5 text-[10px]" style={{ color: accent }}>
+                    {pct}% dari total
+                  </p>
+                </div>
+              );
+            })}
         </div>
         {tidakDilanjutkan && tidakDilanjutkan.value > 0 && (
           <p className="mt-2 text-right text-xs text-muted">
