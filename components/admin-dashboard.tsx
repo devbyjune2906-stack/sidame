@@ -260,7 +260,7 @@ export function AdminDashboard({
                 {statusItems.filter((s) => s.value > 0).map((s) => (
                   <tr key={s.key} className="border-b border-line/40 last:border-0">
                     <td className="py-1.5 text-ink">
-                      <span className="mr-1">{STATUS_ICON[s.key]}</span>
+                      <span className="mr-1" style={{ color: STATUS_ACCENT[s.key] }}>{STATUS_SVG[s.key]}</span>
                       {s.name}
                     </td>
                     <td className="py-1.5 text-right font-medium text-ink">
