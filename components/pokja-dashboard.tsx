@@ -621,7 +621,7 @@ function GlobalStatusStrip({ items }: { items: { key: string; name: string; valu
           return (
             <div
               key={item.key}
-              className="flex flex-col gap-1 px-3 py-2"
+              className="flex flex-col gap-1 px-3 py-2 transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default"
               style={{ background: BG_CARD, borderTop: `2px solid ${meta?.accent ?? BORDER}` }}
             >
               <div className="flex items-center gap-1.5">
@@ -659,7 +659,7 @@ function KpiTile({
 }) {
   return (
     <div
-      className="flex flex-col gap-2 p-3"
+      className="flex flex-col gap-2 p-3 transition-all duration-200 hover:-translate-y-1 hover:shadow-md cursor-default"
       style={{ background: BG_CARD, borderLeft: `3px solid ${accent}` }}
     >
       <div className="flex items-center gap-2">
