@@ -5,15 +5,16 @@ import { getExportRows, type ExportRow } from "@/lib/export-data";
 
 export const runtime = "nodejs";
 
-// Kolom yang dicetak di PDF (landscape A4)
-const COLS: { key: keyof ExportRow; label: string; width: number }[] = [
-  { key: "namaWk", label: "Nama WK", width: 150 },
-  { key: "operatorK3s", label: "Operator/K3S", width: 130 },
-  { key: "provinsi", label: "Provinsi", width: 90 },
-  { key: "typeContract", label: "Kontrak", width: 80 },
-  { key: "statusWk", label: "Status", width: 90 },
-  { key: "startPsc", label: "Start PSC", width: 70 },
-  { key: "endPsc", label: "End PSC", width: 70 },
+const ALL_COLS: { key: keyof ExportRow; label: string; width: number }[] = [
+  { key: "namaWk",        label: "Nama WK",        width: 150 },
+  { key: "lapangan",      label: "Lapangan",        width: 100 },
+  { key: "operatorK3s",   label: "Operator/K3S",    width: 130 },
+  { key: "pemegangSaham", label: "Pemegang Saham",  width: 120 },
+  { key: "provinsi",      label: "Provinsi",         width: 90 },
+  { key: "typeContract",  label: "Kontrak",          width: 80 },
+  { key: "statusWk",      label: "Status",           width: 90 },
+  { key: "startPsc",      label: "Start PSC",        width: 70 },
+  { key: "endPsc",        label: "End PSC",          width: 70 },
 ];
 
 export async function GET(req: NextRequest) {
@@ -23,6 +24,12 @@ export async function GET(req: NextRequest) {
   const sp = Object.fromEntries(req.nextUrl.searchParams.entries());
   const rows = await getExportRows(user.role, sp);
 
+  const selectedKeys = sp.cols
+    ? sp.cols.split(",").filter((k) => ALL_COLS.some((c) => c.key === k))
+    : ALL_COLS.map((c) => c.key);
+
+  const COLS = ALL_COLS.filter((c) => selectedKeys.includes(c.key));
+
   const doc = new PDFDocument({ size: "A4", layout: "landscape", margin: 36 });
   const chunks: Buffer[] = [];
   doc.on("data", (c: Buffer) => chunks.push(c));
@@ -31,7 +38,11 @@ export async function GET(req: NextRequest) {
   const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const startX = doc.page.margins.left;
 
-  // Judul
+  // Scale column widths to fill page width
+  const totalColWidth = COLS.reduce((s, c) => s + c.width, 0);
+  const scale = pageWidth / totalColWidth;
+  const scaledCols = COLS.map((c) => ({ ...c, width: c.width * scale }));
+
   doc.fillColor("#0B5E54").fontSize(16).font("Helvetica-Bold").text("SIDAME — Daftar Wilayah Kerja Migas");
   doc
     .fillColor("#64726F")
@@ -49,7 +60,7 @@ export async function GET(req: NextRequest) {
     doc.rect(startX, y, pageWidth, rowHeight).fill("#0B5E54");
     doc.fillColor("#FFFFFF").fontSize(8).font("Helvetica-Bold");
     let x = startX + 4;
-    for (const c of COLS) {
+    for (const c of scaledCols) {
       doc.text(c.label, x, y + 6, { width: c.width - 6, ellipsis: true });
       x += c.width;
     }
@@ -71,7 +82,7 @@ export async function GET(req: NextRequest) {
     }
     doc.fillColor("#16211F");
     let x = startX + 4;
-    for (const c of COLS) {
+    for (const c of scaledCols) {
       doc.text(String(r[c.key] ?? ""), x, y + 6, { width: c.width - 6, ellipsis: true });
       x += c.width;
     }

@@ -5,6 +5,20 @@ import { getExportRows } from "@/lib/export-data";
 
 export const runtime = "nodejs";
 
+const ALL_COLS = [
+  { header: "Nama WK",         key: "namaWk",        width: 28 },
+  { header: "Lapangan",        key: "lapangan",       width: 20 },
+  { header: "Operator/K3S",    key: "operatorK3s",    width: 24 },
+  { header: "Pemegang Saham",  key: "pemegangSaham",  width: 26 },
+  { header: "Provinsi",        key: "provinsi",       width: 18 },
+  { header: "Type Contract",   key: "typeContract",   width: 16 },
+  { header: "Status WK",       key: "statusWk",       width: 16 },
+  { header: "Start PSC",       key: "startPsc",       width: 14 },
+  { header: "End PSC",         key: "endPsc",         width: 14 },
+] as const;
+
+type ColKey = (typeof ALL_COLS)[number]["key"];
+
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
@@ -12,25 +26,26 @@ export async function GET(req: NextRequest) {
   const sp = Object.fromEntries(req.nextUrl.searchParams.entries());
   const rows = await getExportRows(user.role, sp);
 
+  const selectedKeys: ColKey[] = sp.cols
+    ? (sp.cols.split(",").filter((k) => ALL_COLS.some((c) => c.key === k)) as ColKey[])
+    : ALL_COLS.map((c) => c.key);
+
+  const activeCols = ALL_COLS.filter((c) => selectedKeys.includes(c.key));
+
   const wb = new ExcelJS.Workbook();
   wb.creator = "SIDAME";
   const ws = wb.addWorksheet("Wilayah Kerja");
 
-  ws.columns = [
-    { header: "Nama WK", key: "namaWk", width: 28 },
-    { header: "Lapangan", key: "lapangan", width: 20 },
-    { header: "Operator/K3S", key: "operatorK3s", width: 24 },
-    { header: "Pemegang Saham", key: "pemegangSaham", width: 26 },
-    { header: "Provinsi", key: "provinsi", width: 18 },
-    { header: "Type Contract", key: "typeContract", width: 16 },
-    { header: "Status WK", key: "statusWk", width: 16 },
-    { header: "Start PSC", key: "startPsc", width: 14 },
-    { header: "End PSC", key: "endPsc", width: 14 },
-  ];
+  ws.columns = activeCols.map((c) => ({ header: c.header, key: c.key, width: c.width }));
 
   ws.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
   ws.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0B5E54" } };
-  rows.forEach((r) => ws.addRow(r));
+
+  rows.forEach((r) => {
+    const rowData: Record<string, string> = {};
+    for (const col of activeCols) rowData[col.key] = r[col.key] ?? "";
+    ws.addRow(rowData);
+  });
 
   const buffer = await wb.xlsx.writeBuffer();
   const tgl = new Date().toISOString().slice(0, 10);

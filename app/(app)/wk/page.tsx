@@ -16,6 +16,7 @@ import {
 import { Badge, Button } from "@/components/ui";
 import { WkFilters } from "@/components/wk-filters";
 import { WkActionButtons } from "@/components/wk-action-buttons";
+import { ExportDialog } from "@/components/export-dialog";
 import { deleteWk } from "./actions";
 
 const PAGE_SIZE = 15;
@@ -80,12 +81,7 @@ export default async function WkListPage({
           <p className="mt-1 text-sm text-muted">{total} data ditemukan</p>
         </div>
         <div className="flex gap-2">
-          <Link href={`/api/export/excel?${exportQuery}`}>
-            <Button variant="outline">Export Excel</Button>
-          </Link>
-          <Link href={`/api/export/pdf?${exportQuery}`}>
-            <Button variant="outline">Export PDF</Button>
-          </Link>
+          <ExportDialog baseQuery={exportQuery} />
           {userCanCreate && (
             <Link href="/wk/new">
               <Button>+ Tambah WK</Button>
