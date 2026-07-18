@@ -6,15 +6,17 @@ import { getExportRows, type ExportRow } from "@/lib/export-data";
 export const runtime = "nodejs";
 
 const ALL_COLS: { key: keyof ExportRow; label: string; width: number }[] = [
-  { key: "namaWk",        label: "Nama WK",        width: 150 },
+  { key: "namaWk",        label: "Nama WK",        width: 140 },
   { key: "lapangan",      label: "Lapangan",        width: 100 },
-  { key: "operatorK3s",   label: "Operator/K3S",    width: 130 },
-  { key: "pemegangSaham", label: "Pemegang Saham",  width: 120 },
-  { key: "provinsi",      label: "Provinsi",         width: 90 },
-  { key: "typeContract",  label: "Kontrak",          width: 80 },
-  { key: "statusWk",      label: "Status",           width: 90 },
-  { key: "startPsc",      label: "Start PSC",        width: 70 },
-  { key: "endPsc",        label: "End PSC",          width: 70 },
+  { key: "operatorK3s",   label: "Operator/K3S",    width: 120 },
+  { key: "pemegangSaham", label: "Pemegang Saham",  width: 110 },
+  { key: "provinsi",      label: "Provinsi",         width: 85 },
+  { key: "kabupaten",     label: "Kabupaten/Kota",   width: 100 },
+  { key: "typeContract",  label: "Kontrak",          width: 75 },
+  { key: "jenisWk",       label: "Jenis WK",         width: 85 },
+  { key: "statusWk",      label: "Status",           width: 85 },
+  { key: "startPsc",      label: "Start PSC",        width: 65 },
+  { key: "endPsc",        label: "End PSC",          width: 65 },
 ];
 
 export async function GET(req: NextRequest) {
@@ -38,7 +40,6 @@ export async function GET(req: NextRequest) {
   const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const startX = doc.page.margins.left;
 
-  // Scale column widths to fill page width
   const totalColWidth = COLS.reduce((s, c) => s + c.width, 0);
   const scale = pageWidth / totalColWidth;
   const scaledCols = COLS.map((c) => ({ ...c, width: c.width * scale }));

@@ -1,12 +1,14 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { wilayahKerja, provinsi } from "@/db/schema";
+import { wilayahKerja, provinsi, kabupaten } from "@/db/schema";
 import { buildWkWhere, parseFilters } from "./wk-query";
 import {
   STATUS_WK_LABEL,
   TYPE_CONTRACT_LABEL,
+  JENIS_WK_LABEL,
   type StatusWk,
   type TypeContract,
+  type JenisWk,
 } from "./constants";
 
 export type ExportRow = {
@@ -15,7 +17,9 @@ export type ExportRow = {
   operatorK3s: string;
   pemegangSaham: string;
   provinsi: string;
+  kabupaten: string;
   typeContract: string;
+  jenisWk: string;
   statusWk: string;
   startPsc: string;
   endPsc: string;
@@ -33,6 +37,9 @@ export async function getExportRows(
   const filters = parseFilters(sp);
   const where = buildWkWhere(role, filters);
 
+  const allKabupaten = await db.select({ id: kabupaten.id, nama: kabupaten.nama }).from(kabupaten);
+  const kabMap = new Map(allKabupaten.map((k) => [k.id, k.nama]));
+
   const rows = await db
     .select({
       namaWk: wilayahKerja.namaWk,
@@ -40,7 +47,10 @@ export async function getExportRows(
       operatorK3s: wilayahKerja.operatorK3s,
       pemegangSaham: wilayahKerja.pemegangSaham,
       provinsiNama: provinsi.nama,
+      kabupatenId: wilayahKerja.kabupatenId,
+      kabupatenIds: wilayahKerja.kabupatenIds,
       typeContract: wilayahKerja.typeContract,
+      jenisWk: wilayahKerja.jenisWk,
       statusWk: wilayahKerja.statusWk,
       startPsc: wilayahKerja.startPsc,
       endPsc: wilayahKerja.endPsc,
@@ -50,15 +60,32 @@ export async function getExportRows(
     .where(where)
     .orderBy(asc(wilayahKerja.namaWk));
 
-  return rows.map((r) => ({
-    namaWk: r.namaWk,
-    lapangan: r.lapangan ?? "",
-    operatorK3s: r.operatorK3s ?? "",
-    pemegangSaham: r.pemegangSaham ?? "",
-    provinsi: r.provinsiNama ?? "",
-    typeContract: r.typeContract ? TYPE_CONTRACT_LABEL[r.typeContract as TypeContract] : "",
-    statusWk: STATUS_WK_LABEL[r.statusWk as StatusWk],
-    startPsc: fmt(r.startPsc),
-    endPsc: fmt(r.endPsc),
-  }));
+  return rows.map((r) => {
+    let kabupatenNama = "";
+    if (r.kabupatenIds) {
+      kabupatenNama = r.kabupatenIds
+        .split(",")
+        .map(Number)
+        .filter(Boolean)
+        .map((id) => kabMap.get(id) ?? "")
+        .filter(Boolean)
+        .join(", ");
+    } else if (r.kabupatenId) {
+      kabupatenNama = kabMap.get(r.kabupatenId) ?? "";
+    }
+
+    return {
+      namaWk: r.namaWk,
+      lapangan: r.lapangan ?? "",
+      operatorK3s: r.operatorK3s ?? "",
+      pemegangSaham: r.pemegangSaham ?? "",
+      provinsi: r.provinsiNama ?? "",
+      kabupaten: kabupatenNama,
+      typeContract: r.typeContract ? TYPE_CONTRACT_LABEL[r.typeContract as TypeContract] : "",
+      jenisWk: r.jenisWk ? (JENIS_WK_LABEL[r.jenisWk as JenisWk] ?? r.jenisWk) : "",
+      statusWk: STATUS_WK_LABEL[r.statusWk as StatusWk],
+      startPsc: fmt(r.startPsc),
+      endPsc: fmt(r.endPsc),
+    };
+  });
 }
