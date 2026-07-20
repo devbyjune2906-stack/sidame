@@ -36,6 +36,7 @@ export function WkForm({
   submitLabel,
   hasProcess = false,
   userPokja,
+  back,
 }: {
   action: (prev: { error?: string } | null, fd: FormData) => Promise<{ error?: string } | null>;
   initial?: WkInitial;
