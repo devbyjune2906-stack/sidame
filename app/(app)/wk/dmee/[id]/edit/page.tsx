@@ -10,14 +10,18 @@ import { saveDmeeDetail, addDmeeFieldFromEdit } from "./action";
 
 export default async function DmeeDetailEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   if (!canWrite(user.role) || (!isAdmin(user.role) && !isDmee(user.role))) redirect("/wk");
 
   const { id } = await params;
+  const sp = await searchParams;
+  const back = typeof sp.back === "string" && /^\/wk(\/|$)/.test(sp.back) ? sp.back : "/wk/dmee";
 
   const [wk] = await db
     .select({ id: wilayahKerja.id, namaWk: wilayahKerja.namaWk })
@@ -52,6 +56,7 @@ export default async function DmeeDetailEditPage({
         <h2 className="mb-4 text-base font-semibold text-ink">Isi Data</h2>
         <form action={saveDmeeDetail} className="space-y-4">
           <input type="hidden" name="wkId" value={id} />
+          <input type="hidden" name="back" value={back} />
 
           {/* Field tetap */}
           <div>
@@ -87,7 +92,7 @@ export default async function DmeeDetailEditPage({
 
           <div className="flex gap-2 pt-2">
             <Button type="submit">Simpan</Button>
-            <Link href="/wk/dmee-l">
+            <Link href={back}>
               <Button type="button" variant="outline">Batal</Button>
             </Link>
           </div>

@@ -145,7 +145,7 @@ export default async function DmepLPage() {
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <WkActionButtons id={r.id} editHref={`/wk/dmep/${r.id}/edit`} canWrite={userCanEdit} />
+                    <WkActionButtons id={r.id} editHref={`/wk/dmep/${r.id}/edit?back=/wk/dmep-l`} canWrite={userCanEdit} />
                   </td>
                 </tr>
               );

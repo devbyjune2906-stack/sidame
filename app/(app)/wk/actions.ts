@@ -308,8 +308,11 @@ export async function updateWk(id: string, _prev: ActionState, formData: FormDat
     await updateDetailForExistingProcess(id, formData);
   }
 
+  const back = str(formData, "back");
+  const redirectTo = back && /^\/wk(\/|$)/.test(back) ? back : "/wk";
   revalidatePath("/wk");
-  redirect("/wk");
+  if (redirectTo !== "/wk") revalidatePath(redirectTo);
+  redirect(redirectTo);
 }
 
 export async function deleteWk(formData: FormData) {

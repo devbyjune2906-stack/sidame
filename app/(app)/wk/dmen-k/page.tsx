@@ -105,7 +105,7 @@ export default async function DmenKPage() {
                   </Badge>
                 </td>
                 <td className="px-4 py-3">
-                  <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit`} canWrite={userCanWrite} />
+                  <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit?back=/wk/dmen-k`} canWrite={userCanWrite} />
                 </td>
               </tr>
             ))}

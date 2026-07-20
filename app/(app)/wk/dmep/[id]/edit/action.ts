@@ -56,7 +56,9 @@ export async function saveDmepDetail(formData: FormData) {
     await db.insert(dmepDetail).values({ wkId, ...payload });
   }
 
-  redirect("/wk/dmep-l");
+  const back = String(formData.get("back") ?? "").trim();
+  const redirectTo = back && /^\/wk(\/|$)/.test(back) ? back : "/wk/dmep";
+  redirect(redirectTo);
 }
 
 export async function addDmepFieldFromEdit(formData: FormData) {

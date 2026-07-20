@@ -251,7 +251,7 @@ export default async function DmedTPage() {
                   <td className="px-3 py-3 text-ink">{r.statusKkks ?? "—"}</td>
                   <td className="px-3 py-3 text-ink">{r.keterangan ?? "—"}</td>
                   <td className="px-3 py-3">
-                    <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit`} canWrite={userCanWrite} />
+                    <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit?back=/wk/dmed-t`} canWrite={userCanWrite} />
                   </td>
                 </tr>
               ))}
@@ -312,7 +312,7 @@ export default async function DmedTPage() {
                     </Badge>
                   </td>
                   <td className="px-3 py-3">
-                    <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit`} canWrite={userCanWrite} />
+                    <WkActionButtons id={r.id} editHref={`/wk/${r.id}/edit?back=/wk/dmed-t`} canWrite={userCanWrite} />
                   </td>
                 </tr>
               ))}

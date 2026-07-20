@@ -47,9 +47,12 @@ export function WkForm({
   hasProcess?: boolean;
   /** "DMEW" | "DMEN" untuk non-admin; undefined = Admin (bisa pilih) */
   userPokja?: "DMEW" | "DMEN";
+  /** Halaman tujuan setelah simpan/batal. Default: /wk */
+  back?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const [statusWk, setStatusWk] = useState(initial.statusWk ?? selectableStatuses[0]);
+  const backHref = back ?? "/wk";
 
   // Inisialisasi dari provinsiIds (multi) atau provinsiId (single/lama)
   const initSelectedIds = useMemo<Set<number>>(() => {
@@ -107,6 +110,7 @@ export function WkForm({
 
   return (
     <form action={formAction}>
+      {back && <input type="hidden" name="back" value={back} />}
       <Card className="space-y-5">
         <div>
           <Label htmlFor="namaWk">Nama WK *</Label>
@@ -338,7 +342,7 @@ export function WkForm({
           <Button type="submit" disabled={pending}>
             {pending ? "Menyimpan..." : submitLabel}
           </Button>
-          <Link href="/wk">
+          <Link href={backHref}>
             <Button type="button" variant="outline">
               Batal
             </Button>

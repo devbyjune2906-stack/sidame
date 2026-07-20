@@ -129,11 +129,19 @@ async function loadProcessInitial(wkId: string): Promise<{ dmew?: WkInitial["dme
   return { hasProcess: true };
 }
 
-export default async function EditWkPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditWkPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
   const { id } = await params;
+  const sp = await searchParams;
+  const back = typeof sp.back === "string" && /^\/wk(\/|$)/.test(sp.back) ? sp.back : undefined;
   const [wk] = await db.select().from(wilayahKerja).where(eq(wilayahKerja.id, id)).limit(1);
   if (!wk) notFound();
 
@@ -171,6 +179,7 @@ export default async function EditWkPage({ params }: { params: Promise<{ id: str
         submitLabel="Simpan Perubahan"
         hasProcess={hasProcess}
         userPokja={userPokja}
+        back={back}
         initial={{
           namaWk: wk.namaWk,
           lapangan: wk.lapangan,

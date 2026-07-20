@@ -58,7 +58,9 @@ export async function saveDmeeDetail(formData: FormData) {
     });
   }
 
-  redirect("/wk/dmee-l");
+  const back = String(formData.get("back") ?? "").trim();
+  const redirectTo = back && /^\/wk(\/|$)/.test(back) ? back : "/wk/dmee";
+  redirect(redirectTo);
 }
 
 export async function addDmeeFieldFromEdit(formData: FormData) {

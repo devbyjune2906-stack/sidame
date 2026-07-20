@@ -140,7 +140,7 @@ export default async function DmeeLPage() {
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <WkActionButtons id={r.id} editHref={`/wk/dmee/${r.id}/edit`} canWrite={userCanEdit} />
+                    <WkActionButtons id={r.id} editHref={`/wk/dmee/${r.id}/edit?back=/wk/dmee-l`} canWrite={userCanEdit} />
                   </td>
                 </tr>
               );
